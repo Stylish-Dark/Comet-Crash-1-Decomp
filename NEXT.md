@@ -1,33 +1,32 @@
 # NEXT
 
-## Immediate
+## Immediate priority — first native Windows boot
 
-1. **Execute M1 against the actual NPEB00142 v1.00 files.**
-   - Bootstrap the pinned toolkit with `tools/bootstrap_ps3recomp.ps1`.
-   - Run `tools/m1_analyze.py` with the decrypted EBOOT ELF and, preferably, `PARAM.SFO`.
-   - Compare against the established baseline: ~3,409 PPU functions; 171 imports / 18 libraries; 24 `cellSpurs` imports; 2 embedded SPU ELFs.
-   - Inspect and commit only sanitized generated metadata/reports; never commit the EBOOT or extracted SPU binaries.
+1. Use the recovered advanced source snapshot (commit state `c0089d4`).
+2. Run:
+   ```bat
+   scripts\build_and_run.cmd "D:\Games\Comet Crash"
+   ```
+3. Preserve `logs\boot-YYYYMMDD-HHMMSS.txt`.
+4. Determine the last successful `[boot-stage]` and the first concrete failure after it.
+5. Classify the blocker using evidence: VM/PPU → VFS → HLE → GCM/RESC/RSX → SPURS/SPU → synchronization/HOTREAD → audio → input/host integration.
+6. Fix only the evidenced blocker, add a focused regression test where possible, then checkpoint continuity before the next run.
 
-2. **Perform M2 first lift/build/run.**
-   - Use `tools/m2_lift_build.ps1`.
-   - Ensure the lift uses `--hle-stubs` and the generated HLE NID table.
-   - Build with clang-cl + Ninja.
-   - Capture the first boot log and identify the first real blocker.
+## Repository recovery task
 
-3. **Checkpoint immediately after the first runtime result.**
-   - Update `CONTINUITY.md` with the actual blocker.
-   - Add the sanitized boot finding to `SESSION_LOG.md`.
-   - Put the exact next fix at the top of this file.
+The advanced checkpoint's source files still need to be replayed fully into the current GitHub working tree. Until that reconciliation is complete, use the persistent recovery archives named in `CONTINUITY.md` rather than stale scaffold files.
 
-## Blocker triage order after first boot
+## After first visible output
 
-Unless runtime evidence establishes a different dependency order:
+- verify title/menu rendering and stable frame presentation;
+- verify original controller input;
+- enter a mission and verify simulation, tower placement/selection, pause, exit and save/load;
+- resolve any remaining required audio/SPU behavior.
 
-1. process/thread/memory/runtime primitives;
-2. filesystem/VFS mapping;
-3. GCM/Resc/graphics;
-4. controller input;
-5. remaining sysutil services;
-6. audio/SPURS middleware.
+## Deferred
 
-Do not begin mouse/keyboard or PC polish until vanilla controller gameplay is stable.
+- direct absolute mouse/world-pointer injection;
+- refresh-rate unlock / simulation decoupling;
+- broader graphics/aspect-ratio work;
+- cosmetic/remaster changes;
+- network-service restoration beyond local-play requirements.
