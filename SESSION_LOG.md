@@ -17,4 +17,4 @@
 - Caught and fixed one fake-Windows syntax-gate issue during implementation (avoided an undeclared test-fixture `InterlockedCompareExchange` by using the first return value of the existing `InterlockedIncrement`).
 - Final regression gate after changes: **61/61 tests passed**, `compileall` passed, repository safety passed.
 
-Next action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.
+- Reconstructed the complete recovered source as Git blobs and verified every one of the **68 tracked files** against its expected recovered Git blob SHA before publishing.\n- Atomically restored the advanced tree to GitHub `main` as commit `151ede4002703cce7dd9c3ccc206ae441b3d19d9` (`Restore recovered advanced Comet Crash port tree`). The stale temporary scaffold is no longer the working tree.\n\nNext action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.
