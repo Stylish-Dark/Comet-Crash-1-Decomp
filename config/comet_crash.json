@@ -1,0 +1,13 @@
+{
+  "title": "Comet Crash",
+  "title_id": "NPEB00142",
+  "version": "01.00",
+  "app_version": "01.00",
+  "reference_elf_sha256": "3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6",
+  "reference_elf_size": 2660448,
+  "reference_param_sfo_sha256": "3625eae971977ba33f63f2e423923d4375043995a90afe85d97377a00371fe84",
+  "accepted_elf_sha256": [
+    "3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6",
+    "cf349416cd7f13cf77ac8252ea41c3676d1674496533d2904cf1acd49f516b32"
+  ]
+}

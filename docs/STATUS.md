@@ -4,24 +4,35 @@ Current target: NPEB00142 v1.00.
 
 ## Verified binary facts
 
-- Deterministic RPCS3-style rebuilt PPU ELF: 2,660,448 bytes, SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`.
+- Deterministic RPCS3-style rebuilt PPU ELF: 2,660,448 bytes, SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`. The earlier `cf3494...` reconstruction remains accepted because its executable/loadable content yields the same verified analysis.
 - 3,409 unique PPU functions from 3,473 OPD descriptors.
 - 171 firmware imports across 18 libraries.
 - 24 `cellSpurs` imports.
-- Two embedded SPU programs (2,952 and 95,264 bytes). Large = MultiStream MP3 middleware; small = actively consumed but unidentified.
-- `cellPadGetData` path and downstream pad decoder are mapped.
+- Two embedded SPU programs. The large one is MultiStream MP3 middleware; the small one is actively consumed but remains unidentified.
+- `cellPadGetData` path and downstream pad decoder are mapped; see `docs/reversing/input.md`.
 
-## Engineering state
+## Current engineering state
 
-- Reproducible local FREE-NPDRM decrypt/validation/analyse/lift/build/run pipeline exists.
-- `ps3recomp` pin: `d3ed1a5c946a9c5370b51631e13371a1adf70396`.
-- Full PPU lift completed: 3,744 emitted functions after boundary recovery/tail wrappers.
-- Small SPU: 28 reachable functions, zero reachable unsupported instructions.
-- MultiStream SPU: 1,099 reachable functions from entry `0x3050`; all 446 unsupported `.word` markers are outside the reachable set.
-- Explicit VMX lift fixes cover the two real v0.12.1 PPU holes: `vsrab`, `vsrb`.
-- Windows host includes persistent settings, F1 Graphics & Input overlay, live windowed/borderless, live VSync patch, mouse/controller coexistence, SPURS urgent-command support, VFS/HDD mappings, RESC/GCM fixes and explicit Comet HLE compatibility.
-- Build refuses to continue unless all 171 Comet imports are covered.
-- Recovered local regression gate: **61/61 tests passing**, plus compileall and repository-safety checks.
-- First-boot diagnostics now mirror native stdout/stderr into `logs/boot-YYYYMMDD-HHMMSS.txt`, record ELF/runtime metadata, emit granular `[boot-stage]` markers, and mark the first presented guest frame.
+- Reproducible decrypt/validation/analyse/lift/build/run CLI is present. The original retail NPEB00142 EBOOT is NPDRM FREE-license and can be rebuilt locally without a RAP.
+- `ps3recomp` is pinned to one upstream commit.
+- PPU and SPU lifts are separate generated outputs and proprietary inputs are ignored.
+- Windows runner uses the upstream D3D12/HLE runtime contract.
+- The current workspace has reproduced the decrypted ELF directly from the user-owned retail EBOOT and has now run the upstream `ps3recomp` v0.12.1 SDK analysis pipeline against it. Upstream `ppu_loader.py` independently reports 3,473 OPD descriptors / 3,409 unique functions and 171 firmware imports across 18 libraries; upstream `extract_spu_images.py` independently extracts the same 2 SPU ELFs (2,952 and 95,264 bytes).
 
-**Not yet claimed:** successful native Windows boot/playability. The next engineering phase is a real Windows run and evidence-driven repair of the first runtime blocker.
+The repository remains pinned to upstream commit `d3ed1a5c946a9c5370b51631e13371a1adf70396`. That exact commit has green Linux/Windows/macOS CI but no downloadable CI artifact. For sandbox-only lift experiments, the published v0.12.1 Linux SDK bundle is used as a bootstrap because the sandbox cannot perform ordinary GitHub clones. Final reproducible builds should still use the pinned commit, and any lift difference must be reconciled before generated code is promoted.
+
+## Lift and Windows host status
+
+- First full lift completed: 3,744 PPU functions emitted after boundary recovery/tail wrappers.
+- The small SPU lift has 28 reachable functions with zero unsupported instructions.
+- The MultiStream MP3 SPU has 1,099 functions reachable from entry 0x3050; all 446 unsupported `.word` markers are outside that reachable set.
+- The v0.12.1 PPU lifter left exactly two real VMX holes (`vsrab`, `vsrb`); `tools/patch_ppu_lift.py` patches them alias-safely and the lift command now applies that automatically.
+- The Windows host layer has persistent settings, an F1 in-game Graphics & Input overlay, live windowed/borderless switching, a live VSync switch (via a deterministic ps3recomp D3D12 source patch), and mouse/controller coexistence through an exact `cellPadGetData` HLE override.
+- Mouse movement currently uses compatibility-mode analogue injection. Direct absolute world/UI-pointer injection remains a later refinement after the native boot path is proven.
+- `scripts/build_and_run.cmd` automates the entire user-owned-game -> native EXE pipeline on Windows.
+- Comet-specific `cellSpursAddUrgentCommand` support is wired end-to-end: a real four-slot guest FIFO is consumed by the host job-chain walker before the normal command stream, preserving the title's direct-JOB and RESET_PC usage.
+- A Comet-specific HLE compatibility layer covers verified gaps that would otherwise hit ps3recomp's unresolved-import success fallback: `_cellGcmFunc15`, `cellRescSetWaitFlip`, `sys_net_free_thread_context`, NP score/region calls, trophy abort, and PS3-only recording/video export/upload services. Optional online/media services fail explicitly or operate in offline-safe mode instead of returning fabricated success and leaving the game waiting for callbacks.
+- Current local regression gate: 61/61 tests passing. The build now generates the pinned runtime HLE table and refuses to continue unless all 171 Comet imports are covered by runtime handlers or explicit port overrides. Host/settings/compat and the Windows main translation unit also pass a whole-port syntax compile gate.
+- First-boot diagnostics are now durable: the run command mirrors combined native stdout/stderr into `logs/boot-YYYYMMDD-HHMMSS.txt`, records ELF/runtime-path metadata, and the runner emits `[boot-stage]` checkpoints through PPU entry plus the first presented guest frame.
+
+**Not yet claimed:** successful native Windows boot/playability. This Linux execution environment has no Windows SDK/D3D12 runtime, so the real EXE must still be built/run on Windows. The next engineering phase is first-boot logging and resolving any title-specific HLE/RSX/SPURS runtime failures until missions are playable.

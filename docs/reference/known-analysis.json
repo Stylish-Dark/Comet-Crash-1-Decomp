@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "title": "Comet Crash",
+  "title_id": "NPEB00142",
+  "version": "01.00",
+  "reference_elf": {
+    "size": 2660448,
+    "sha256": "3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6",
+    "format": "ELF64 big-endian PPC64 Cell LV2 executable",
+    "accepted_sha256": [
+      "3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6",
+      "cf349416cd7f13cf77ac8252ea41c3676d1674496533d2904cf1acd49f516b32"
+    ],
+    "reconstruction": "RPCS3-style SELF MakeElf: decrypted PT_LOAD data + ELF/PHDR/SHDR tables; non-alloc tail payloads omitted"
+  },
+  "firmware_imports": {
+    "count": 171,
+    "library_count": 18,
+    "by_library": {
+      "cellAudio": 5,
+      "cellGame": 3,
+      "cellGcmSys": 30,
+      "cellNetCtl": 4,
+      "cellRec": 5,
+      "cellResc": 14,
+      "cellRtc": 3,
+      "cellSpurs": 24,
+      "cellSysmodule": 1,
+      "cellSysutil": 20,
+      "cellVideoExportUtility": 3,
+      "cellVideoUpload": 1,
+      "sceNp": 19,
+      "sceNpTrophy": 10,
+      "sysPrxForUser": 15,
+      "sys_fs": 5,
+      "sys_io": 6,
+      "sys_net": 3
+    }
+  },
+  "ppu_opd": {
+    "region_vaddr": "0x00233130",
+    "region_size": "0x00006C88",
+    "descriptor_count": 3473,
+    "unique_function_count": 3409,
+    "entry_code": "0x00010230",
+    "module_toc": "0x00241DB8"
+  },
+  "spu_images": [
+    {
+      "size": 2952,
+      "sha256": "946ae7cbd718d4404f1be8edfe967cd85052f5a4c19c472ee35acf102b17220f",
+      "file_offset": "0x001B4980",
+      "ppu_vaddr": "0x001C4980",
+      "role": "unknown-active"
+    },
+    {
+      "size": 95264,
+      "sha256": "9a3889076b6c874ac191ae9d5f97bb26fdec2f5a0739ec7efe6e986fb2ed15bf",
+      "file_offset": "0x00207580",
+      "ppu_vaddr": "0x00217580",
+      "role": "Sony MultiStream MP3 audio middleware"
+    }
+  ],
+  "controller_input": {
+    "cellPadGetData_nid": "0x8B72CDA1",
+    "cellPadGetData_stub": "0x001B6D78",
+    "direct_call_site": "0x000F4CAC",
+    "polling_function": "0x000F4858",
+    "pad_decoder_function": "0x000F1500"
+  }
+}

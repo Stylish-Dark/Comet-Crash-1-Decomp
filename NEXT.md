@@ -2,31 +2,39 @@
 
 ## Immediate priority — first native Windows boot
 
-1. Use the recovered advanced source snapshot (commit state `c0089d4`).
-2. Run:
+1. Run:
+
    ```bat
    scripts\build_and_run.cmd "D:\Games\Comet Crash"
    ```
-3. Preserve `logs\boot-YYYYMMDD-HHMMSS.txt`.
-4. Determine the last successful `[boot-stage]` and the first concrete failure after it.
-5. Classify the blocker using evidence: VM/PPU → VFS → HLE → GCM/RESC/RSX → SPURS/SPU → synchronization/HOTREAD → audio → input/host integration.
-6. Fix only the evidenced blocker, add a focused regression test where possible, then checkpoint continuity before the next run.
 
-## Repository recovery task
+2. Preserve the generated `logs\boot-YYYYMMDD-HHMMSS.txt`.
 
-The advanced checkpoint's source files still need to be replayed fully into the current GitHub working tree. Until that reconciliation is complete, use the persistent recovery archives named in `CONTINUITY.md` rather than stale scaffold files.
+3. Determine the last successful `[boot-stage]` and the first concrete failure after it.
+
+4. Classify the blocker using evidence, in roughly this order:
+   - process / VM / PPU dispatch;
+   - filesystem / VFS / title-data paths;
+   - missing or incorrect HLE behavior;
+   - GCM / RESC / RSX;
+   - SPURS / SPU dispatch;
+   - synchronization / HOTREAD;
+   - audio;
+   - input or host integration.
+
+5. Fix only the evidenced blocker, add a focused regression test where possible, then checkpoint continuity before the next run.
 
 ## After first visible output
 
-- verify title/menu rendering and stable frame presentation;
-- verify original controller input;
-- enter a mission and verify simulation, tower placement/selection, pause, exit and save/load;
-- resolve any remaining required audio/SPU behavior.
+- Verify title/menu rendering and stable frame presentation.
+- Verify original controller input before judging mouse behavior.
+- Enter a mission and verify simulation, tower placement/selection, pause, exit and save/load behavior.
+- Restore/fix audio/SPU behavior if it was merely bypassed or still partial.
 
-## Deferred
+## Deferred until vanilla gameplay is stable
 
 - direct absolute mouse/world-pointer injection;
 - refresh-rate unlock / simulation decoupling;
-- broader graphics/aspect-ratio work;
+- broader graphics options and aspect-ratio work;
 - cosmetic/remaster changes;
 - network-service restoration beyond local-play requirements.

@@ -1,0 +1,9 @@
+# Generated automatically beside CometCrashPC.exe on first launch.
+width=1280
+height=720
+display_mode=windowed
+vsync=on
+frame_limit=60
+mouse_enabled=on
+mouse_sensitivity=1.0
+mouse_stick=left

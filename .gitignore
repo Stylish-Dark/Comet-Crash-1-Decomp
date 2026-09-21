@@ -1,26 +1,51 @@
-# Local proprietary game material
-game/
-private/
-local/
-**/EBOOT.BIN
-**/EBOOT.ELF
-**/EBOOT.elf
+# Proprietary PS3/game data
 *.pkg
+*.PKG
 *.rap
+*.RAP
 *.rif
+*.RIF
+*.self
+*.SELF
+*.sprx
+*.SPRX
+*.pak
+*.PAK
+*.edat
+*.EDAT
+*.sdat
+*.SDAT
+*.psarc
+*.PSARC
+EBOOT.BIN
+EBOOT.ELF
+*.orig.ELF
+*.crack.ELF
+PARAM.SFO
+PARAM.PFD
+LIC.DAT
+/game/
+/gamefiles/
+/input-game/
+/proprietary/
 
-# Generated/lifted code and build products
-build/
-recompiled/
-spu/images/
-spu/lifted/
-out/raw/
-
-# Tooling
-.venv/
+# Generated/local
+/build/
+/out/
+/generated/
+/work/
+/external/
+/_harness/
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exe
 __pycache__/
 *.pyc
+.worktrees/
+.vscode/
+.idea/
 
-# Logs / crash dumps
-*.log
-*.dmp
+# Runtime boot logs
+/logs/
