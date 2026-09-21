@@ -6,6 +6,7 @@ class WindowsScriptTests(unittest.TestCase):
   s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
   for command in [' decrypt ',' validate ',' analyze ',' lift ',' build ',' run ']: self.assertIn(command,s)
   self.assertIn('vcvars64.bat',s)
+  self.assertIn('if not defined VSCMD_VER',s)
   self.assertIn('clang-cl.exe',s)
   self.assertIn('F1 = Graphics/Input menu',s)
  def test_accepts_ps3_game_parent_or_title_root(self):

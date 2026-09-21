@@ -29,8 +29,9 @@ if not exist "%EBOOT%" (
 )
 
 rem Enter a VS x64 developer environment automatically when this is a normal shell.
-where cl.exe >nul 2>nul
-if errorlevel 1 (
+rem Checking VSCMD_VER is stronger than checking cl.exe: a stray compiler on PATH
+rem does not guarantee that the Windows SDK/LIB/INCLUDE environment is initialized.
+if not defined VSCMD_VER (
   set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
   if not exist "!VSWHERE!" (
     echo ERROR: Visual Studio 2022 Build Tools are required ^(Desktop C++ + Clang tools + Windows SDK^).
@@ -51,8 +52,13 @@ where cmake.exe >nul 2>nul || (echo ERROR: CMake not found. & exit /b 3)
 where clang-cl.exe >nul 2>nul || (echo ERROR: clang-cl not found. Add the Visual Studio C++ Clang tools component. & exit /b 3)
 where ninja.exe >nul 2>nul
 if errorlevel 1 (
-  echo [setup] Ninja not found; installing it for this Python...
-  py -3 -m pip install ninja || exit /b !errorlevel!
+  py -3 -c "import ninja" >nul 2>nul
+  if errorlevel 1 (
+    echo [setup] Ninja not found; installing it for this Python...
+    py -3 -m pip install ninja || exit /b !errorlevel!
+  ) else (
+    echo [setup] Ninja found in the Python package; CMake will use its embedded executable.
+  )
 )
 
 if not exist "%ROOT%\external\ps3recomp\.git" (

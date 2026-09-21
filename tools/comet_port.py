@@ -12,6 +12,7 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from audit_hle_coverage import audit as audit_hle
+from check_env import find_ninja
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
@@ -92,8 +93,10 @@ def lift_command(elf: Path, ps3recomp: Path, analysis: Path, output: Path):
     return [sys.executable,ps3recomp/'tools'/'ppu_lifter.py',elf,'--functions',funcs,'--hle-stubs',imports,'-o',output]
 def spu_lift_command(images: Path, ps3recomp: Path, lifted: Path, registry: Path):
     return [sys.executable,ps3recomp/'tools'/'build_spu_workloads.py','--images',images,'--lifted',lifted,'--out',registry,'--register-fn','comet_crash_spu_register_all','--constructor','--title','comet_crash']
-def cmake_configure_command(ps3recomp: Path, recomp: Path, spu: Path, registry: Path, build: Path):
-    return ['cmake','-S',ROOT/'port','-B',build,'-G','Ninja','-DCMAKE_C_COMPILER=clang-cl','-DCMAKE_CXX_COMPILER=clang-cl',f'-DPS3RECOMP_DIR={ps3recomp}',f'-DRECOMP_DIR={recomp}',f'-DSPU_LIFTED_DIR={spu}',f'-DSPU_REGISTRY={registry}']
+def cmake_configure_command(ps3recomp: Path, recomp: Path, spu: Path, registry: Path, build: Path, ninja_program: str|Path|None=None):
+    cmd=['cmake','-S',ROOT/'port','-B',build,'-G','Ninja','-DCMAKE_C_COMPILER=clang-cl','-DCMAKE_CXX_COMPILER=clang-cl',f'-DPS3RECOMP_DIR={ps3recomp}',f'-DRECOMP_DIR={recomp}',f'-DSPU_LIFTED_DIR={spu}',f'-DSPU_REGISTRY={registry}']
+    if ninja_program: cmd.append(f'-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_program}')
+    return cmd
 
 def runtime_environment(title_root: Path, param_sfo: Path) -> dict[str,str]:
     m=load_manifest()
@@ -162,7 +165,10 @@ def cmd_build(a):
     if hle['missing']:
         details=', '.join(f'{x.get("library",x.get("lib","?"))}:{x["nid"]}' for x in hle['missing'])
         raise RuntimeError(f'unresolved Comet HLE imports: {details}')
-    run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build)); run(['cmake','--build',a.build])
+    ninja=find_ninja()
+    if not ninja: raise FileNotFoundError('Ninja not found on PATH or in the Python ninja package')
+    print(f'Ninja: {ninja}')
+    run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build,ninja)); run(['cmake','--build',a.build])
 def cmd_run(a):
     exe=a.exe or a.build/'CometCrashPC.exe'
     sfo=find_param_sfo(a.game); title_root=sfo.parent

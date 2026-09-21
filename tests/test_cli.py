@@ -7,8 +7,8 @@ class T(unittest.TestCase):
   q=c.spu_lift_command(Path('images'),Path('sdk'),Path('lifted'),Path('reg.c'))
   s=' '.join(map(str,q)); self.assertIn('build_spu_workloads.py',s); self.assertIn('--images',q); self.assertIn('--constructor',q); self.assertIn('comet_crash_spu_register_all',q)
  def test_cmake_has_spu_paths(self):
-  q=c.cmake_configure_command(Path('sdk'),Path('ppu'),Path('spu'),Path('reg.c'),Path('build'))
-  s=' '.join(map(str,q)); self.assertIn('SPU_LIFTED_DIR=',s); self.assertIn('SPU_REGISTRY=',s); self.assertIn('clang-cl',s)
+  q=c.cmake_configure_command(Path('sdk'),Path('ppu'),Path('spu'),Path('reg.c'),Path('build'),Path('tools/ninja.exe'))
+  s=' '.join(map(str,q)); self.assertIn('SPU_LIFTED_DIR=',s); self.assertIn('SPU_REGISTRY=',s); self.assertIn('clang-cl',s); self.assertIn('CMAKE_MAKE_PROGRAM:FILEPATH=',s)
  def test_parser_commands(self):
   p=c.parser()
   for name in ['decrypt','validate','probe','analyze','lift','build','run']:

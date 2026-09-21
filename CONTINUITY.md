@@ -71,6 +71,8 @@ Do not silently move this pin. Runtime source patchers deliberately fail on upst
 - `port/comet_settings.*` — persistent settings.
 - `scripts/build_and_run.cmd` — one-command Windows pipeline.
 - Boot diagnostics now write `logs/boot-YYYYMMDD-HHMMSS.txt` by default and include stage markers through PPU entry plus the first presented guest frame.
+- Windows bootstrap now keys developer-environment setup off `VSCMD_VER` rather than a stray `cl.exe`, discovers Ninja either on PATH or from the PyPI `ninja` wheel, and passes the exact Ninja executable to CMake.
+- clang-cl builds explicitly disable strict-aliasing assumptions and floating-point contraction to retain the upstream recompilation semantics; the irrelevant `/experimental:c11atomics` clang-cl flag was removed.
 
 ## Working hypotheses / unresolved questions
 

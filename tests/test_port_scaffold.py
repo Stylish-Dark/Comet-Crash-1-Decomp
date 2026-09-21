@@ -47,3 +47,6 @@ class HostLayerTests(unittest.TestCase):
   s=(ROOT/'port'/'CMakeLists.txt').read_text()
   for lib in ['d3d12','dxgi','d3dcompiler','xinput','ole32','bcrypt']:
    self.assertIn(lib,s)
+  self.assertIn('/clang:-fno-strict-aliasing',s)
+  self.assertIn('/clang:-ffp-contract=off',s)
+  self.assertNotIn('/experimental:c11atomics',s)

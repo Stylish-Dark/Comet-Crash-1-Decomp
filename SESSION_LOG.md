@@ -22,4 +22,9 @@
 - Hardened the HLE gate so symbolic constants count only when passed to `ps3_hle_register[_ctx]` or the port `reg(...)` wrapper; direct literal registrations still count. Added a regression proving declared-only NIDs remain uncovered.
 - Regression gate after HLE-audit hardening: **62/62 tests passed** and `compileall` passed.
 
+- Hardened fresh Windows setup: `build_and_run.cmd` now tests `VSCMD_VER` rather than merely seeing a `cl.exe` on PATH, ensuring the Windows SDK/LIB/INCLUDE environment is actually initialized.
+- Hardened Ninja discovery: `tools/check_env.py` and `tools/comet_port.py` now accept the executable bundled by the PyPI `ninja` wheel when `ninja.exe` is absent from PATH, and CMake receives that exact executable via `CMAKE_MAKE_PROGRAM`.
+- Aligned clang-cl semantics with upstream's recompilation intent: disabled strict-aliasing assumptions and FP contraction explicitly, retained `/bigobj`, and removed the irrelevant clang-cl `/experimental:c11atomics` option.
+- Added Ninja discovery regression tests. Regression gate: **64/64 tests passed** and `compileall` passed.
+
 Next action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.
