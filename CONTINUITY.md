@@ -6,7 +6,7 @@ Produce a Windows-native static-recompilation port of **Comet Crash 1** from the
 
 ## Current state
 
-This recovered checkpoint is materially ahead of the temporary scaffold that replaced the GitHub repository. It is the authoritative engineering state to preserve and restore.
+The recovered advanced checkpoint has now been restored byte-for-byte into GitHub `main` at commit `151ede4002703cce7dd9c3ccc206ae441b3d19d9`. The stale temporary scaffold is no longer the working tree; GitHub is again the canonical source state.
 
 Current project state:
 
@@ -20,7 +20,7 @@ Current project state:
 - F1 host Graphics & Input overlay and persistent settings are implemented;
 - the one-command Windows pipeline is `scripts/build_and_run.cmd`;
 - first-boot diagnostics now produce a durable boot log and fine-grained native initialization stage markers;
-- current local regression gate: **61/61 tests passing**, plus `compileall` and repository-safety checks.
+- current local regression gate: **61/61 tests passing**, plus `compileall` and repository-safety checks;\n- all 68 recovered tracked files were re-uploaded through a SHA-verified restore: every Git blob matched the recovered snapshot before `main` moved.
 
 **Not yet established:** successful native Windows boot, visible title/menu output, or playable missions. This environment cannot execute the Windows/D3D12 build.
 
