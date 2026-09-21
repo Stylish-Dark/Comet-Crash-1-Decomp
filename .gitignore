@@ -1,0 +1,26 @@
+# Local proprietary game material
+game/
+private/
+local/
+**/EBOOT.BIN
+**/EBOOT.ELF
+**/EBOOT.elf
+*.pkg
+*.rap
+*.rif
+
+# Generated/lifted code and build products
+build/
+recompiled/
+spu/images/
+spu/lifted/
+out/raw/
+
+# Tooling
+.venv/
+__pycache__/
+*.pyc
+
+# Logs / crash dumps
+*.log
+*.dmp
