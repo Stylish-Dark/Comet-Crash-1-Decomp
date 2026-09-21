@@ -1,45 +1,37 @@
 # DECISIONS
 
 ## D001 — Static recompilation is the implementation path
+Use `ps3recomp` as the native-port foundation. RPCS3 is a behavioral/reference baseline, not the shipped runtime.
 
-**Decision:** Build the native port around `ps3recomp`, not around shipping an emulator wrapper.
+## D002 — Preserve vanilla behavior before PC refinements
+Controller-driven original behavior comes first. Native absolute mouse-pointer injection, high-refresh changes and timing-sensitive PC improvements wait until missions are demonstrably stable.
 
-**Reason:** The project goal is a native PC port with an inspectable/modifiable adaptation layer, not simply PS3 execution on PC.
+## D003 — Never redistribute proprietary title material
+No PKG/RAP/RIF, EBOOT/ELF, extracted game assets, Sony SDK material, or embedded proprietary SPU binaries are committed.
 
-## D002 — Vanilla behavior before enhancements
+## D004 — Do not fake core gameplay
+Missing guest behavior is repaired through faithful runtime/HLE/lift work.
 
-**Decision:** First reach stable controller-driven gameplay matching the original. Mouse/keyboard, high-refresh work, aspect-ratio changes and other PC polish come afterwards.
+## D005 — Optional PS3 services must not return fabricated success
+Unsupported online/media/export services fail explicitly or use intentional offline-safe behavior rather than returning success without required callbacks/state.
 
-**Rejected:** changing input/render timing while core boot/gameplay correctness is still unknown.
+## D006 — SPU work is evidence-driven
+The large SPU is established as MultiStream MP3 middleware; the small active SPU remains unidentified.
 
-## D003 — Preserve the legal boundary
+## D007 — Pin ps3recomp and fail loudly on upstream drift
+Current pin: `d3ed1a5c946a9c5370b51631e13371a1adf70396`.
 
-**Decision:** Never commit or redistribute Comet Crash PKG/RAP/RIF files, EBOOT.BIN, decrypted ELF files, extracted copyrighted assets, or Sony SDK material.
+## D008 — HLE coverage is a build gate
+All 171 Comet imports must be covered by the pinned runtime or explicit port overrides.
 
-**Allowed:** original port code, scripts, non-infringing generated metadata, compatibility reports, address/signature-based patches, documentation.
+## D009 — Compatibility-mode mouse first
+Current mouse injection uses the original pad abstraction while preserving physical controllers. Direct absolute pointer injection comes after native gameplay stability.
 
-## D004 — Do not fake gameplay
+## D010 — First-boot evidence outranks speculative static work
+With 61/61 recovered tests green and lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log.
 
-**Decision:** Missing guest behavior is fixed through faithful lifting/HLE/runtime work. Core gameplay must not be silently replaced with approximate host-side logic just to make the executable run.
+## D011 — Repository continuity is canonical
+A fresh session reads `CONTINUITY.md` first. Significant work updates `NEXT.md` and `SESSION_LOG.md`.
 
-## D005 — SPU work is evidence-driven
-
-**Decision:** Do not assume every embedded SPU image must be lifted before first boot. Determine what the title actually dispatches.
-
-**Current evidence:** the larger embedded SPU appears to be Sony MultiStream/MP3 audio middleware. The smaller image remains unresolved.
-
-## D006 — Pin the active ps3recomp revision
-
-**Decision:** Reproducible work currently targets `sp00nznet/ps3recomp@e2815326c58d3530936166982672cb09acdef4f9`.
-
-**Reason:** the 2026-09-21 revision generalizes lifted-SPU integration into the official project template. Do not silently move the pin; update this decision when deliberately rebasing.
-
-## D007 — GitHub is the continuity source of truth
-
-**Decision:** Important facts, hypotheses, failures, tooling pins, milestones and next actions are checkpointed here as work proceeds. Chat history is not the project record.
-
-## D008 — Keep the runner scaffold in-repo; keep ps3recomp external and pinned
-
-**Decision:** Snapshot the MIT-licensed upstream project template under `port/` while obtaining the full `ps3recomp` toolkit separately at the exact pinned commit.
-
-**Reason:** this makes Comet Crash-specific runner/build changes reviewable in this repository without vendoring the entire evolving toolkit. `THIRD_PARTY_NOTICES.md` preserves attribution.
+## D012 — Recovered advanced checkpoint supersedes the temporary scaffold
+The recovered `3250838` history and follow-up `c0089d4` state are more authoritative than the earlier temporary GitHub reconstruction. Stale remote scaffold assumptions must not override verified recovered state.
