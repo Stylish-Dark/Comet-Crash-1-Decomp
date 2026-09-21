@@ -17,4 +17,9 @@
 - Caught and fixed one fake-Windows syntax-gate issue during implementation (avoided an undeclared test-fixture `InterlockedCompareExchange` by using the first return value of the existing `InterlockedIncrement`).
 - Final regression gate after changes: **61/61 tests passed**, `compileall` passed, repository safety passed.
 
-- Reconstructed the complete recovered source as Git blobs and verified every one of the **68 tracked files** against its expected recovered Git blob SHA before publishing.\n- Atomically restored the advanced tree to GitHub `main` as commit `151ede4002703cce7dd9c3ccc206ae441b3d19d9` (`Restore recovered advanced Comet Crash port tree`). The stale temporary scaffold is no longer the working tree.\n\nNext action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.
+- Audited the restored build path against the exact pinned `ps3recomp` commit `d3ed1a5c...`; loader/lifter/SPU CLI contracts and all five Comet runtime patch anchor sites still match the pin.
+- Found a real false-green risk in `tools/audit_hle_coverage.py`: any declared `NID_*` constant was previously counted as a port override even when never registered.
+- Hardened the HLE gate so symbolic constants count only when passed to `ps3_hle_register[_ctx]` or the port `reg(...)` wrapper; direct literal registrations still count. Added a regression proving declared-only NIDs remain uncovered.
+- Regression gate after HLE-audit hardening: **62/62 tests passed** and `compileall` passed.
+
+Next action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.

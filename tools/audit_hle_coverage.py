@@ -4,13 +4,24 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 REG_RE=re.compile(r'ps3_hle_register(?:_ctx)?\(\s*0x([0-9A-Fa-f]{8})u?')
-OVERRIDE_RE=re.compile(r'\bNID_[A-Z0-9_]+\s*=\s*0x([0-9A-Fa-f]{8})u?')
+NID_DEF_RE=re.compile(r'\b(NID_[A-Z0-9_]+)\s*=\s*0x([0-9A-Fa-f]{8})u?')
+NID_REG_RE=re.compile(r'\b(?:ps3_hle_register(?:_ctx)?|reg)\s*\(\s*(NID_[A-Z0-9_]+)\b')
 
 def parse_registered_nids(text: str) -> set[int]:
     return {int(x,16) for x in REG_RE.findall(text)}
 
 def parse_override_nids(text: str) -> set[int]:
-    return {int(x,16) for x in OVERRIDE_RE.findall(text)}
+    """Return only port NIDs that are actually registered.
+
+    Declaring ``constexpr NID_FOO = ...`` is not coverage by itself.  Resolve
+    symbolic NID constants only when they are passed to ps3_hle_register[_ctx]
+    (or the port's tiny ``reg`` wrapper), and also accept direct literal
+    registrations.  This keeps the 171-import gate from going green merely
+    because an unregistered constant exists in a source file.
+    """
+    definitions={name:int(value,16) for name,value in NID_DEF_RE.findall(text)}
+    registered_symbols=set(NID_REG_RE.findall(text))
+    return parse_registered_nids(text) | {definitions[name] for name in registered_symbols if name in definitions}
 
 def uncovered_imports(imports: list[dict], covered: set[int]) -> list[dict]:
     return [x for x in imports if int(str(x['nid']),16) not in covered]
