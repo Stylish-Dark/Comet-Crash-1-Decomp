@@ -35,4 +35,4 @@ Original uploaded checkpoint SHA-256: `873f0a8e94828c4d5c6189eb35442313d9e7cf858
 
 Clean recovered source ZIP SHA-256: `e78a3e659b3e3fc34a5f2743c9a7181d40cdf73d7b9e14ce7b03af8b50dbf887`.
 
-The present GitHub working tree was created from an earlier temporary reconstruction and may still contain stale scaffold files until the recovered tree is fully replayed. Do not treat those stale files as stronger evidence than `CONTINUITY.md` or the preserved recovery artifacts.
+Recovery is complete: all 68 tracked files from the advanced snapshot were uploaded with Git blob SHA verification and restored to GitHub `main` in commit `151ede4002703cce7dd9c3ccc206ae441b3d19d9`. The earlier temporary scaffold is no longer the repository working tree.
