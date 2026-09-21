@@ -27,4 +27,9 @@
 - Aligned clang-cl semantics with upstream's recompilation intent: disabled strict-aliasing assumptions and FP contraction explicitly, retained `/bigobj`, and removed the irrelevant clang-cl `/experimental:c11atomics` option.
 - Added Ninja discovery regression tests. Regression gate: **64/64 tests passed** and `compileall` passed.
 
+- Added `tools/make_ci_scaffold.py`, which uses ps3recomp's own smoke-header generator plus tiny synthetic PPU/SPU translation units to stage a non-proprietary Windows link fixture.
+- Expanded `.github/workflows/tests.yml`: Linux now explicitly installs project requirements, and a Windows job clones the exact ps3recomp lock, applies all five Comet runtime patches, stages synthetic generated code, then compiles/links `CometCrashPC.exe` with clang-cl + Ninja.
+- Verified the CI fixture's upstream `make_smoke_elf.py --out/--header` CLI against the exact pinned commit.
+- Added CI-scaffold regression tests. Local gate: **66/66 tests passed**, `compileall` passed, and workflow YAML parses.
+
 Next action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.

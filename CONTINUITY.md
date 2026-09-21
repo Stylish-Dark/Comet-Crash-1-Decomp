@@ -73,6 +73,7 @@ Do not silently move this pin. Runtime source patchers deliberately fail on upst
 - Boot diagnostics now write `logs/boot-YYYYMMDD-HHMMSS.txt` by default and include stage markers through PPU entry plus the first presented guest frame.
 - Windows bootstrap now keys developer-environment setup off `VSCMD_VER` rather than a stray `cl.exe`, discovers Ninja either on PATH or from the PyPI `ninja` wheel, and passes the exact Ninja executable to CMake.
 - clang-cl builds explicitly disable strict-aliasing assumptions and floating-point contraction to retain the upstream recompilation semantics; the irrelevant `/experimental:c11atomics` clang-cl flag was removed.
+- GitHub CI now includes a Windows compile/link gate: it clones the exact ps3recomp pin, applies all five Comet runtime patchers, stages synthetic (non-proprietary) generated-code fixtures, and builds `CometCrashPC.exe` with clang-cl/Ninja.
 
 ## Working hypotheses / unresolved questions
 

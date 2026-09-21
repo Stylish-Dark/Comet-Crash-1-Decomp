@@ -1,5 +1,6 @@
 name: tests
 on: [push, pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -7,6 +8,51 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -v
       - run: python -m compileall -q tools tests
       - run: python tools/repo_safety.py
+
+  windows-scaffold:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install ninja
+          $lock = Get-Content config/ps3recomp.lock | ConvertFrom-StringData
+          git clone $lock.repository external/ps3recomp
+          git -C external/ps3recomp checkout --detach $lock.commit
+          python -m pip install -r external/ps3recomp/requirements.txt
+
+      - name: Apply pinned Comet runtime patches
+        shell: pwsh
+        run: |
+          python tools/patch_ps3recomp_host.py external/ps3recomp
+          python tools/patch_ps3recomp_spurs.py external/ps3recomp
+          python tools/patch_ps3recomp_vfs.py external/ps3recomp
+          python tools/patch_ps3recomp_resc.py external/ps3recomp
+          python tools/patch_ps3recomp_gcm.py external/ps3recomp
+
+      - name: Stage synthetic generated-code fixtures
+        shell: pwsh
+        run: python tools/make_ci_scaffold.py --ps3recomp external/ps3recomp
+
+      - name: Compile and link Windows port scaffold
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%I in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSROOT=%%I"
+          if not defined VSROOT exit /b 3
+          call "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat"
+          if errorlevel 1 exit /b %errorlevel%
+          for /f "delims=" %%I in ('python -c "import ninja; print(ninja.BIN_DIR)"') do set "NINJA_DIR=%%I"
+          cmake -S port -B build-ci -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_MAKE_PROGRAM:FILEPATH="%NINJA_DIR%\ninja.exe" -DPS3RECOMP_DIR="%GITHUB_WORKSPACE%\external\ps3recomp" -DRECOMP_DIR="%GITHUB_WORKSPACE%\generated\ci\recompiled" -DSPU_LIFTED_DIR="%GITHUB_WORKSPACE%\generated\ci\spu" -DSPU_REGISTRY="%GITHUB_WORKSPACE%\generated\ci\spu_workloads.c"
+          if errorlevel 1 exit /b %errorlevel%
+          cmake --build build-ci
+          if errorlevel 1 exit /b %errorlevel%
+          if not exist build-ci\CometCrashPC.exe exit /b 4
