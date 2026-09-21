@@ -8,20 +8,18 @@ Target title: **NPEB00142**, user's **v1.00** copy.
 
 ## Current state
 
-The repository was empty at the start of the 2026-09-22 work session. Prior structured design material was recovered and has now been made canonical here.
+The repository is now structured as the canonical project checkpoint and contains executable M1/M2 tooling plus a pinned native-port scaffold. The project is still at the **M1 execution → M2 first boot** boundary: no current-session compatibility report, native build, visible output or playable port has been produced yet because the user's decrypted title input is not present in the repository or retained file library.
 
-The project is at the boundary between **M1 reproducible analysis** and **M2 first native boot attempt**. There is **no recorded successful native build, visible output, or playable port yet**.
-
-Current toolkit baseline is pinned to:
+Current toolkit baseline:
 
 - upstream: `sp00nznet/ps3recomp`
-- commit: `e2815326c58d3530936166982672cb09acdef4f9`
-- commit date: 2026-09-21
-- reason: this revision moves the title-agnostic lifted-SPU build arrangement into `templates/project`, which is directly relevant because Comet Crash imports `cellSpurs` and contains embedded SPU ELFs.
+- pinned commit: `e2815326c58d3530936166982672cb09acdef4f9`
+- pin date: 2026-09-21
+- reason: this revision moves reusable lifted-SPU build integration into the official project template, directly relevant to Comet Crash's `cellSpurs` usage and embedded SPU images.
 
 ## Established facts
 
-Previous analysis of the user's NPEB00142 v1.00 executable established:
+Prior analysis of the user's NPEB00142 v1.00 executable established:
 
 - valid decrypted big-endian PPC64 PS3 ELF;
 - approximately **3,409 PPU functions** detected;
@@ -29,61 +27,73 @@ Previous analysis of the user's NPEB00142 v1.00 executable established:
 - **24 `cellSpurs` imports**;
 - **two embedded SPU ELF programs**;
 - the larger embedded SPU contains Sony MultiStream/MP3 identifiers and is strongly indicative of audio middleware rather than core gameplay simulation;
-- the executable uses **`cellPad`**, giving the PC adaptation layer a contained interception point for controller compatibility and later keyboard/mouse work.
+- the executable uses **`cellPad`**, giving the PC adaptation layer a contained controller/input interception point.
 
-The current `ps3recomp` pipeline uses:
+The current pinned `ps3recomp` pipeline is:
 
-1. `tools/ppu_loader.py` for image / OPD / TOC / firmware-import analysis;
+1. `tools/ppu_loader.py` for image / OPD / TOC / import analysis;
 2. `tools/ppu_lifter.py ... --hle-stubs ...` for PPU lifting;
-3. `tools/gen_hle_nids.py --all` for the runtime NID→HLE registration table;
-4. the project template + CMake/Ninja to build and boot the lifted title.
+3. `tools/gen_hle_nids.py --all` for NID→HLE registration;
+4. the official project scaffold + CMake/Ninja for the native runner.
 
-On Windows, use **clang-cl**, not MSVC `cl`, and retain `/bigobj` for large lifted translation units.
+On Windows, use **clang-cl**, not MSVC `cl`; large lifted translation units require `/bigobj`.
 
 ## Working hypotheses
 
 - The large embedded SPU is Sony MultiStream/MP3 audio middleware.
-- Audio/SPURS may be deferrable during first-light work if it blocks rendering, but only behind an explicit development-only bypass.
-- The smaller embedded SPU may be unrelated to gameplay, but its role is **not established**.
-- Static recompilation is technically plausible for this title, but successful boot still depends on actual runtime/HLE coverage and game-specific behavior.
+- Audio/SPURS may be deferrable during first-light work only behind an explicit development-only bypass.
+- The smaller embedded SPU's role is not established.
+- Static recompilation is technically plausible, but successful boot depends on actual HLE/runtime coverage and title-specific behavior.
 
 ## Completed
 
-- Recovered the prior project objective and architecture.
-- Recovered the prior executable-analysis findings listed above.
-- Re-checked the current `ps3recomp` toolchain and project template.
-- Chosen an exact upstream commit to prevent silent toolchain drift.
-- Initialized this repository as the canonical continuity/checkpoint system.
+- Recovered the prior project objective, architecture and executable-analysis findings.
+- Re-checked current upstream `ps3recomp` behavior and pinned an exact revision.
+- Created the canonical continuity files and project design record.
+- Added `tools/m1_analyze.py`: validates the PPU ELF, optionally validates PARAM.SFO, fingerprints the source, reruns PPU/import/SPU analysis, and emits JSON/Markdown compatibility reports while keeping SPU binaries local-only.
+- Added `tools/bootstrap_ps3recomp.ps1`: installs/checks out the exact pinned toolkit revision.
+- Added `tools/m2_lift_build.ps1`: lifts with `--hle-stubs`, generates the HLE NID table, configures clang-cl/Ninja, builds, and can capture a first boot log.
+- Added `port/` from the pinned MIT-licensed upstream project template, with Comet Crash naming and no speculative title-specific overrides.
+- Added third-party attribution and a lightweight Python syntax-check workflow.
+- Searched retained project files for a usable EBOOT/ELF; none is available. Only prior design documentation was found.
 
 ## Approaches attempted / considered
 
 - Static recompilation via `ps3recomp`: retained.
-- Full emulator-based delivery: not the target; RPCS3 remains a behavioral comparison baseline only.
-- Reimplementing gameplay logic in host code merely to get something running: rejected.
+- Full emulator-based delivery: not the target; RPCS3 remains a behavioral comparison baseline.
+- Reimplementing gameplay in host code merely to get something running: rejected.
 - Mouse/keyboard-first work: rejected until vanilla controller gameplay is stable.
 - Redistributing original game binaries/assets: prohibited.
+- Guessing the first boot blocker before running the title: rejected; runtime evidence decides.
 
 ## Unresolved questions
 
-- Exact hashes of the user's v1.00 decrypted executable and source tree have not yet been captured into a non-proprietary manifest.
-- The precise 171-import list and per-library counts need to be regenerated and stored in the repo.
-- The role of the smaller embedded SPU ELF is unknown.
-- It is not yet known which embedded SPU images are actually submitted to SPURS, or at what point in boot.
-- The first unsupported HLE/runtime failure is unknown because no current native boot attempt has been captured.
-- The repo does not yet contain a reproducible M1 automation script.
+- Exact SHA-256 and current reproducible metadata for the user's v1.00 decrypted executable are not yet captured.
+- The precise current import list/per-library counts still need to be regenerated by M1.
+- The smaller embedded SPU's role is unknown.
+- It is not yet known which embedded SPU images are actually submitted through SPURS or when.
+- The first unsupported HLE/runtime failure is unknown because no current native boot attempt has been executed.
 
 ## Current bottleneck
 
-The project needs a reproducible, repo-owned M1 pipeline that accepts the user's local decrypted `EBOOT.ELF`, runs the pinned `ps3recomp` analysis tools, captures import/function/SPU metadata without committing proprietary binary data, and prepares the exact inputs for the first PPU lift.
+A usable local copy of the user's legally obtained **NPEB00142 v1.00 decrypted EBOOT ELF** (and preferably its `PARAM.SFO`) must be supplied to the repo tooling. The binary is deliberately not tracked in GitHub, and no retained copy is available to this work session.
 
 ## Exact next useful action
 
-Create and commit the M1 automation + compatibility-report tooling, then run it against the user's NPEB00142 v1.00 decrypted executable. After the report matches the established ~3,409 functions / 171 imports / two SPU images baseline, perform the first PPU lift with `--hle-stubs` and build the port scaffold.
+On the machine holding the game files:
+
+1. Run `tools/bootstrap_ps3recomp.ps1` to materialize the pinned toolkit under `local/ps3recomp`.
+2. Run `tools/m1_analyze.py --elf <EBOOT.ELF> --param-sfo <PARAM.SFO> --ps3recomp local/ps3recomp`.
+3. Verify the regenerated baseline (~3,409 functions / 171 imports / 18 libraries / 24 `cellSpurs` / 2 SPU images), inspect the generated metadata for proprietary payloads, then commit the sanitized analysis.
+4. Run `tools/m2_lift_build.ps1 -Eboot <EBOOT.ELF> -Run` and checkpoint the **first actual runtime blocker** plus boot log findings.
 
 ## Important supporting files
 
 - `docs/DESIGN.md` — architecture, milestones, legal boundary, testing strategy.
-- `research/ps3recomp-current.md` — current upstream commands, compiler requirements, SPU tooling, pinned revision.
-- `DECISIONS.md` — settled project decisions and rejected approaches.
-- `NEXT.md` — current concrete work queue.
+- `research/ps3recomp-current.md` — pinned upstream commands, compiler/SPU requirements.
+- `tools/m1_analyze.py` — reproducible title inventory/report generator.
+- `tools/m2_lift_build.ps1` — first lift/build/run path.
+- `port/` — pinned native-runner scaffold.
+- `DECISIONS.md` — settled decisions/rejected approaches.
+- `NEXT.md` — immediate concrete work queue.
 - `SESSION_LOG.md` — chronological work-session record.

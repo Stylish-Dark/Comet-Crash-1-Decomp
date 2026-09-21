@@ -32,8 +32,14 @@
 
 **Decision:** Reproducible work currently targets `sp00nznet/ps3recomp@e2815326c58d3530936166982672cb09acdef4f9`.
 
-**Reason:** the 2026-09-21 revision generalizes the lifted-SPU build arrangement into the official project template. Comet Crash's 24 `cellSpurs` imports make that directly relevant. Do not silently move the pin; update this decision when deliberately rebasing.
+**Reason:** the 2026-09-21 revision generalizes lifted-SPU integration into the official project template. Do not silently move the pin; update this decision when deliberately rebasing.
 
 ## D007 — GitHub is the continuity source of truth
 
 **Decision:** Important facts, hypotheses, failures, tooling pins, milestones and next actions are checkpointed here as work proceeds. Chat history is not the project record.
+
+## D008 — Keep the runner scaffold in-repo; keep ps3recomp external and pinned
+
+**Decision:** Snapshot the MIT-licensed upstream project template under `port/` while obtaining the full `ps3recomp` toolkit separately at the exact pinned commit.
+
+**Reason:** this makes Comet Crash-specific runner/build changes reviewable in this repository without vendoring the entire evolving toolkit. `THIRD_PARTY_NOTICES.md` preserves attribution.
