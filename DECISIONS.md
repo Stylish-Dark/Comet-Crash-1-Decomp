@@ -45,3 +45,4 @@ With 61/61 local tests green and the lift/HLE gates clean, the next engineering 
 ## D011 — GitHub/repository continuity is canonical
 
 The repository must always carry enough structured state for a fresh conversation to resume without chat history. `CONTINUITY.md` is read first; meaningful milestones update `NEXT.md` and `SESSION_LOG.md` immediately.
+\n## D012 — Recovered advanced tree supersedes the temporary scaffold\n\nThe SHA-verified recovered 68-file source tree restored at `151ede4` is canonical. Do not reintroduce the earlier M1-only scaffold or treat it as a newer project state.\n
