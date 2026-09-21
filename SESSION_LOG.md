@@ -1,18 +1,20 @@
 # SESSION LOG
 
-## 2026-09-22 — Repository recovery, canonicalization and executable M1/M2 path
+## 2026-09-22 — Advanced checkpoint recovered and first-boot diagnostics hardened
 
-- Opened `Stylish-Dark/Comet-Crash-1-Decomp`; GitHub reported the repository was completely empty.
-- Recovered the prior structured Comet Crash port design from retained project material instead of inventing state.
-- Restored the established target and analysis facts: NPEB00142 v1.00, ~3,409 PPU functions, 171 firmware imports / 18 libraries, 24 `cellSpurs` imports, two embedded SPU ELFs, large SPU likely MultiStream/MP3 audio middleware, and `cellPad` input.
-- Re-checked current upstream `ps3recomp` documentation/source and confirmed the current loader → lifter `--hle-stubs` → HLE NID table → native build pipeline.
-- Confirmed Windows builds should use clang-cl and large lifted TUs require `/bigobj`.
-- Pinned upstream `ps3recomp` to `e2815326c58d3530936166982672cb09acdef4f9` (2026-09-21), whose project template now includes generic lifted-SPU integration.
-- Initialized canonical `README.md`, `CONTINUITY.md`, `DECISIONS.md`, `NEXT.md`, `SESSION_LOG.md`, design/research notes and legal ignore rules.
-- Added deterministic `tools/m1_analyze.py` with ELF validation, optional PARAM.SFO validation, SHA-256 source identity, import/function inventory, local-only SPU extraction and JSON/Markdown compatibility reports.
-- Added `tools/bootstrap_ps3recomp.ps1` to reproduce the exact toolkit revision.
-- Added `tools/m2_lift_build.ps1` to perform the first PPU lift with `--hle-stubs`, generate the HLE NID table, build with clang-cl/Ninja, and optionally capture a boot log.
-- Snapshotted the pinned MIT-licensed upstream project template into `port/`, changed only title/project defaults and kept title-specific override hooks empty pending evidence.
-- Added `THIRD_PARTY_NOTICES.md` and a lightweight CI syntax check for the M1 Python tooling.
-- Searched retained project files for EBOOT.ELF/EBOOT.BIN/NPEB00142 game data. No usable proprietary binary is retained; only prior project documentation is available.
-- Therefore no new compatibility counts or boot result were fabricated. The next blocker is executing the committed tooling on the user's local game files.
+- Received `Comet-Crash-1-Decomp-checkpoint.zip` containing a clean Git repository whose HEAD was original commit `3250838` (`Fix Comet RSX report completion paths`).
+- Confirmed the checkpoint's origin is `Stylish-Dark/Comet-Crash-1-Decomp`.
+- Verified GitHub no longer exposes the original checkpoint commits, making the upload a recovered lost advanced history.
+- Established that the recovered project is materially ahead of the temporary scaffold: full PPU/SPU lift, HLE coverage gate, Windows host controls, mouse compatibility input, SPURS urgent commands, VFS/RESC/GCM fixes and one-command Windows build/run were already implemented.
+- Untouched checkpoint validation: pytest reported 57 tests + 7 subtests passing; repository CI contract reported 57/57 unittest tests passing; compileall passed; repository safety passed.
+- Audited the first-Windows-boot path and found native console diagnostics were not durably preserved.
+- Added durable combined stdout/stderr boot logging with timestamped default path, ELF SHA-256, executable/title/runtime mapping metadata and recorded host exit code.
+- Added granular native `[boot-stage]` markers through initialization/PPU entry and a first-presented-guest-frame marker.
+- Added `tests/test_boot_logging.py`.
+- Caught and fixed a fake-Windows syntax-gate issue during implementation.
+- Final recovered regression gate: **61/61 tests passed**, compileall passed, repository safety passed.
+- Committed recovered work locally as `c0089d4` (`Add durable first-boot diagnostics and continuity`).
+- Preserved the original history-bearing checkpoint and clean `c0089d4` source snapshot in persistent Library storage under `/Projects/Comet Crash/`.
+- Updated GitHub continuity records so future sessions do not regress to the obsolete “M1 waiting for EBOOT” state.
+
+Next action: run the recovered one-command Windows pipeline and use its generated boot log to identify the first actual native blocker.
