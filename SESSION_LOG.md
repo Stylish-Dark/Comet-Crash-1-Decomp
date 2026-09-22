@@ -51,3 +51,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Squash-merged PR #1 to `main` as `076ccac39ded89c96743ec6e2988ed9a28f3c64b` (`Gate fresh PPU lifts on unsupported instructions`).
 
 Next action remains the first real Windows build/run against the user's extracted NPEB00142 v1.00 files; static and synthetic pre-boot gates are now materially stronger.
+
+## 2026-09-22 — Real pinned PPU lifter proven on Windows
+
+- Replaced the hand-written synthetic PPU CI source with a four-byte non-proprietary big-endian PPC fixture containing one `blr` instruction at guest address `0x10000`.
+- Windows CI now invokes the exact pinned `ppu_lifter.py` on that fixture, producing genuine `ppu_recomp.h` and split `ppu_recomp_*.cpp` output.
+- The first real-lifter run exposed a Windows encoding failure: ps3recomp-generated C++ contained CP-1252 comment bytes while the new PPU audit assumed UTF-8.
+- Hardened both `patch_ppu_lift.py` and `audit_ppu_lift.py` to treat generated source byte-safely. Patching now uses a reversible Latin-1 byte mapping, preserving all original bytes except the intentional ASCII VMX replacement; auditing uses the same byte-stable approach.
+- Added regression coverage for CP-1252/non-UTF-8 generated-source bytes and made CI mirror the real Comet order: pinned lifter -> compatibility patch -> completeness audit -> compile/link.
+- PR #2 run `35680385634` passed completely: **74/74 unit tests**, `compileall`, repository safety, real pinned PPU lift, compatibility patch, PPU completeness audit, and Windows clang-cl compile/link all succeeded.
+- Squash-merged PR #2 to `main` as `a565de86fb5e4370bd51d69f82b4b2ff3e316098` (`Exercise real pinned PPU lifter in Windows CI`).
+
+Remaining synthetic generated-code coverage in the Windows gate is the SPU side; the real Comet first native boot still remains the decisive runtime boundary.
