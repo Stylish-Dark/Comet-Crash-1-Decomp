@@ -29,7 +29,7 @@ Prerequisites: Visual Studio 2022/Build Tools with Desktop C++, Clang tools and 
 
 While running, press **F1** for the Graphics & Input panel. Resolution changes currently apply on the next launch; borderless/windowed and VSync are live. Mouse compatibility mode maps movement onto the selected PS3 analogue stick and maps LMB/RMB/MMB to Cross/Circle/R1 while retaining physical-controller input.
 
-Each launch also writes a timestamped native boot log under `logs\` containing startup-stage markers and combined stdout/stderr. Preserve that file if the first native run stops or crashes; it is the primary next-debugging artifact.
+Each launch also writes a timestamped native boot log under `logs\` containing startup-stage markers and combined stdout/stderr. Preserve that file if the first native run stops or crashes; it is the primary next-debugging artifact. Run `python tools/boot_triage.py <boot-log>` for a conservative first-pass classification of the evidenced blocker.
 
 See `docs/reversing/` for binary findings and `docs/superpowers/specs/` for the port architecture.
 

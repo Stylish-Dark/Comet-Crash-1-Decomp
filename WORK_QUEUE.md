@@ -8,13 +8,14 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - Input: supported NPEB00142 v1.00 extracted game directory.
 - Run `scripts\build_and_run.cmd "<game folder>"`.
 - Preserve `logs\boot-*.txt`.
-- Success for this work unit: a complete boot log with the last boot stage and first concrete failure/success signal.
+- Run `python tools/boot_triage.py <boot-log>` to obtain the initial evidence-based subsystem classification.
+- Success for this work unit: a complete boot log with the last boot stage, first concrete failure/success signal, and triage classification.
 - Blocker: requires a Windows machine plus the user's local game data.
 
 ## Next
 
-[ ] **Classify and fix the first evidenced native blocker**
-- Use the boot log only; do not speculate ahead.
+[ ] **Verify triage and fix the first evidenced native blocker**
+- Use the boot log and `tools/boot_triage.py`; do not speculate ahead.
 - Classify into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, or input.
 - Make the smallest faithful fix.
 - Add a focused regression test or deterministic audit.
@@ -56,3 +57,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Add Windows real-lifter compile/link CI gate.
 [x] Add native crash, hang and boot-summary diagnostics.
 [x] Establish `STATE.md`, `WORK_QUEUE.md` and `PROJECT_PLAN.md` as the durable handoff structure.
+[x] Add deterministic saved-boot-log subsystem triage with conservative `unknown` handling for generic crash/watchdog symptoms.

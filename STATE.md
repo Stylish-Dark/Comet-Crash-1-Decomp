@@ -31,6 +31,7 @@ The static-analysis, lift, compatibility, reproducibility and pre-boot diagnosti
 - Added persistent host settings and an F1 Graphics & Input overlay.
 - Hardened fresh-machine bootstrap, exact toolchain reset, dependency verification, Ninja discovery and clean analysis/lift/build state.
 - Added durable boot logs, stage markers, native crash diagnostics, first-frame hang watchdog and automatic failure summaries.
+- Added `tools/boot_triage.py`, which classifies saved boot evidence into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, input, or `unknown` without guessing from generic crash/watchdog symptoms.
 - Added Windows CI that clones the exact ps3recomp pin, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, and compiles/links `CometCrashPC.exe`. The CI SPU fixture remains synthetic.
 - Most recent recorded local regression gate: **86/86 tests passing**, plus `compileall`. Repository-safety checks have also passed in a real Git checkout.
 
@@ -89,6 +90,7 @@ Do not invent the next runtime defect without a boot log.
 - `docs/reversing/spu.md` — SPU findings.
 - `config/ps3recomp.lock` — exact toolchain pin.
 - `tools/comet_port.py` — main pipeline.
+- `tools/boot_triage.py` — deterministic saved-boot-log classifier.
 - `scripts/build_and_run.cmd` — one-command Windows path.
 
 ## Most recent checkpoint
@@ -105,4 +107,4 @@ Run the supported title on Windows:
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"
 ```
 
-Preserve the generated boot log. The next AI work unit is to classify the last successful boot stage and first concrete failure signal, fix only that evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
+Preserve the generated boot log, then run `python tools/boot_triage.py <boot-log>`. The next AI work unit is to verify that evidence-based classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
