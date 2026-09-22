@@ -1,36 +1,45 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from audit_ppu_lift import audit_path as audit_ppu_path
+
 ROOT = Path(__file__).resolve().parents[1]
 
-PPU_STUB = r'''#include "ppu_recomp.h"
+PPU_BASE = 0x00010000
+PPU_RAW = (0x4E800020).to_bytes(4, "big")  # blr
+PPU_FUNCTIONS = [{"start": hex(PPU_BASE), "end": hex(PPU_BASE + len(PPU_RAW))}]
 
-void func_00010000(ppu_context*) {}
+SPU_STUB = """/* Synthetic CI-only SPU translation unit.
+ * The Windows scaffold build checks compiler/link/runtime integration; it does
+ * not execute guest SPU code. Real lifts are supplied only from user-owned data.
+ */
+"""
 
-extern "C" {
-extern const func_entry function_table[] = {
-    {0x00010000u, func_00010000, "func_00010000"},
-    {0, nullptr, nullptr},
-};
-extern const uint64_t function_table_count = 1;
-}
-'''
-
-SPU_STUB = '''/* Synthetic CI-only SPU translation unit.\n * The Windows scaffold build checks compiler/link/runtime integration; it does\n * not execute guest SPU code. Real lifts are supplied only from user-owned data.\n */\n'''
-
-REGISTRY_STUB = '''/* Synthetic CI-only workload registry.\n * Real Comet builds replace this ignored generated file with the fingerprinted\n * registry produced by ps3recomp/tools/build_spu_workloads.py.\n */\n'''
+REGISTRY_STUB = """/* Synthetic CI-only workload registry.
+ * Real Comet builds replace this ignored generated file with the fingerprinted
+ * registry produced by ps3recomp/tools/build_spu_workloads.py.
+ */
+"""
 
 
-def write_stub_sources(recomp: Path, spu: Path, registry: Path) -> None:
-    recomp.mkdir(parents=True, exist_ok=True)
+def write_ppu_input(work: Path) -> tuple[Path, Path]:
+    work.mkdir(parents=True, exist_ok=True)
+    raw = work / "ci_ppu.bin"
+    functions = work / "ci_ppu.functions.json"
+    raw.write_bytes(PPU_RAW)
+    functions.write_text(json.dumps(PPU_FUNCTIONS, indent=2) + "\n", encoding="utf-8", newline="\n")
+    return raw, functions
+
+
+def write_spu_stub_sources(spu: Path, registry: Path) -> None:
     (spu / "ci_stub").mkdir(parents=True, exist_ok=True)
     registry.parent.mkdir(parents=True, exist_ok=True)
-    (recomp / "ppu_recomp_ci.cpp").write_text(PPU_STUB, encoding="utf-8", newline="\n")
     (spu / "ci_stub" / "spu_recomp.c").write_text(SPU_STUB, encoding="utf-8", newline="\n")
     registry.write_text(REGISTRY_STUB, encoding="utf-8", newline="\n")
 
@@ -39,38 +48,61 @@ def stage(ps3recomp: Path, generated: Path, work: Path) -> None:
     ps3recomp = ps3recomp.resolve()
     generated = generated.resolve()
     work = work.resolve()
-    make_smoke = ps3recomp / "tools" / "make_smoke_elf.py"
-    if not make_smoke.is_file():
-        raise FileNotFoundError(f"missing pinned ps3recomp smoke generator: {make_smoke}")
+    lifter = ps3recomp / "tools" / "ppu_lifter.py"
+    if not lifter.is_file():
+        raise FileNotFoundError(f"missing pinned ps3recomp PPU lifter: {lifter}")
 
     recomp = generated / "recompiled"
     spu = generated / "spu"
     registry = generated / "spu_workloads.c"
     if generated.exists():
         shutil.rmtree(generated)
-    generated.mkdir(parents=True)
-    work.mkdir(parents=True, exist_ok=True)
-
-    # The upstream smoke generator writes ppu_recomp.h directly from the same
-    # HEADER_PREAMBLE as the lifter.  Using it makes this compile gate sensitive
-    # to ABI drift without committing any generated/proprietary title code.
-    smoke_elf = work / "ci_smoke.elf"
-    header = recomp / "ppu_recomp.h"
     recomp.mkdir(parents=True, exist_ok=True)
+
+    raw, functions = write_ppu_input(work)
     subprocess.run(
-        [sys.executable, str(make_smoke), "--out", str(smoke_elf), "--header", str(header)],
+        [
+            sys.executable,
+            str(lifter),
+            str(raw),
+            "--raw",
+            "--base",
+            hex(PPU_BASE),
+            "--functions",
+            str(functions),
+            "--jobs",
+            "1",
+            "-o",
+            str(recomp),
+        ],
         check=True,
     )
+
+    header = recomp / "ppu_recomp.h"
+    chunks = sorted(recomp.glob("ppu_recomp_*.cpp"))
     if not header.is_file():
-        raise RuntimeError(f"smoke generator did not produce {header}")
-    write_stub_sources(recomp, spu, registry)
+        raise RuntimeError(f"pinned lifter did not produce {header}")
+    if not chunks:
+        raise RuntimeError(f"pinned lifter produced no PPU source chunks under {recomp}")
+
+    report = audit_ppu_path(recomp)
+    if report["unsupported_total"]:
+        sample = ", ".join(str(x["instruction"]) for x in report["unsupported"][:5])
+        raise RuntimeError(
+            f"synthetic pinned PPU lift contains {report['unsupported_total']} unsupported TODO(s): {sample}"
+        )
+
+    write_spu_stub_sources(spu, registry)
+    print(f"CI PPU input:  {raw} ({len(PPU_RAW)} bytes, one blr)")
     print(f"CI PPU header: {header}")
-    print(f"CI PPU stub:   {recomp / 'ppu_recomp_ci.cpp'}")
+    print(f"CI PPU chunks: {len(chunks)}")
     print(f"CI SPU stub:   {spu / 'ci_stub' / 'spu_recomp.c'}")
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Stage non-proprietary generated-code fixtures for the Windows port compile gate")
+    ap = argparse.ArgumentParser(
+        description="Stage non-proprietary real-lifter fixtures for the Windows port compile gate"
+    )
     ap.add_argument("--ps3recomp", type=Path, required=True)
     ap.add_argument("--generated", type=Path, default=ROOT / "generated" / "ci")
     ap.add_argument("--work", type=Path, default=ROOT / "work" / "ci")
