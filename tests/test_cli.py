@@ -29,3 +29,11 @@ class BuildPatchTests(unittest.TestCase):
   self.assertIn('Comet SPURS urgent-command patch',s)
   self.assertIn('audit_hle_coverage',s)
   self.assertIn('HLE coverage gate',s)
+
+
+class LiftGateTests(unittest.TestCase):
+ def test_lift_applies_ppu_completeness_gate_after_compat_patch(self):
+  s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
+  self.assertIn('audit_ppu_lift',s)
+  self.assertIn('PPU audit:',s)
+  self.assertIn("if ppu_report['unsupported_total']",s)
