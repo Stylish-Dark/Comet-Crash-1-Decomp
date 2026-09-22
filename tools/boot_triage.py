@@ -114,6 +114,24 @@ def classify_signal(signal: str | None) -> tuple[str, str]:
     return "unknown", "signal did not match a known subsystem signature"
 
 
+def derive_outcome(*, first_frame_presented: bool, host_exit_code: int | None,
+                   timed_out: bool = False, interrupted: str | None = None,
+                   first_signal: str | None = None) -> str:
+    if interrupted:
+        return "interrupted"
+    if timed_out:
+        return "timed-out"
+    if host_exit_code is None:
+        return "incomplete"
+    if first_frame_presented:
+        return "clean-visible-exit" if host_exit_code == 0 else "visible-output-then-failure"
+    if host_exit_code == 0:
+        return "clean-exit-before-frame"
+    if first_signal:
+        return "failure-before-frame"
+    return "nonzero-exit-before-frame"
+
+
 def _detect_first_signal(line: str) -> str | None:
     lower = line.lower()
     for marker in SIGNAL_PATTERNS:
@@ -165,6 +183,19 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         line.strip() == f"{BOOT_STAGE_PREFIX}first guest frame presented"
         for line in lines
     )
+    if footer.get("first_frame_presented") in ("true", "false"):
+        first_frame_presented = footer["first_frame_presented"] == "true"
+    timed_out = footer.get("timed_out") == "true"
+    interrupted = footer.get("interrupted")
+    if interrupted in (None, "", "<none>"):
+        interrupted = None
+    outcome = derive_outcome(
+        first_frame_presented=first_frame_presented,
+        host_exit_code=host_exit_code,
+        timed_out=timed_out,
+        interrupted=interrupted,
+        first_signal=first_signal,
+    )
 
     return {
         "last_boot_stage": last_stage,
@@ -174,6 +205,7 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         "first_frame_presented": first_frame_presented,
         "suspected_subsystem": subsystem,
         "rationale": rationale,
+        "boot_outcome": outcome,
     }
 
 
@@ -199,6 +231,7 @@ def main() -> int:
         print(f"host exit code:       {report['host_exit_code'] if report['host_exit_code'] is not None else '<unknown>'}")
         print(f"first frame presented:{' yes' if report['first_frame_presented'] else ' no'}")
         print(f"suspected subsystem:  {report['suspected_subsystem']}")
+        print(f"boot outcome:         {report['boot_outcome']}")
         print(f"rationale:            {report['rationale']}")
     return 0
 

@@ -16,7 +16,7 @@ from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
 from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
-from boot_triage import classify_signal as classify_boot_signal
+from boot_triage import classify_signal as classify_boot_signal, derive_outcome as derive_boot_outcome
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
@@ -84,10 +84,13 @@ BOOT_SIGNAL_MARKERS=(
     'D3D12 init FAILED',
 )
 
-def update_boot_summary(summary: dict[str,str|None], line: str) -> None:
+def update_boot_summary(summary: dict[str,object], line: str) -> None:
     text=line.strip()
     if text.startswith('[boot-stage] '):
-        summary['last_boot_stage']=text[len('[boot-stage] '):]
+        stage=text[len('[boot-stage] '):]
+        summary['last_boot_stage']=stage
+        if stage=='first guest frame presented':
+            summary['first_frame_presented']=True
     lower=text.lower()
     detected=False
     for marker in BOOT_SIGNAL_MARKERS:
@@ -132,7 +135,7 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write('# Comet Crash native boot log\n')
         log.write(json.dumps(header,indent=2,sort_keys=True)+'\n\n')
         log.flush()
-        summary: dict[str,str|None]={'last_boot_stage':None,'first_signal':None,'first_specific_signal':None}
+        summary: dict[str,object]={'last_boot_stage':None,'first_signal':None,'first_specific_signal':None,'first_frame_presented':False}
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
         assert proc.stdout is not None
@@ -174,20 +177,46 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         triage_signal=summary['first_specific_signal'] or summary['first_signal']
         triage_display=triage_signal or '<none>'
         subsystem,rationale=classify_boot_signal(triage_signal)
+        first_frame=bool(summary['first_frame_presented'])
+        outcome=derive_boot_outcome(
+            first_frame_presented=first_frame,
+            host_exit_code=rc,
+            timed_out=timed_out,
+            interrupted=interrupted,
+            first_signal=summary['first_signal'] if isinstance(summary['first_signal'],str) else None,
+        )
         log.write(f'\n# last_boot_stage={last}\n')
         log.write(f'# first_signal={signal}\n')
         log.write(f'# triage_signal={triage_display}\n')
         log.write(f'# suspected_subsystem={subsystem}\n')
         log.write(f'# triage_rationale={rationale}\n')
+        log.write(f'# first_frame_presented={"true" if first_frame else "false"}\n')
         log.write(f'# interrupted={interrupted or "<none>"}\n')
         log.write(f'# timed_out={"true" if timed_out else "false"}\n')
+        log.write(f'# boot_outcome={outcome}\n')
         log.write(f'# host_exit_code={rc}\n'); log.flush()
+    sidecar=log_path.with_suffix('.summary.json')
+    sidecar.write_text(json.dumps({
+        'log_path':str(log_path),
+        'last_boot_stage':None if last=='<none>' else last,
+        'first_signal':summary['first_signal'],
+        'triage_signal':triage_signal,
+        'suspected_subsystem':subsystem,
+        'triage_rationale':rationale,
+        'first_frame_presented':first_frame,
+        'interrupted':interrupted,
+        'timed_out':timed_out,
+        'boot_outcome':outcome,
+        'host_exit_code':rc,
+    },indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
+    print(f'[boot-summary-json] {sidecar}',flush=True)
     print(f'[boot-summary] last_stage={last}',flush=True)
     if summary['first_signal']:
         print(f'[boot-summary] first_signal={summary["first_signal"]}',flush=True)
     if triage_signal:
         print(f'[boot-summary] triage_signal={triage_signal}',flush=True)
     print(f'[boot-summary] suspected_subsystem={subsystem}',flush=True)
+    print(f'[boot-summary] boot_outcome={outcome}',flush=True)
     print(f'[boot-summary] triage_rationale={rationale}',flush=True)
     if interrupted:
         raise KeyboardInterrupt

@@ -38,6 +38,7 @@ class BootTriageTests(unittest.TestCase):
         self.assertEqual(report["triage_signal"], "[HLE] UNIMPLEMENTED nid=0xDEADBEEF")
         self.assertEqual(report["host_exit_code"], 7)
         self.assertEqual(report["suspected_subsystem"], "hle")
+        self.assertEqual(report["boot_outcome"], "failure-before-frame")
 
     def test_later_specific_signal_overrides_generic_first_symptom(self):
         report = b.summarize_lines([
@@ -64,6 +65,23 @@ class BootTriageTests(unittest.TestCase):
         self.assertTrue(report["first_frame_presented"])
         self.assertEqual(report["host_exit_code"], 0)
         self.assertEqual(report["suspected_subsystem"], "unknown")
+        self.assertEqual(report["boot_outcome"], "clean-visible-exit")
+
+    def test_timeout_and_interrupt_outcomes_override_exit_code(self):
+        self.assertEqual(
+            b.derive_outcome(first_frame_presented=False,host_exit_code=1,timed_out=True),
+            "timed-out",
+        )
+        self.assertEqual(
+            b.derive_outcome(first_frame_presented=False,host_exit_code=1,interrupted="keyboard"),
+            "interrupted",
+        )
+
+    def test_clean_exit_before_frame_is_distinct(self):
+        self.assertEqual(
+            b.derive_outcome(first_frame_presented=False,host_exit_code=0),
+            "clean-exit-before-frame",
+        )
 
     def test_summarize_file_reads_saved_boot_log(self):
         with tempfile.TemporaryDirectory() as td:

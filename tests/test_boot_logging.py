@@ -83,7 +83,19 @@ class BootLogTests(unittest.TestCase):
                 comet_port.run_logged([sys.executable,'-c',code],log)
             text=log.read_text(encoding='utf-8')
             self.assertIn('# suspected_subsystem=hle',text)
+            self.assertIn('# boot_outcome=failure-before-frame',text)
             self.assertIn("matched '[hle] unimplemented'",text.lower())
+
+    def test_success_sidecar_records_first_frame(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=('print("[boot-stage] entering recompiled title"); '
+                  'print("[boot-stage] first guest frame presented")')
+            comet_port.run_logged([sys.executable,'-c',code],log)
+            data=json.loads(log.with_suffix('.summary.json').read_text(encoding='utf-8'))
+            self.assertTrue(data['first_frame_presented'])
+            self.assertEqual(data['boot_outcome'],'clean-visible-exit')
+            self.assertEqual(data['host_exit_code'],0)
 
     def test_run_logged_timeout_preserves_diagnostics(self):
         with tempfile.TemporaryDirectory() as td:
@@ -101,7 +113,13 @@ class BootLogTests(unittest.TestCase):
             self.assertIn('# last_boot_stage=entering recompiled title',text)
             self.assertIn('# timed_out=true',text)
             self.assertIn('# interrupted=<none>',text)
+            self.assertIn('# boot_outcome=timed-out',text)
             self.assertIn('# host_exit_code=',text)
+            sidecar=log.with_suffix('.summary.json')
+            self.assertTrue(sidecar.is_file())
+            data=json.loads(sidecar.read_text(encoding='utf-8'))
+            self.assertEqual(data['boot_outcome'],'timed-out')
+            self.assertEqual(data['last_boot_stage'],'entering recompiled title')
 
     def test_run_logged_rejects_nonpositive_timeout(self):
         with tempfile.TemporaryDirectory() as td:
