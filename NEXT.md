@@ -2,8 +2,8 @@
 
 ## Verified pre-boot gates
 
-- Linux CI: **71/71 tests passing**, `compileall` passing, repository-safety gate passing.
-- Windows CI: exact pinned `ps3recomp` clone + all five Comet runtime patches + synthetic generated-code fixtures **compile and link `CometCrashPC.exe` successfully**.
+- Linux CI: **74/74 tests passing**, `compileall` passing, repository-safety gate passing.
+- Windows CI: exact pinned `ps3recomp` clone + all five Comet runtime patches + **real pinned PPU lifter output** from a non-proprietary PPC fixture **compile and link `CometCrashPC.exe` successfully**.
 - Fresh PPU lifts now fail if any unsupported `/* TODO: ... */;` instruction remains after the known `vsrab`/`vsrb` compatibility rewrite.
 - HLE coverage still gates all 171 firmware imports.
 
