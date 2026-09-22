@@ -35,3 +35,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added stale-output regression coverage. Local gate: **72/72 tests passed** plus `compileall`.
 - Tightened title-version safety: `validate_inputs` now rejects unknown EBOOT SHA-256 values and mismatched `VERSION`/`APP_VER` instead of merely warning and continuing into version-specific compatibility code. Both known accepted v1.00 ELF reconstructions remain valid.
 - Added unknown-ELF and version-mismatch regressions. Local gate: **74/74 tests passed** plus `compileall`.
+- Added `build --clean` support and made the one-command Windows launcher use it, so stale CMake cache/compiler state cannot survive across otherwise-clean bootstrap/lift runs; manual standalone builds remain incremental by default.
+- Added parser/launcher regressions. Local gate: **76/76 tests passed** plus `compileall`.

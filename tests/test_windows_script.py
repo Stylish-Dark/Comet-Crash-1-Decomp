@@ -17,3 +17,6 @@ class WindowsScriptTests(unittest.TestCase):
   self.assertIn('Preparing pinned ps3recomp toolchain and dependencies',s)
   self.assertIn('call "%ROOT%\\scripts\\bootstrap.cmd"',s)
   self.assertNotIn('--skip-deps',s)
+ def test_one_command_pipeline_uses_clean_cmake_build(self):
+  s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
+  self.assertIn('comet_port.py" build --clean',s)

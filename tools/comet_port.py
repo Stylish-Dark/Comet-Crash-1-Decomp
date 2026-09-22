@@ -178,7 +178,9 @@ def cmd_lift(a):
         if report['unsupported_reachable']:
             raise RuntimeError(f'{img.name}: {report["unsupported_reachable"]} reachable unsupported SPU instructions')
 def cmd_build(a):
-    require_toolkit(a.ps3recomp); a.build.mkdir(parents=True,exist_ok=True)
+    require_toolkit(a.ps3recomp)
+    if a.clean: shutil.rmtree(a.build,ignore_errors=True)
+    a.build.mkdir(parents=True,exist_ok=True)
     backend=a.ps3recomp/'libs'/'video'/'rsx_d3d12_backend.c'
     changed=patch_host_backend(backend)
     print(f'Comet host D3D12 patch: {"applied" if changed else "already present"}')
@@ -224,7 +226,7 @@ def parser():
     q=s.add_parser('probe'); q.add_argument('elf',type=Path); q.add_argument('-o','--output',type=Path,default=ROOT/'out'/'local_probe.json'); q.set_defaults(func=cmd_probe)
     q=s.add_parser('analyze'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('-o','--output',type=Path,default=ROOT/'out'); q.add_argument('--spu',type=Path,default=ROOT/'work'/'spu'); q.set_defaults(func=cmd_analyze)
     q=s.add_parser('lift'); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--analysis',type=Path,default=ROOT/'out'); q.add_argument('-o','--output',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu-images',type=Path,default=ROOT/'work'/'spu'); q.add_argument('--spu-output',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--clean',action='store_true'); q.set_defaults(func=cmd_lift)
-    q=s.add_parser('build'); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--recomp',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--imports',type=Path,default=ROOT/'out'/'EBOOT.imports.json'); q.add_argument('--build',type=Path,default=ROOT/'build'); q.set_defaults(func=cmd_build)
+    q=s.add_parser('build'); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--recomp',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--imports',type=Path,default=ROOT/'out'/'EBOOT.imports.json'); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--clean',action='store_true',help='remove the CMake build directory before configuring'); q.set_defaults(func=cmd_build)
     q=s.add_parser('run'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--exe',type=Path); q.add_argument('--log',type=Path,help='boot log path (default: logs/boot-YYYYMMDD-HHMMSS.txt)'); q.set_defaults(func=cmd_run)
     return p
 def main():

@@ -13,6 +13,9 @@ class T(unittest.TestCase):
   p=c.parser()
   for name in ['decrypt','validate','probe','analyze','lift','build','run']:
    with self.subTest(name=name): self.assertEqual(p.parse_args([name]+({'decrypt':['x'],'validate':['x'],'probe':['x'],'analyze':['g','e'],'lift':['e'],'build':[],'run':['g','e']}[name])).cmd,name)
+ def test_build_parser_accepts_clean(self):
+  a=c.parser().parse_args(['build','--clean'])
+  self.assertTrue(a.clean)
 
 class ManifestCompatibilityTests(unittest.TestCase):
  def test_accepts_current_and_legacy_reference_elf_hashes(self):
