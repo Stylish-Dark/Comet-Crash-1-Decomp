@@ -32,3 +32,7 @@ While running, press **F1** for the Graphics & Input panel. Resolution changes c
 Each launch also writes a timestamped native boot log under `logs\` containing startup-stage markers and combined stdout/stderr. Preserve that file if the first native run stops or crashes; it is the primary next-debugging artifact.
 
 See `docs/reversing/` for binary findings and `docs/superpowers/specs/` for the port architecture.
+
+## Project handoff
+
+For continued development, start with **`STATE.md`**. It is the authoritative handoff document. `WORK_QUEUE.md` contains bounded next work units, `PROJECT_PLAN.md` contains the high-level architecture/phases, and `SESSION_LOG.md` records completed work cycles.

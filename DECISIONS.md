@@ -40,11 +40,11 @@ Current mouse implementation injects onto the existing PS3 pad abstraction while
 
 ## D010 — First-boot evidence outranks further speculative static work
 
-With 61/61 local tests green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
+With the current regression gates green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
 
 ## D011 — GitHub/repository continuity is canonical
 
-The repository must always carry enough structured state for a fresh conversation to resume without chat history. `CONTINUITY.md` is read first; meaningful milestones update `NEXT.md` and `SESSION_LOG.md` immediately.
+The repository must always carry enough structured state for a fresh conversation to resume without chat history. `STATE.md` is read first; meaningful milestones update `STATE.md`, `WORK_QUEUE.md`, and `SESSION_LOG.md` immediately.
 
 ## D014 — The toolchain pin is an execution gate, not documentation
 

@@ -47,3 +47,8 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Restored the exact Ninja executable handoff in `tools/comet_port.py`: `cmd_build` now uses `find_ninja()` and passes the resolved executable to CMake through `CMAKE_MAKE_PROGRAM`, including wheel-only Ninja installs. Added functional regression coverage. Local gate: **82/82 tests passed** plus `compileall`.
 
 - Added `tools/audit_analysis.py` and wired it into `cmd_analyze`: the exact pinned toolkit must reproduce 3,473 OPDs / 3,409 functions, entry/TOC, all 171 imports with the exact 18-library distribution, and the two known SPU images by size+SHA-256 before lifting can begin. Drift now hard-fails. Added focused regressions. Local gate: **86/86 tests passed** plus `compileall`.
+
+- Reconstructed project state from GitHub rather than chat history at commit `a4cbef69f03fce29999a7df48015f7acbc7abaab`.
+- Added canonical `STATE.md`, bounded `WORK_QUEUE.md`, and `PROJECT_PLAN.md` handoff documents; converted legacy `CONTINUITY.md`/`NEXT.md` into compatibility pointers.
+- Updated README/DECISIONS/technical status to use the new handoff model and current recorded **86/86** regression state.
+- Current project bottleneck remains the first real Windows native boot; no new runtime defect is inferred without that evidence.
