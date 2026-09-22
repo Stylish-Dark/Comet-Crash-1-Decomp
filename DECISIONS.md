@@ -40,7 +40,7 @@ Current mouse implementation injects onto the existing PS3 pad abstraction while
 
 ## D010 — First-boot evidence outranks further speculative static work
 
-With 71/71 CI tests green and the exact-pin Windows scaffold build green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
+With 74/74 CI tests green and the exact-pin real-PPU-lifter Windows scaffold build green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
 
 ## D011 — GitHub/repository continuity is canonical
 
@@ -57,3 +57,7 @@ For long sessions, stop before the tool/execution limit is approached. Push comp
 ## D014 — Generated PPU TODOs are a hard lift gate
 
 After applying the two known Comet VMX compatibility rewrites (`vsrab`, `vsrb`), a fresh PPU lift must contain no remaining generated `/* TODO: ... */;` instruction holes. Missing PPU chunks or any residual TODO instruction stop the pipeline before build/boot.
+
+## D015 — CI should exercise real generated output where practical
+
+Synthetic inputs are acceptable, but important generation stages should use the actual pinned ps3recomp tools rather than hand-written lookalike output whenever a non-proprietary fixture can do so. This keeps ABI, encoding and generator drift inside the automated gate.
