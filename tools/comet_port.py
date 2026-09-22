@@ -50,6 +50,11 @@ def validate_inputs(game_root: Path, elf: Path|None=None) -> dict:
 def run(cmd, cwd=None, env=None):
     print('+',' '.join(map(str,cmd)),flush=True); subprocess.run([str(x) for x in cmd],cwd=cwd,env=env,check=True)
 
+def reset_generated_dir(path: Path) -> None:
+    """Replace an ignored/generated directory with an empty one."""
+    shutil.rmtree(path,ignore_errors=True)
+    path.mkdir(parents=True,exist_ok=True)
+
 def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
     """Run a native boot while mirroring combined stdout/stderr to a durable log."""
     cmd=[str(x) for x in cmd]
@@ -129,7 +134,8 @@ def cmd_validate(a): print(json.dumps(validate_inputs(a.game,a.elf),indent=2))
 def cmd_probe(a):
     r=probe_elf(a.elf); a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps(r,indent=2)+'\n'); print(json.dumps(r,indent=2))
 def cmd_analyze(a):
-    require_toolkit(a.ps3recomp); validate_inputs(a.game,a.elf); a.output.mkdir(parents=True,exist_ok=True); a.spu.mkdir(parents=True,exist_ok=True)
+    require_toolkit(a.ps3recomp); validate_inputs(a.game,a.elf)
+    reset_generated_dir(a.output); reset_generated_dir(a.spu)
     for c in analysis_commands(a.elf,a.ps3recomp,a.output,a.spu): run(c)
     local=probe_elf(a.elf); (a.output/'local_probe.json').write_text(json.dumps(local,indent=2)+'\n')
 def cmd_lift(a):

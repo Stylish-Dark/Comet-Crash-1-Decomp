@@ -31,3 +31,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added bootstrap regression coverage. Local gate: **70/70 tests passed** plus `compileall`.
 - Removed the existing-checkout `--skip-deps` shortcut from `scripts/build_and_run.cmd`; step 1 now always runs the full bootstrap so a clone left behind by an interrupted dependency install cannot poison future runs.
 - Added launcher regression coverage. Local gate: **71/71 tests passed** plus `compileall`.
+- Made analysis deterministic across reruns: `cmd_analyze` now replaces its generated analysis and SPU-extraction directories before invoking ps3recomp, preventing stale extracted images/manifests from surviving into a new lift.
+- Added stale-output regression coverage. Local gate: **72/72 tests passed** plus `compileall`.

@@ -59,3 +59,14 @@ class ToolkitPinTests(unittest.TestCase):
    (repo/'tools'/'ppu_loader.py').write_text('# fixture\n',encoding='utf-8')
    with self.assertRaisesRegex(RuntimeError,'not a Git checkout'):
     c.verify_toolkit_checkout(repo,'0'*40)
+
+
+class GeneratedDirResetTests(unittest.TestCase):
+ def test_reset_generated_dir_removes_stale_outputs(self):
+  with tempfile.TemporaryDirectory() as td:
+   p=Path(td)/'generated'; (p/'nested').mkdir(parents=True)
+   (p/'stale.elf').write_text('old',encoding='utf-8')
+   (p/'nested'/'stale.json').write_text('old',encoding='utf-8')
+   c.reset_generated_dir(p)
+   self.assertTrue(p.is_dir())
+   self.assertEqual(list(p.iterdir()),[])
