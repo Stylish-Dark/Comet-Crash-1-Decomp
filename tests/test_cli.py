@@ -31,6 +31,11 @@ class BuildPatchTests(unittest.TestCase):
   self.assertIn('audit_hle_coverage',s)
   self.assertIn('HLE coverage gate',s)
 
+ def test_build_keeps_python_wheel_ninja_handoff(self):
+  s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
+  self.assertIn('ninja=find_ninja()',s)
+  self.assertIn('CMAKE_MAKE_PROGRAM:FILEPATH=',s)
+
 class LiftGateTests(unittest.TestCase):
  def test_lift_applies_ppu_completeness_gate_after_compat_patch(self):
   s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
