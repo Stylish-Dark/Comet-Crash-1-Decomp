@@ -43,3 +43,39 @@ void foo_spu_func_00000020(spu_context* ctx) { spu_unsupported(0x24, "mystery");
         r=a.audit_text(src,0x10)
         self.assertEqual(r['unsupported_reachable'],1)
         self.assertEqual(r['reachable_unsupported'][0]['mnemonic'],'mystery')
+
+
+class PpuCompletenessAuditTests(unittest.TestCase):
+    def test_known_comet_shift_holes_are_clean_after_patch(self):
+        import patch_ppu_lift as patch
+        import audit_ppu_lift as audit
+        src='''void f(ppu_context* ctx) {\n/* TODO: vsrab v1, v11, v13 */;\n/* TODO: vsrb v12, v11, v12 */;\n}\n'''
+        out, stats=patch.patch_text(src)
+        self.assertEqual(stats,{'vsrab':1,'vsrb':1})
+        self.assertEqual(audit.audit_text(out),[])
+
+    def test_unknown_ppu_todo_is_a_hard_audit_failure(self):
+        import audit_ppu_lift as audit
+        holes=audit.audit_text('''\n/* TODO: mystery v1, v2, v3 */;\n''')
+        self.assertEqual(len(holes),1)
+        self.assertEqual(holes[0]['line'],2)
+        self.assertEqual(holes[0]['instruction'],'mystery v1, v2, v3')
+
+    def test_directory_audit_requires_generated_chunks(self):
+        import audit_ppu_lift as audit
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(FileNotFoundError):
+                audit.audit_path(Path(td))
+
+    def test_directory_audit_reports_file_and_line(self):
+        import audit_ppu_lift as audit
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'ppu_recomp_000.cpp'
+            p.write_text('ok\n/* TODO: strange r1, r2 */;\n',encoding='utf-8')
+            r=audit.audit_path(Path(td))
+            self.assertEqual(r['source_files'],1)
+            self.assertEqual(r['unsupported_total'],1)
+            self.assertEqual(r['unsupported'][0]['file'],str(p))
+            self.assertEqual(r['unsupported'][0]['line'],2)

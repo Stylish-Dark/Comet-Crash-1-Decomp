@@ -31,7 +31,7 @@ def patch_file(path: Path):
     return stats
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description='Patch Comet Crash PPU lift holes not handled by ps3recomp v0.12.1')
+    ap = argparse.ArgumentParser(description='Patch Comet Crash PPU lift holes not handled by the pinned ps3recomp lifter')
     ap.add_argument('paths', nargs='+', type=Path)
     args = ap.parse_args()
     total={'vsrab':0,'vsrb':0}

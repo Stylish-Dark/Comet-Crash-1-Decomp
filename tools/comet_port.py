@@ -6,6 +6,7 @@ from ps3_probe import probe_elf
 from decrypt_comet_self import decrypt_self
 from patch_ppu_lift import patch_file as patch_ppu_file
 from audit_spu_lift import audit_file as audit_spu_file
+from audit_ppu_lift import audit_path as audit_ppu_path
 from patch_ps3recomp_host import patch_file as patch_host_backend
 from patch_ps3recomp_spurs import patch_file as patch_spurs_runtime
 from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
@@ -131,6 +132,11 @@ def cmd_lift(a):
         st=patch_ppu_file(cpp)
         for k,v in st.items(): ppu_patch[k]+=v
     print(f'Comet Crash PPU compatibility patch: {ppu_patch}')
+    ppu_report=audit_ppu_path(a.output)
+    print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}')
+    if ppu_report['unsupported_total']:
+        sample=', '.join(str(x['instruction']) for x in ppu_report['unsupported'][:5])
+        raise RuntimeError(f'PPU lift still contains {ppu_report["unsupported_total"]} unsupported TODO instruction(s): {sample}')
     images=list(a.spu_images.glob('*.elf'))
     if not images: raise FileNotFoundError(f'no extracted SPU ELFs in {a.spu_images}; run analyze first')
     a.spu_output.mkdir(parents=True,exist_ok=True); a.spu_registry.parent.mkdir(parents=True,exist_ok=True)

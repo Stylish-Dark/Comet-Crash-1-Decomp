@@ -18,6 +18,8 @@ class CiScaffoldTests(unittest.TestCase):
             ppu = (recomp / "ppu_recomp_ci.cpp").read_text()
             self.assertIn("function_table", ppu)
             self.assertIn("function_table_count", ppu)
+            self.assertIn("void func_00010000(ppu_context*)", ppu)
+            self.assertNotIn('extern "C" void func_00010000', ppu)
             self.assertTrue((spu / "ci_stub" / "spu_recomp.c").is_file())
             self.assertTrue(registry.is_file())
             self.assertNotIn("NPEB00142", ppu)
