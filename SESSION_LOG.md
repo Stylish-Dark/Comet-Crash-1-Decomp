@@ -25,3 +25,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added regression coverage for both failure modes. Local gate: **69/69 tests passed** and `compileall` passed.
 - Added first-boot native crash diagnostics in `port/main.cpp`: `SetUnhandledExceptionFilter` records exception code/address, image RVA, crashing thread, and AV read/write/execute target to stderr, which is already mirrored into the durable boot log.
 - Extended the fake-Windows compile fixture and boot-log source regression to keep the crash path syntax-checked. Regression gate remains **69/69 tests passed** plus `compileall`.
+- Added a non-fatal first-frame watchdog: at 10s and 30s without a presented guest frame it records the last boot stage, flip count, and `g_last_hle_nid`/name breadcrumb from the pinned runtime. This makes deadlocks/spins diagnostically useful without killing the process.
+- Regression gate remains **69/69 tests passed** plus `compileall`.

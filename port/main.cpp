@@ -32,6 +32,8 @@ void cellGcmTickFlip(void);
 int cellGcm_take_flip_pending(void);
 void cellGcm_rsx_process_fifo(void);
 unsigned cellGcm_flip_request_count(void);
+extern uint32_t g_last_hle_nid;
+extern const char* g_last_hle_name;
 int rsx_d3d12_backend_init(uint32_t,uint32_t,const char*);
 void rsx_d3d12_backend_present(void);
 int rsx_d3d12_backend_pump_messages(void);
@@ -40,6 +42,7 @@ int rsx_d3d12_backend_pump_messages(void);
 #define VM_SIZE 0x100010000ull
 #define STACK_TOP 0x0FF00000u
 static volatile LONG g_frames_presented=0;
+static const char* volatile g_last_boot_stage="process start";
 extern "C" unsigned ppu_boot_frames_presented(void){ return (unsigned)g_frames_presented; }
 
 static void present_guest_frame(){
@@ -86,8 +89,23 @@ static DWORD WINAPI frame_clock(LPVOID){
 
 
 static void boot_stage(const char* stage){
+    g_last_boot_stage=stage;
     fprintf(stderr,"[boot-stage] %s\n",stage);
     fflush(stderr);
+}
+
+static DWORD WINAPI boot_watchdog(LPVOID){
+    static const DWORD waits_ms[]={10000u,20000u};
+    unsigned elapsed=0;
+    for(DWORD wait_ms:waits_ms){
+        Sleep(wait_ms); elapsed+=(unsigned)(wait_ms/1000u);
+        if(g_frames_presented>0) return 0;
+        const char* hle=g_last_hle_name&&*g_last_hle_name?g_last_hle_name:"<none>";
+        fprintf(stderr,"[watchdog] no guest frame after %us; last_stage=%s flips=%u last_hle=0x%08X (%s)\n",
+                elapsed,g_last_boot_stage?g_last_boot_stage:"<none>",cellGcm_flip_request_count(),g_last_hle_nid,hle);
+        fflush(stderr);
+    }
+    return 0;
 }
 
 static char s_root[1024];
@@ -147,6 +165,7 @@ int main(int argc,char**argv){
     setvbuf(stdout,NULL,_IONBF,0);
     setvbuf(stderr,NULL,_IONBF,0);
     SetUnhandledExceptionFilter(crash_filter);
+    CreateThread(NULL,0,boot_watchdog,NULL,0,NULL);
     boot_stage("process entered");
     fprintf(stderr,"[boot] ELF: %s\n",argv[1]);
     comet_host_init();
