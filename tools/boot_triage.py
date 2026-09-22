@@ -149,6 +149,11 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
 
     for raw in lines:
         line = raw.rstrip("\r\n")
+        m = SUMMARY_RE.match(line)
+        if m:
+            footer[m.group(1)] = m.group(2).strip()
+            continue
+
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
         detected = _detect_first_signal(line)
@@ -158,10 +163,6 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
             category, _ = classify_signal(detected)
             if category != "unknown" and first_specific_signal is None:
                 first_specific_signal = detected
-
-        m = SUMMARY_RE.match(line)
-        if m:
-            footer[m.group(1)] = m.group(2).strip()
 
     # Prefer the runner's explicit footer because it is written after streaming
     # completes and is therefore the authoritative summary when present.

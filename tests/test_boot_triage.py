@@ -40,6 +40,16 @@ class BootTriageTests(unittest.TestCase):
         self.assertEqual(report["suspected_subsystem"], "hle")
         self.assertEqual(report["boot_outcome"], "failure-before-frame")
 
+    def test_footer_lines_are_not_reparsed_as_runtime_signals(self):
+        report = b.summarize_lines([
+            "[watchdog] no guest frame after 10s",
+            "# first_signal=[HLE] UNIMPLEMENTED nid=0xDEADBEEF",
+            "# host_exit_code=7",
+        ])
+        self.assertEqual(report["first_signal"], "[HLE] UNIMPLEMENTED nid=0xDEADBEEF")
+        self.assertEqual(report["triage_signal"], "[HLE] UNIMPLEMENTED nid=0xDEADBEEF")
+        self.assertEqual(report["suspected_subsystem"], "hle")
+
     def test_later_specific_signal_overrides_generic_first_symptom(self):
         report = b.summarize_lines([
             "[boot-stage] entering recompiled title",
