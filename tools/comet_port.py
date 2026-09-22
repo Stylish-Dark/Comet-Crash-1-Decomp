@@ -16,6 +16,7 @@ from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
 from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
+from boot_triage import classify_signal as classify_boot_signal
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
@@ -121,12 +122,17 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         rc=proc.wait()
         last=summary['last_boot_stage'] or '<none>'
         signal=summary['first_signal'] or '<none>'
+        subsystem,rationale=classify_boot_signal(summary['first_signal'])
         log.write(f'\n# last_boot_stage={last}\n')
         log.write(f'# first_signal={signal}\n')
+        log.write(f'# suspected_subsystem={subsystem}\n')
+        log.write(f'# triage_rationale={rationale}\n')
         log.write(f'# host_exit_code={rc}\n'); log.flush()
     print(f'[boot-summary] last_stage={last}',flush=True)
     if summary['first_signal']:
         print(f'[boot-summary] first_signal={summary["first_signal"]}',flush=True)
+    print(f'[boot-summary] suspected_subsystem={subsystem}',flush=True)
+    print(f'[boot-summary] triage_rationale={rationale}',flush=True)
     if rc:
         raise subprocess.CalledProcessError(rc,cmd)
     return rc
