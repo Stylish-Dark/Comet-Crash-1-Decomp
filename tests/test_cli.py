@@ -1,4 +1,4 @@
-import sys, unittest
+import subprocess, sys, tempfile, unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import comet_port as c
@@ -7,8 +7,8 @@ class T(unittest.TestCase):
   q=c.spu_lift_command(Path('images'),Path('sdk'),Path('lifted'),Path('reg.c'))
   s=' '.join(map(str,q)); self.assertIn('build_spu_workloads.py',s); self.assertIn('--images',q); self.assertIn('--constructor',q); self.assertIn('comet_crash_spu_register_all',q)
  def test_cmake_has_spu_paths(self):
-  q=c.cmake_configure_command(Path('sdk'),Path('ppu'),Path('spu'),Path('reg.c'),Path('build'),Path('tools/ninja.exe'))
-  s=' '.join(map(str,q)); self.assertIn('SPU_LIFTED_DIR=',s); self.assertIn('SPU_REGISTRY=',s); self.assertIn('clang-cl',s); self.assertIn('CMAKE_MAKE_PROGRAM:FILEPATH=',s)
+  q=c.cmake_configure_command(Path('sdk'),Path('ppu'),Path('spu'),Path('reg.c'),Path('build'))
+  s=' '.join(map(str,q)); self.assertIn('SPU_LIFTED_DIR=',s); self.assertIn('SPU_REGISTRY=',s); self.assertIn('clang-cl',s)
  def test_parser_commands(self):
   p=c.parser()
   for name in ['decrypt','validate','probe','analyze','lift','build','run']:
@@ -30,10 +30,32 @@ class BuildPatchTests(unittest.TestCase):
   self.assertIn('audit_hle_coverage',s)
   self.assertIn('HLE coverage gate',s)
 
-
 class LiftGateTests(unittest.TestCase):
  def test_lift_applies_ppu_completeness_gate_after_compat_patch(self):
   s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
   self.assertIn('audit_ppu_lift',s)
   self.assertIn('PPU audit:',s)
   self.assertIn("if ppu_report['unsupported_total']",s)
+
+
+class ToolkitPinTests(unittest.TestCase):
+ def test_checkout_revision_must_match_expected_pin(self):
+  with tempfile.TemporaryDirectory() as td:
+   repo=Path(td)/'ps3recomp'; (repo/'tools').mkdir(parents=True)
+   (repo/'tools'/'ppu_loader.py').write_text('# fixture\n',encoding='utf-8')
+   subprocess.run(['git','init',str(repo)],check=True,stdout=subprocess.DEVNULL)
+   subprocess.run(['git','-C',str(repo),'config','user.email','ci@example.invalid'],check=True)
+   subprocess.run(['git','-C',str(repo),'config','user.name','CI'],check=True)
+   subprocess.run(['git','-C',str(repo),'add','.'],check=True)
+   subprocess.run(['git','-C',str(repo),'commit','-m','fixture'],check=True,stdout=subprocess.DEVNULL)
+   head=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()
+   self.assertEqual(c.verify_toolkit_checkout(repo,head),head)
+   with self.assertRaisesRegex(RuntimeError,'pin mismatch'):
+    c.verify_toolkit_checkout(repo,'0'*40)
+
+ def test_non_git_toolkit_is_rejected(self):
+  with tempfile.TemporaryDirectory() as td:
+   repo=Path(td)/'ps3recomp'; (repo/'tools').mkdir(parents=True)
+   (repo/'tools'/'ppu_loader.py').write_text('# fixture\n',encoding='utf-8')
+   with self.assertRaisesRegex(RuntimeError,'not a Git checkout'):
+    c.verify_toolkit_checkout(repo,'0'*40)

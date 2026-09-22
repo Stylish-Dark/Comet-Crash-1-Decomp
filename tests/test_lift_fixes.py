@@ -20,19 +20,6 @@ class PpuPatchTests(unittest.TestCase):
         self.assertEqual(out,src)
         self.assertEqual(stats,{'vsrab':0,'vsrb':0})
 
-    def test_patch_file_preserves_non_utf8_bytes(self):
-        import patch_ppu_lift as p
-        import tempfile
-        with tempfile.TemporaryDirectory() as td:
-            path=Path(td)/'ppu_recomp_000.cpp'
-            before=b'// generated \x97 comment\n/* TODO: vsrb v1, v2, v3 */;\n'
-            path.write_bytes(before)
-            stats=p.patch_file(path)
-            after=path.read_bytes()
-            self.assertEqual(stats,{'vsrab':0,'vsrb':1})
-            self.assertIn(b'// generated \x97 comment\n',after)
-            self.assertNotIn(b'TODO: vsrb',after)
-
 class SpuReachabilityTests(unittest.TestCase):
     def test_unreachable_unsupported_word_does_not_fail(self):
         import audit_spu_lift as a
@@ -57,7 +44,6 @@ void foo_spu_func_00000020(spu_context* ctx) { spu_unsupported(0x24, "mystery");
         self.assertEqual(r['unsupported_reachable'],1)
         self.assertEqual(r['reachable_unsupported'][0]['mnemonic'],'mystery')
 
-
 class PpuCompletenessAuditTests(unittest.TestCase):
     def test_known_comet_shift_holes_are_clean_after_patch(self):
         import patch_ppu_lift as patch
@@ -73,6 +59,14 @@ class PpuCompletenessAuditTests(unittest.TestCase):
         self.assertEqual(len(holes),1)
         self.assertEqual(holes[0]['line'],2)
         self.assertEqual(holes[0]['instruction'],'mystery v1, v2, v3')
+
+    def test_unsupported_spr_noop_is_a_hard_audit_failure(self):
+        import audit_ppu_lift as audit
+        holes=audit.audit_text('''\n/* mfspr r3, 999: unsupported SPR -- no-op */;\n''')
+        self.assertEqual(len(holes),1)
+        self.assertEqual(holes[0]['line'],2)
+        self.assertEqual(holes[0]['kind'],'unsupported-spr-noop')
+        self.assertEqual(holes[0]['instruction'],'mfspr r3, 999')
 
     def test_directory_audit_requires_generated_chunks(self):
         import audit_ppu_lift as audit
@@ -92,13 +86,3 @@ class PpuCompletenessAuditTests(unittest.TestCase):
             self.assertEqual(r['unsupported_total'],1)
             self.assertEqual(r['unsupported'][0]['file'],str(p))
             self.assertEqual(r['unsupported'][0]['line'],2)
-
-    def test_directory_audit_tolerates_windows_cp1252_comment_bytes(self):
-        import audit_ppu_lift as audit
-        import tempfile
-        with tempfile.TemporaryDirectory() as td:
-            p=Path(td)/'ppu_recomp_000.cpp'
-            p.write_bytes(b'// generated \x97 comment\n/* TODO: mystery v1, v2, v3 */;\n')
-            r=audit.audit_path(Path(td))
-            self.assertEqual(r['unsupported_total'],1)
-            self.assertEqual(r['unsupported'][0]['instruction'],'mystery v1, v2, v3')

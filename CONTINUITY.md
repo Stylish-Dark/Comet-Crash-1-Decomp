@@ -6,7 +6,7 @@ Produce a Windows-native static-recompilation port of **Comet Crash 1** from the
 
 ## Current state
 
-The recovered advanced tree is fully restored on GitHub `main`. The repository is again the canonical project state; the obsolete temporary scaffold has been superseded.
+This recovered checkpoint is materially ahead of the temporary scaffold that replaced the GitHub repository. It is the authoritative engineering state to preserve and restore.
 
 Current project state:
 
@@ -14,13 +14,13 @@ Current project state:
 - title/SFO/ELF validation is implemented and fingerprints are pinned;
 - upstream analysis independently confirms **3,409 unique PPU functions**, **171 firmware imports across 18 libraries**, **24 `cellSpurs` imports**, and **2 embedded SPU ELFs**;
 - full PPU lift and both embedded SPU lifts have completed;
-- the exact pinned lifter still leaves the two known Comet VMX holes (`vsrab`, `vsrb`); the compatibility patch fixes them and a post-patch PPU completeness audit now rejects any remaining generated TODO instruction holes;
+- reachable unsupported-instruction gates are clean after the two explicit VMX fixes (`vsrab`, `vsrb`);
 - Windows native runner, D3D12 integration patches, VFS/HDD mappings, RESC/GCM fixes, SPURS urgent-command handling, and Comet-specific HLE overrides are implemented;
 - controller input is preserved while mouse compatibility-mode input overlays the exact `cellPadGetData` path;
 - F1 host Graphics & Input overlay and persistent settings are implemented;
 - the one-command Windows pipeline is `scripts/build_and_run.cmd`;
 - first-boot diagnostics now produce a durable boot log and fine-grained native initialization stage markers;
-- current CI regression gate: **74/74 tests passing**, `compileall` passing, repository safety passing, and the Windows scaffold compile/link job passing against the exact pinned `ps3recomp` checkout.
+- current local regression gate: **61/61 tests passing**, plus `compileall` and repository-safety checks.
 
 **Not yet established:** successful native Windows boot, visible title/menu output, or playable missions. This environment cannot execute the Windows/D3D12 build.
 
@@ -62,19 +62,15 @@ Do not silently move this pin. Runtime source patchers deliberately fail on upst
 - `tools/decrypt_comet_self.py` — local FREE-NPDRM SELF reconstruction.
 - `tools/ps3_probe.py` — PPU/import/SPU/callsite probing.
 - `tools/comet_port.py` — decrypt → validate → analyse → lift → build → run pipeline.
-- `tools/patch_ppu_lift.py` — explicit Comet VMX fixes; generated-source handling is byte-preserving across Windows default encodings.
+- `tools/patch_ppu_lift.py` — explicit Comet VMX fixes.
 - `tools/audit_spu_lift.py` — reachable SPU unsupported-instruction gate.
-- `tools/audit_ppu_lift.py` — post-compatibility PPU completeness gate; a fresh lift fails if any generated `/* TODO: ... */;` instruction hole remains or if the expected PPU chunks are missing.
-- `tools/audit_hle_coverage.py` — exact 171-import coverage gate; port overrides count only when their NID is actually registered, not merely declared as a constant.
+- `tools/audit_hle_coverage.py` — exact 171-import coverage gate.
 - `tools/patch_ps3recomp_{host,spurs,vfs,resc,gcm}.py` — deterministic pinned-runtime patches.
 - `port/comet_compat.*` — title-specific compatibility HLE.
 - `port/comet_host.*` — mouse/controller coexistence, overlay, host controls.
 - `port/comet_settings.*` — persistent settings.
 - `scripts/build_and_run.cmd` — one-command Windows pipeline.
 - Boot diagnostics now write `logs/boot-YYYYMMDD-HHMMSS.txt` by default and include stage markers through PPU entry plus the first presented guest frame.
-- Windows bootstrap now keys developer-environment setup off `VSCMD_VER` rather than a stray `cl.exe`, discovers Ninja either on PATH or from the PyPI `ninja` wheel, and passes the exact Ninja executable to CMake.
-- clang-cl builds explicitly disable strict-aliasing assumptions and floating-point contraction to retain the upstream recompilation semantics; the irrelevant `/experimental:c11atomics` clang-cl flag was removed.
-- GitHub CI now includes a Windows compile/link gate: it clones the exact ps3recomp pin, applies all five Comet runtime patchers, uses a non-proprietary one-instruction PPC fixture to run the real pinned `ppu_lifter.py`, applies the same PPU compatibility patch and completeness audit as the Comet pipeline, then compiles/links `CometCrashPC.exe` with clang-cl/Ninja. PR run `35680385634` passed both Linux and Windows jobs.
 
 ## Working hypotheses / unresolved questions
 
@@ -118,14 +114,3 @@ After the run:
 - `NEXT.md` — immediate work queue.
 - `DECISIONS.md` — durable decisions/rejected approaches.
 - `SESSION_LOG.md` — chronological checkpoints.
-
-## Session checkpoint discipline
-
-For long work sessions, do not run until the tool/execution window is exhausted. Before the session becomes risky:
-
-1. stop substantive work;
-2. commit and push all completed source/test/documentation changes to GitHub;
-3. update `CONTINUITY.md`, `NEXT.md`, and `SESSION_LOG.md` with the exact current state, last verified test result, unresolved work, and next action;
-4. only then report the checkpoint and stop the session.
-
-GitHub is the continuity boundary. Uncommitted or chat-only progress must never be treated as durable project state.

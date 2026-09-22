@@ -13,7 +13,6 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from audit_hle_coverage import audit as audit_hle
-from check_env import find_ninja
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
@@ -78,8 +77,23 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
     if rc:
         raise subprocess.CalledProcessError(rc,cmd)
     return rc
+def verify_toolkit_checkout(path: Path, expected_commit: str|None=None) -> str:
+    if not (path/'tools'/'ppu_loader.py').exists():
+        raise FileNotFoundError(f'ps3recomp checkout missing at {path}; run scripts\\bootstrap.cmd')
+    if not (path/'.git').exists():
+        raise RuntimeError(f'ps3recomp at {path} is not a Git checkout; run scripts\\bootstrap.cmd so the exact locked revision can be verified')
+    expected=expected_commit or load_ps3recomp_lock()['commit']
+    try:
+        head=subprocess.check_output(['git','-C',str(path),'rev-parse','HEAD'],text=True,stderr=subprocess.STDOUT).strip()
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f'could not verify ps3recomp revision at {path}: {e.output.strip()}') from e
+    if head != expected:
+        raise RuntimeError(f'ps3recomp pin mismatch: checkout={head}, expected={expected}; run scripts\\bootstrap.cmd')
+    return head
+
 def require_toolkit(path: Path):
-    if not (path/'tools'/'ppu_loader.py').exists(): raise FileNotFoundError(f'ps3recomp checkout missing at {path}; run scripts\\bootstrap.cmd')
+    head=verify_toolkit_checkout(path)
+    print(f'ps3recomp pin verified: {head}')
 
 def analysis_commands(elf: Path, ps3recomp: Path, out: Path, spu_dir: Path):
     py=sys.executable
@@ -94,10 +108,8 @@ def lift_command(elf: Path, ps3recomp: Path, analysis: Path, output: Path):
     return [sys.executable,ps3recomp/'tools'/'ppu_lifter.py',elf,'--functions',funcs,'--hle-stubs',imports,'-o',output]
 def spu_lift_command(images: Path, ps3recomp: Path, lifted: Path, registry: Path):
     return [sys.executable,ps3recomp/'tools'/'build_spu_workloads.py','--images',images,'--lifted',lifted,'--out',registry,'--register-fn','comet_crash_spu_register_all','--constructor','--title','comet_crash']
-def cmake_configure_command(ps3recomp: Path, recomp: Path, spu: Path, registry: Path, build: Path, ninja_program: str|Path|None=None):
-    cmd=['cmake','-S',ROOT/'port','-B',build,'-G','Ninja','-DCMAKE_C_COMPILER=clang-cl','-DCMAKE_CXX_COMPILER=clang-cl',f'-DPS3RECOMP_DIR={ps3recomp}',f'-DRECOMP_DIR={recomp}',f'-DSPU_LIFTED_DIR={spu}',f'-DSPU_REGISTRY={registry}']
-    if ninja_program: cmd.append(f'-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_program}')
-    return cmd
+def cmake_configure_command(ps3recomp: Path, recomp: Path, spu: Path, registry: Path, build: Path):
+    return ['cmake','-S',ROOT/'port','-B',build,'-G','Ninja','-DCMAKE_C_COMPILER=clang-cl','-DCMAKE_CXX_COMPILER=clang-cl',f'-DPS3RECOMP_DIR={ps3recomp}',f'-DRECOMP_DIR={recomp}',f'-DSPU_LIFTED_DIR={spu}',f'-DSPU_REGISTRY={registry}']
 
 def runtime_environment(title_root: Path, param_sfo: Path) -> dict[str,str]:
     m=load_manifest()
@@ -171,10 +183,7 @@ def cmd_build(a):
     if hle['missing']:
         details=', '.join(f'{x.get("library",x.get("lib","?"))}:{x["nid"]}' for x in hle['missing'])
         raise RuntimeError(f'unresolved Comet HLE imports: {details}')
-    ninja=find_ninja()
-    if not ninja: raise FileNotFoundError('Ninja not found on PATH or in the Python ninja package')
-    print(f'Ninja: {ninja}')
-    run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build,ninja)); run(['cmake','--build',a.build])
+    run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build)); run(['cmake','--build',a.build])
 def cmd_run(a):
     exe=a.exe or a.build/'CometCrashPC.exe'
     sfo=find_param_sfo(a.game); title_root=sfo.parent

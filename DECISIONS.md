@@ -40,24 +40,16 @@ Current mouse implementation injects onto the existing PS3 pad abstraction while
 
 ## D010 — First-boot evidence outranks further speculative static work
 
-With 74/74 CI tests green and the exact-pin real-PPU-lifter Windows scaffold build green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
+With 61/61 local tests green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
 
 ## D011 — GitHub/repository continuity is canonical
 
 The repository must always carry enough structured state for a fresh conversation to resume without chat history. `CONTINUITY.md` is read first; meaningful milestones update `NEXT.md` and `SESSION_LOG.md` immediately.
 
-## D012 — Recovered advanced tree supersedes the temporary scaffold
+## D014 — The toolchain pin is an execution gate, not documentation
 
-The SHA-verified recovered 68-file source tree restored at `151ede4` is canonical. Do not reintroduce the earlier M1-only scaffold or treat it as a newer project state.
+Analysis, lift and build commands must verify that the ps3recomp checkout is a Git checkout at the exact commit in `config/ps3recomp.lock`. A mismatched or unverifiable checkout is rejected before generated code or runtime patches are used.
 
-## D013 — Checkpoint before the execution window becomes risky
+## D015 — Explicit PPU no-op fallbacks are build blockers
 
-For long sessions, stop before the tool/execution limit is approached. Push completed work first, then update `CONTINUITY.md`, `NEXT.md`, and `SESSION_LOG.md` so a fresh conversation can resume exactly. Chat-only or uncommitted progress is never considered a safe checkpoint.
-
-## D014 — Generated PPU TODOs are a hard lift gate
-
-After applying the two known Comet VMX compatibility rewrites (`vsrab`, `vsrb`), a fresh PPU lift must contain no remaining generated `/* TODO: ... */;` instruction holes. Missing PPU chunks or any residual TODO instruction stop the pipeline before build/boot.
-
-## D015 — CI should exercise real generated output where practical
-
-Synthetic inputs are acceptable, but important generation stages should use the actual pinned ps3recomp tools rather than hand-written lookalike output whenever a non-proprietary fixture can do so. This keeps ABI, encoding and generator drift inside the automated gate.
+Generated PPU code must contain no generic lifter `TODO:` holes and no `unsupported SPR -- no-op` fallbacks after Comet compatibility patching. Silent unsupported guest instructions are not accepted as successful lifts.
