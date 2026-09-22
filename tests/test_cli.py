@@ -1,4 +1,5 @@
 import subprocess, sys, tempfile, unittest
+from unittest import mock
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import comet_port as c
@@ -55,6 +56,21 @@ class LiftGateTests(unittest.TestCase):
 
 
 class ToolkitPinTests(unittest.TestCase):
+ def test_runtime_helpers_are_imported(self):
+  self.assertTrue(callable(c.find_ninja))
+  self.assertTrue(callable(c.load_ps3recomp_lock))
+ def test_default_checkout_revision_reads_lock(self):
+  with tempfile.TemporaryDirectory() as td:
+   repo=Path(td)/'ps3recomp'; (repo/'tools').mkdir(parents=True)
+   (repo/'tools'/'ppu_loader.py').write_text('# fixture\n',encoding='utf-8')
+   subprocess.run(['git','init',str(repo)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+   subprocess.run(['git','-C',str(repo),'config','user.email','ci@example.invalid'],check=True)
+   subprocess.run(['git','-C',str(repo),'config','user.name','CI'],check=True)
+   subprocess.run(['git','-C',str(repo),'add','.'],check=True)
+   subprocess.run(['git','-C',str(repo),'commit','-m','fixture'],check=True,stdout=subprocess.DEVNULL)
+   head=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()
+   with mock.patch.object(c,'load_ps3recomp_lock',return_value={'commit':head}):
+    self.assertEqual(c.verify_toolkit_checkout(repo),head)
  def test_checkout_revision_must_match_expected_pin(self):
   with tempfile.TemporaryDirectory() as td:
    repo=Path(td)/'ps3recomp'; (repo/'tools').mkdir(parents=True)

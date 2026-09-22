@@ -37,3 +37,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added unknown-ELF and version-mismatch regressions. Local gate: **74/74 tests passed** plus `compileall`.
 - Added `build --clean` support and made the one-command Windows launcher use it, so stale CMake cache/compiler state cannot survive across otherwise-clean bootstrap/lift runs; manual standalone builds remain incremental by default.
 - Added parser/launcher regressions. Local gate: **76/76 tests passed** plus `compileall`.
+- Functional testing exposed a real regression in `tools/comet_port.py`: `find_ninja` and `load_ps3recomp_lock` were referenced but not imported, which would have broken a real build/default pin check with `NameError`. Restored both imports.
+- Added regressions that call the default lock-based checkout verification and assert the runtime helpers are imported/callable, preventing source-only tests from missing this class again. Local gate: **78/78 tests passed** plus `compileall`.

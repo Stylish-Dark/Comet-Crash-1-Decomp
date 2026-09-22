@@ -13,6 +13,8 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from audit_hle_coverage import audit as audit_hle
+from check_env import find_ninja
+from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
