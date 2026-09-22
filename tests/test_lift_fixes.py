@@ -75,6 +75,18 @@ class PpuCompletenessAuditTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 audit.audit_path(Path(td))
 
+    def test_directory_audit_is_encoding_agnostic(self):
+        import audit_ppu_lift as audit
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'ppu_recomp_000.cpp'
+            # 0x97 is a CP-1252 en dash and is invalid standalone UTF-8.
+            p.write_bytes(b'// cp1252 \x97 comment\n/* TODO: mystery v1, v2, v3 */;\n')
+            r=audit.audit_path(Path(td))
+            self.assertEqual(r['unsupported_total'],1)
+            self.assertEqual(r['unsupported'][0]['line'],2)
+            self.assertEqual(r['unsupported'][0]['instruction'],'mystery v1, v2, v3')
+
     def test_directory_audit_reports_file_and_line(self):
         import audit_ppu_lift as audit
         import tempfile
