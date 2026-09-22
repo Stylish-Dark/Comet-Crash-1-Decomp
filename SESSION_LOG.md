@@ -33,3 +33,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added launcher regression coverage. Local gate: **71/71 tests passed** plus `compileall`.
 - Made analysis deterministic across reruns: `cmd_analyze` now replaces its generated analysis and SPU-extraction directories before invoking ps3recomp, preventing stale extracted images/manifests from surviving into a new lift.
 - Added stale-output regression coverage. Local gate: **72/72 tests passed** plus `compileall`.
+- Tightened title-version safety: `validate_inputs` now rejects unknown EBOOT SHA-256 values and mismatched `VERSION`/`APP_VER` instead of merely warning and continuing into version-specific compatibility code. Both known accepted v1.00 ELF reconstructions remain valid.
+- Added unknown-ELF and version-mismatch regressions. Local gate: **74/74 tests passed** plus `compileall`.

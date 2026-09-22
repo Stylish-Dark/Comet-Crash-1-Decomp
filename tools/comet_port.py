@@ -29,6 +29,15 @@ def is_reference_elf_hash(manifest: dict, digest: str) -> bool:
     accepted=set(manifest.get('accepted_elf_sha256',[]))
     accepted.add(manifest.get('reference_elf_sha256',''))
     return digest in accepted
+def require_supported_version(manifest: dict, version: str|None, app_version: str|None) -> None:
+    if version and manifest.get('version') and version != manifest['version']:
+        raise ValueError(f'unsupported title version: {version} (expected {manifest["version"]})')
+    if app_version and manifest.get('app_version') and app_version != manifest['app_version']:
+        raise ValueError(f'unsupported app version: {app_version} (expected {manifest["app_version"]})')
+
+def require_supported_elf(manifest: dict, digest: str) -> None:
+    if not is_reference_elf_hash(manifest,digest):
+        raise ValueError(f'unsupported EBOOT reconstruction SHA-256: {digest}')
 def find_param_sfo(root: Path) -> Path:
     for p in [root/'PARAM.SFO',root/'PS3_GAME'/'PARAM.SFO']:
         if p.exists(): return p
@@ -41,10 +50,10 @@ def validate_inputs(game_root: Path, elf: Path|None=None) -> dict:
     m=load_manifest(); sfo=find_param_sfo(game_root); meta=parse_sfo(sfo)
     got={'title':meta.get('TITLE'),'title_id':meta.get('TITLE_ID'),'version':meta.get('VERSION'),'app_version':meta.get('APP_VER'),'param_sfo_sha256':sha256_file(sfo),'warnings':[]}
     if got['title_id']!=m['title_id']: raise ValueError(f'wrong title id: {got["title_id"]}')
-    if got['app_version'] and got['app_version']!=m['app_version']: got['warnings'].append(f'app version {got["app_version"]} != reference {m["app_version"]}')
+    require_supported_version(m,got['version'],got['app_version'])
     if elf:
         validate_elf_header(elf); got['elf_sha256']=sha256_file(elf); got['elf_size']=elf.stat().st_size
-        if not is_reference_elf_hash(m,got['elf_sha256']): got['warnings'].append('ELF differs from accepted v1.00 binary reconstructions')
+        require_supported_elf(m,got['elf_sha256'])
     return got
 
 def run(cmd, cwd=None, env=None):

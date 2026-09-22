@@ -20,6 +20,19 @@ class ManifestCompatibilityTests(unittest.TestCase):
   self.assertTrue(c.is_reference_elf_hash(m,'new'))
   self.assertTrue(c.is_reference_elf_hash(m,'old'))
   self.assertFalse(c.is_reference_elf_hash(m,'other'))
+ def test_unknown_elf_is_rejected_not_warned(self):
+  m={'reference_elf_sha256':'new','accepted_elf_sha256':['new','old']}
+  c.require_supported_elf(m,'new')
+  c.require_supported_elf(m,'old')
+  with self.assertRaisesRegex(ValueError,'unsupported EBOOT'):
+   c.require_supported_elf(m,'other')
+ def test_version_mismatch_is_rejected(self):
+  m={'version':'01.00','app_version':'01.00'}
+  c.require_supported_version(m,'01.00','01.00')
+  with self.assertRaisesRegex(ValueError,'unsupported title version'):
+   c.require_supported_version(m,'02.00','01.00')
+  with self.assertRaisesRegex(ValueError,'unsupported app version'):
+   c.require_supported_version(m,'01.00','02.00')
 
 class BuildPatchTests(unittest.TestCase):
  def test_build_applies_spurs_and_d3d12_patches(self):
