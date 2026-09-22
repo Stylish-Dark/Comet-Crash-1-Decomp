@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 PPU_STUB = r'''#include "ppu_recomp.h"
 
-extern "C" void func_00010000(ppu_context*) {}
+void func_00010000(ppu_context*) {}
 
 extern "C" {
 extern const func_entry function_table[] = {
