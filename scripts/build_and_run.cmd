@@ -84,7 +84,7 @@ py -3 "%ROOT%\tools\comet_port.py" build --clean || exit /b !errorlevel!
 
 echo [7/7] Starting Comet Crash PC...
 echo        F1 = Graphics/Input menu
-py -3 "%ROOT%\tools\comet_port.py" run "%TITLE_ROOT%" "%ELF%"
+py -3 "%ROOT%\tools\comet_port.py" run "%TITLE_ROOT%" "%ELF%" !RUN_TIMEOUT_ARG!
 set "RC=%ERRORLEVEL%"
 echo.
 echo Comet Crash PC exited with code %RC%.

@@ -20,3 +20,10 @@ class WindowsScriptTests(unittest.TestCase):
  def test_one_command_pipeline_uses_clean_cmake_build(self):
   s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
   self.assertIn('comet_port.py" build --clean',s)
+
+class NativeRunTimeoutTests(unittest.TestCase):
+ def test_optional_native_run_timeout_is_forwarded(self):
+  s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
+  self.assertIn('boot-timeout-seconds',s)
+  self.assertIn('RUN_TIMEOUT_ARG',s)
+  self.assertIn('!RUN_TIMEOUT_ARG!',s)

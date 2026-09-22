@@ -85,9 +85,45 @@ class BootLogTests(unittest.TestCase):
             self.assertIn('# suspected_subsystem=hle',text)
             self.assertIn("matched '[hle] unimplemented'",text.lower())
 
+    def test_run_logged_timeout_preserves_diagnostics(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=('import time; '
+                  'print("[boot-stage] entering recompiled title", flush=True); '
+                  'time.sleep(30)')
+            with self.assertRaises(subprocess.TimeoutExpired):
+                comet_port.run_logged(
+                    [sys.executable,'-c',code],
+                    log,
+                    timeout_seconds=0.2,
+                )
+            text=log.read_text(encoding='utf-8')
+            self.assertIn('# last_boot_stage=entering recompiled title',text)
+            self.assertIn('# timed_out=true',text)
+            self.assertIn('# interrupted=<none>',text)
+            self.assertIn('# host_exit_code=',text)
+
+    def test_run_logged_rejects_nonpositive_timeout(self):
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaisesRegex(ValueError,'must be > 0'):
+                comet_port.run_logged(
+                    [sys.executable,'-c','pass'],
+                    Path(td)/'boot.txt',
+                    timeout_seconds=0,
+                )
+
+    def test_interrupt_path_is_durable_by_construction(self):
+        src=(ROOT/'tools'/'comet_port.py').read_text(encoding='utf-8')
+        self.assertIn('except KeyboardInterrupt:',src)
+        self.assertIn("interrupted='keyboard'",src)
+        self.assertIn('# interrupted=',src)
+        self.assertIn('_stop_process(proc)',src)
+
     def test_run_parser_accepts_explicit_log_path(self):
         args=comet_port.parser().parse_args(['run','game','EBOOT.ELF','--log','logs/custom.txt'])
         self.assertEqual(args.log,Path('logs/custom.txt'))
+        args=comet_port.parser().parse_args(['run','game','EBOOT.ELF','--timeout','45'])
+        self.assertEqual(args.timeout,45.0)
 
     def test_native_runner_has_stage_markers_and_first_frame_marker(self):
         src=(ROOT/'port'/'main.cpp').read_text(encoding='utf-8')

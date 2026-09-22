@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, datetime as dt, hashlib, json, os, shutil, subprocess, sys
+import argparse, datetime as dt, hashlib, json, os, shutil, subprocess, sys, threading
 from pathlib import Path
 from sfo import parse_sfo
 from ps3_probe import probe_elf
@@ -102,8 +102,21 @@ def update_boot_summary(summary: dict[str,str|None], line: str) -> None:
     if subsystem!='unknown' and summary.get('first_specific_signal') is None:
         summary['first_specific_signal']=text
 
-def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
+def _stop_process(proc: subprocess.Popen) -> int:
+    """Terminate a stuck native process, escalating to kill after a short grace period."""
+    if proc.poll() is not None:
+        return int(proc.returncode or 0)
+    proc.terminate()
+    try:
+        return int(proc.wait(timeout=5))
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        return int(proc.wait())
+
+def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_seconds: float|None=None):
     """Run a native boot while mirroring combined stdout/stderr to a durable log."""
+    if timeout_seconds is not None and timeout_seconds <= 0:
+        raise ValueError('timeout_seconds must be > 0')
     cmd=[str(x) for x in cmd]
     log_path=log_path.resolve(); log_path.parent.mkdir(parents=True,exist_ok=True)
     print('+',' '.join(cmd),flush=True)
@@ -114,6 +127,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
             'command':cmd,
             **(metadata or {}),
         }
+        if timeout_seconds is not None:
+            header['timeout_seconds']=timeout_seconds
         log.write('# Comet Crash native boot log\n')
         log.write(json.dumps(header,indent=2,sort_keys=True)+'\n\n')
         log.flush()
@@ -121,12 +136,39 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
         assert proc.stdout is not None
-        with proc.stdout:
-            for line in proc.stdout:
-                print(line,end='',flush=True)
-                update_boot_summary(summary,line)
-                log.write(line); log.flush()
-        rc=proc.wait()
+        timed_out=False
+        interrupted: str|None=None
+        timer: threading.Timer|None=None
+
+        if timeout_seconds is not None:
+            def timeout_proc() -> None:
+                nonlocal timed_out
+                if proc.poll() is None:
+                    timed_out=True
+                    print(f'[boot-timeout] terminating native process after {timeout_seconds:g}s',flush=True)
+                    try:
+                        proc.terminate()
+                    except OSError:
+                        pass
+            timer=threading.Timer(timeout_seconds,timeout_proc)
+            timer.daemon=True
+            timer.start()
+
+        try:
+            with proc.stdout:
+                for line in proc.stdout:
+                    print(line,end='',flush=True)
+                    update_boot_summary(summary,line)
+                    log.write(line); log.flush()
+            rc=proc.wait()
+        except KeyboardInterrupt:
+            interrupted='keyboard'
+            print('[boot-interrupt] Ctrl+C received; terminating native process',flush=True)
+            rc=_stop_process(proc)
+        finally:
+            if timer is not None:
+                timer.cancel()
+
         last=summary['last_boot_stage'] or '<none>'
         signal=summary['first_signal'] or '<none>'
         triage_signal=summary['first_specific_signal'] or summary['first_signal']
@@ -137,6 +179,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         log.write(f'# triage_signal={triage_display}\n')
         log.write(f'# suspected_subsystem={subsystem}\n')
         log.write(f'# triage_rationale={rationale}\n')
+        log.write(f'# interrupted={interrupted or "<none>"}\n')
+        log.write(f'# timed_out={"true" if timed_out else "false"}\n')
         log.write(f'# host_exit_code={rc}\n'); log.flush()
     print(f'[boot-summary] last_stage={last}',flush=True)
     if summary['first_signal']:
@@ -145,6 +189,10 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         print(f'[boot-summary] triage_signal={triage_signal}',flush=True)
     print(f'[boot-summary] suspected_subsystem={subsystem}',flush=True)
     print(f'[boot-summary] triage_rationale={rationale}',flush=True)
+    if interrupted:
+        raise KeyboardInterrupt
+    if timed_out:
+        raise subprocess.TimeoutExpired(cmd,timeout_seconds)
     if rc:
         raise subprocess.CalledProcessError(rc,cmd)
     return rc
@@ -286,7 +334,7 @@ def cmd_run(a):
         'title_root':str(title_root.resolve()),
         'runtime_environment':runtime_env,
     }
-    run_logged([exe,a.elf],log_path,env=env,metadata=metadata)
+    run_logged([exe,a.elf],log_path,env=env,metadata=metadata,timeout_seconds=a.timeout)
 def parser():
     p=argparse.ArgumentParser(description='Comet Crash native-port pipeline'); s=p.add_subparsers(dest='cmd',required=True)
     q=s.add_parser('decrypt'); q.add_argument('input',type=Path); q.add_argument('-o','--output',type=Path,default=ROOT/'work'/'EBOOT.ELF'); q.set_defaults(func=cmd_decrypt)
@@ -295,7 +343,7 @@ def parser():
     q=s.add_parser('analyze'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('-o','--output',type=Path,default=ROOT/'out'); q.add_argument('--spu',type=Path,default=ROOT/'work'/'spu'); q.set_defaults(func=cmd_analyze)
     q=s.add_parser('lift'); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--analysis',type=Path,default=ROOT/'out'); q.add_argument('-o','--output',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu-images',type=Path,default=ROOT/'work'/'spu'); q.add_argument('--spu-output',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--clean',action='store_true'); q.set_defaults(func=cmd_lift)
     q=s.add_parser('build'); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--recomp',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--imports',type=Path,default=ROOT/'out'/'EBOOT.imports.json'); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--clean',action='store_true',help='remove the CMake build directory before configuring'); q.set_defaults(func=cmd_build)
-    q=s.add_parser('run'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--exe',type=Path); q.add_argument('--log',type=Path,help='boot log path (default: logs/boot-YYYYMMDD-HHMMSS.txt)'); q.set_defaults(func=cmd_run)
+    q=s.add_parser('run'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--exe',type=Path); q.add_argument('--log',type=Path,help='boot log path (default: logs/boot-YYYYMMDD-HHMMSS.txt)'); q.add_argument('--timeout',type=float,help='optional native-run timeout in seconds; the default is unlimited'); q.set_defaults(func=cmd_run)
     return p
 def main():
     a=parser().parse_args(); a.func(a)
