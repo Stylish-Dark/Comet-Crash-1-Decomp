@@ -20,6 +20,19 @@ class PpuPatchTests(unittest.TestCase):
         self.assertEqual(out,src)
         self.assertEqual(stats,{'vsrab':0,'vsrb':0})
 
+    def test_patch_file_preserves_non_utf8_bytes(self):
+        import patch_ppu_lift as p
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            path=Path(td)/'ppu_recomp_000.cpp'
+            before=b'// generated \x97 comment\n/* TODO: vsrb v1, v2, v3 */;\n'
+            path.write_bytes(before)
+            stats=p.patch_file(path)
+            after=path.read_bytes()
+            self.assertEqual(stats,{'vsrab':0,'vsrb':1})
+            self.assertIn(b'// generated \x97 comment\n',after)
+            self.assertNotIn(b'TODO: vsrb',after)
+
 class SpuReachabilityTests(unittest.TestCase):
     def test_unreachable_unsupported_word_does_not_fail(self):
         import audit_spu_lift as a
