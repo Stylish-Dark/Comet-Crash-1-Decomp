@@ -39,7 +39,7 @@ def audit_path(path: Path) -> dict[str, object]:
 
     holes: list[dict[str, object]] = []
     for source in sources:
-        for item in audit_text(source.read_text(encoding='utf-8')):
+        for item in audit_text(source.read_bytes().decode('latin-1')):
             holes.append({'file': str(source), **item})
     return {
         'source_files': len(sources),
