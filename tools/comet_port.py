@@ -72,6 +72,40 @@ def reset_generated_dir(path: Path) -> None:
     shutil.rmtree(path,ignore_errors=True)
     path.mkdir(parents=True,exist_ok=True)
 
+def git_state(path: Path) -> dict[str,object]:
+    """Return commit/dirty provenance without mutating the checkout."""
+    if not (path/'.git').exists():
+        return {'commit':None,'dirty':None}
+    commit=subprocess.check_output(
+        ['git','-C',str(path),'rev-parse','HEAD'],text=True,stderr=subprocess.STDOUT
+    ).strip()
+    dirty=bool(subprocess.check_output(
+        ['git','-C',str(path),'status','--porcelain','--untracked-files=no'],
+        text=True,stderr=subprocess.STDOUT,
+    ).strip())
+    return {'commit':commit,'dirty':dirty}
+
+def make_build_provenance(*, project_root: Path, ps3recomp_commit: str,
+                          hle: dict[str,object], recomp: Path, spu: Path) -> dict[str,object]:
+    return {
+        'schema_version':1,
+        'built_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+        'port_git':git_state(project_root),
+        'ps3recomp_commit':ps3recomp_commit,
+        'hle_coverage':{
+            'imports':int(hle['imports']),
+            'covered_imports':int(hle['covered_imports']),
+            'missing':len(hle.get('missing',[])),
+        },
+        'generated_ppu_chunks':len(list(recomp.glob('ppu_recomp_*.cpp'))),
+        'generated_spu_units':len(list(spu.glob('*/spu_recomp.c'))),
+    }
+
+def write_build_provenance(build: Path, provenance: dict[str,object]) -> Path:
+    path=build/'build_provenance.json'
+    path.write_text(json.dumps(provenance,indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
+    return path
+
 BOOT_SIGNAL_MARKERS=(
     '[crash]',
     '[watchdog]',
@@ -208,6 +242,7 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         'timed_out':timed_out,
         'boot_outcome':outcome,
         'host_exit_code':rc,
+        'build_provenance':(metadata or {}).get('build_provenance'),
     },indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
     print(f'[boot-summary-json] {sidecar}',flush=True)
     print(f'[boot-summary] last_stage={last}',flush=True)
@@ -239,9 +274,10 @@ def verify_toolkit_checkout(path: Path, expected_commit: str|None=None) -> str:
         raise RuntimeError(f'ps3recomp pin mismatch: checkout={head}, expected={expected}; run scripts\\bootstrap.cmd')
     return head
 
-def require_toolkit(path: Path):
+def require_toolkit(path: Path) -> str:
     head=verify_toolkit_checkout(path)
     print(f'ps3recomp pin verified: {head}')
+    return head
 
 def analysis_commands(elf: Path, ps3recomp: Path, out: Path, spu_dir: Path):
     py=sys.executable
@@ -319,7 +355,7 @@ def cmd_lift(a):
         if report['unsupported_reachable']:
             raise RuntimeError(f'{img.name}: {report["unsupported_reachable"]} reachable unsupported SPU instructions')
 def cmd_build(a):
-    require_toolkit(a.ps3recomp)
+    ps3recomp_commit=require_toolkit(a.ps3recomp)
     if a.clean: shutil.rmtree(a.build,ignore_errors=True)
     a.build.mkdir(parents=True,exist_ok=True)
     backend=a.ps3recomp/'libs'/'video'/'rsx_d3d12_backend.c'
@@ -345,6 +381,15 @@ def cmd_build(a):
     if not ninja: raise FileNotFoundError('Ninja not found on PATH or in the Python ninja package')
     print(f'Ninja: {ninja}')
     run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build,ninja)); run(['cmake','--build',a.build])
+    provenance=make_build_provenance(
+        project_root=ROOT,
+        ps3recomp_commit=ps3recomp_commit,
+        hle=hle,
+        recomp=a.recomp,
+        spu=a.spu,
+    )
+    provenance_path=write_build_provenance(a.build,provenance)
+    print(f'Build provenance: {provenance_path}')
 def cmd_run(a):
     validate_inputs(a.game,a.elf)
     exe=a.exe or a.build/'CometCrashPC.exe'
@@ -356,12 +401,18 @@ def cmd_run(a):
     else:
         stamp=dt.datetime.now().strftime('%Y%m%d-%H%M%S')
         log_path=ROOT/'logs'/f'boot-{stamp}.txt'
+    provenance_path=a.build/'build_provenance.json'
+    if provenance_path.is_file():
+        build_provenance=json.loads(provenance_path.read_text(encoding='utf-8'))
+    else:
+        build_provenance={'status':'missing','path':str(provenance_path.resolve())}
     metadata={
         'exe':str(Path(exe).resolve()),
         'elf':str(a.elf.resolve()),
         'elf_sha256':sha256_file(a.elf),
         'title_root':str(title_root.resolve()),
         'runtime_environment':runtime_env,
+        'build_provenance':build_provenance,
     }
     run_logged([exe,a.elf],log_path,env=env,metadata=metadata,timeout_seconds=a.timeout)
 def parser():
