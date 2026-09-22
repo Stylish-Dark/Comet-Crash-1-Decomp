@@ -53,3 +53,7 @@ Analysis, lift and build commands must verify that the ps3recomp checkout is a G
 ## D015 — Explicit PPU no-op fallbacks are build blockers
 
 Generated PPU code must contain no generic lifter `TODO:` holes and no `unsupported SPR -- no-op` fallbacks after Comet compatibility patching. Silent unsupported guest instructions are not accepted as successful lifts.
+
+## D016 — ps3recomp cache is disposable and reproducible
+
+`external/ps3recomp` is a pinned toolchain cache, not a user workspace. Existing checkouts are restored to the exact locked upstream tree before each pipeline run, then Comet-specific runtime patches are reapplied deterministically. Local edits inside that cache are not preserved.

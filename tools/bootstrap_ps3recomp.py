@@ -17,8 +17,14 @@ def load_lock(path: Path = LOCK) -> dict[str,str]:
 
 def build_bootstrap_commands(checkout: Path, lock: dict[str,str]) -> list[list[str]]:
     if checkout.exists() and (checkout/".git").exists():
-        return [["git","-C",str(checkout),"fetch","--tags","origin"],
-                ["git","-C",str(checkout),"checkout","--detach",lock["commit"]]]
+        # external/ps3recomp is a reproducible toolchain cache, not a workspace.
+        # Reset it completely before every pipeline run so an interrupted prior
+        # Comet runtime patch cannot leak into the next lift/build.
+        return [["git","-C",str(checkout),"remote","set-url","origin",lock["repository"]],
+                ["git","-C",str(checkout),"fetch","--tags","origin"],
+                ["git","-C",str(checkout),"checkout","--detach",lock["commit"]],
+                ["git","-C",str(checkout),"reset","--hard",lock["commit"]],
+                ["git","-C",str(checkout),"clean","-ffd"]]
     return [["git","clone",lock["repository"],str(checkout)],
             ["git","-C",str(checkout),"checkout","--detach",lock["commit"]]]
 
