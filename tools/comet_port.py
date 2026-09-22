@@ -40,6 +40,11 @@ def require_supported_version(manifest: dict, version: str|None, app_version: st
 def require_supported_elf(manifest: dict, digest: str) -> None:
     if not is_reference_elf_hash(manifest,digest):
         raise ValueError(f'unsupported EBOOT reconstruction SHA-256: {digest}')
+def validate_supported_elf_file(path: Path) -> str:
+    validate_elf_header(path)
+    digest=sha256_file(path)
+    require_supported_elf(load_manifest(),digest)
+    return digest
 def find_param_sfo(root: Path) -> Path:
     for p in [root/'PARAM.SFO',root/'PS3_GAME'/'PARAM.SFO']:
         if p.exists(): return p
@@ -54,8 +59,7 @@ def validate_inputs(game_root: Path, elf: Path|None=None) -> dict:
     if got['title_id']!=m['title_id']: raise ValueError(f'wrong title id: {got["title_id"]}')
     require_supported_version(m,got['version'],got['app_version'])
     if elf:
-        validate_elf_header(elf); got['elf_sha256']=sha256_file(elf); got['elf_size']=elf.stat().st_size
-        require_supported_elf(m,got['elf_sha256'])
+        got['elf_sha256']=validate_supported_elf_file(elf); got['elf_size']=elf.stat().st_size
     return got
 
 def run(cmd, cwd=None, env=None):
@@ -182,7 +186,7 @@ def cmd_analyze(a):
     for c in analysis_commands(a.elf,a.ps3recomp,a.output,a.spu): run(c)
     local=probe_elf(a.elf); (a.output/'local_probe.json').write_text(json.dumps(local,indent=2)+'\n')
 def cmd_lift(a):
-    require_toolkit(a.ps3recomp)
+    require_toolkit(a.ps3recomp); validate_supported_elf_file(a.elf)
     if a.clean:
         shutil.rmtree(a.output,ignore_errors=True); shutil.rmtree(a.spu_output,ignore_errors=True)
         if a.spu_registry.exists(): a.spu_registry.unlink()
@@ -236,6 +240,7 @@ def cmd_build(a):
         raise RuntimeError(f'unresolved Comet HLE imports: {details}')
     run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build)); run(['cmake','--build',a.build])
 def cmd_run(a):
+    validate_inputs(a.game,a.elf)
     exe=a.exe or a.build/'CometCrashPC.exe'
     sfo=find_param_sfo(a.game); title_root=sfo.parent
     runtime_env=runtime_environment(title_root,sfo)

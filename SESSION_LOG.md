@@ -41,3 +41,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added regressions that call the default lock-based checkout verification and assert the runtime helpers are imported/callable, preventing source-only tests from missing this class again. Local gate: **78/78 tests passed** plus `compileall`.
 - Added incremental boot-log summarization in `run_logged`: it tracks the last boot stage and first concrete crash/watchdog/unimplemented signal while streaming output, appends them to the log, and prints the summary before raising on a non-zero native exit.
 - Added failure-path regression coverage. Local gate: **79/79 tests passed** plus `compileall`.
+- Closed strict-validation bypasses: `lift` now validates the supported ELF fingerprint independently, and `run` revalidates the game SFO plus ELF immediately before launching the native process.
+- Added direct-lift/direct-run gate regressions. Local gate: **81/81 tests passed** plus `compileall`.

@@ -48,6 +48,9 @@ class BuildPatchTests(unittest.TestCase):
   self.assertIn('HLE coverage gate',s)
 
 class LiftGateTests(unittest.TestCase):
+ def test_lift_revalidates_supported_elf(self):
+  s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
+  self.assertIn('require_toolkit(a.ps3recomp); validate_supported_elf_file(a.elf)',s)
  def test_lift_applies_ppu_completeness_gate_after_compat_patch(self):
   s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
   self.assertIn('audit_ppu_lift',s)
@@ -102,3 +105,12 @@ class GeneratedDirResetTests(unittest.TestCase):
    c.reset_generated_dir(p)
    self.assertTrue(p.is_dir())
    self.assertEqual(list(p.iterdir()),[])
+
+
+class RunValidationTests(unittest.TestCase):
+ def test_run_revalidates_game_and_elf_before_launch(self):
+  s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
+  start=s.index('def cmd_run(a):')
+  body=s[start:s.index('def parser():',start)]
+  self.assertIn('validate_inputs(a.game,a.elf)',body)
+  self.assertLess(body.index('validate_inputs(a.game,a.elf)'),body.index('run_logged('))
