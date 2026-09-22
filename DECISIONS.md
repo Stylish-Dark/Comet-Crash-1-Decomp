@@ -40,7 +40,7 @@ Current mouse implementation injects onto the existing PS3 pad abstraction while
 
 ## D010 — First-boot evidence outranks further speculative static work
 
-With 66/66 local tests green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
+With 71/71 CI tests green and the exact-pin Windows scaffold build green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
 
 ## D011 — GitHub/repository continuity is canonical
 
@@ -53,3 +53,7 @@ The SHA-verified recovered 68-file source tree restored at `151ede4` is canonica
 ## D013 — Checkpoint before the execution window becomes risky
 
 For long sessions, stop before the tool/execution limit is approached. Push completed work first, then update `CONTINUITY.md`, `NEXT.md`, and `SESSION_LOG.md` so a fresh conversation can resume exactly. Chat-only or uncommitted progress is never considered a safe checkpoint.
+
+## D014 — Generated PPU TODOs are a hard lift gate
+
+After applying the two known Comet VMX compatibility rewrites (`vsrab`, `vsrb`), a fresh PPU lift must contain no remaining generated `/* TODO: ... */;` instruction holes. Missing PPU chunks or any residual TODO instruction stop the pipeline before build/boot.
