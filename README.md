@@ -23,13 +23,19 @@ From a normal Command Prompt, run one command against your extracted game folder
 scripts\build_and_run.cmd "D:\Games\Comet Crash"
 ```
 
+For a deliberately bounded first-boot attempt, a second argument applies a timeout to the native-run phase while preserving diagnostics:
+
+```bat
+scripts\build_and_run.cmd "D:\Games\Comet Crash" 60
+```
+
 The script enters the Visual Studio x64 developer environment automatically, clones/verifies the pinned `ps3recomp`, decrypts this title's FREE-NPDRM EBOOT, validates NPEB00142, analyses/lifts PPU + SPU code, builds the native runner with clang-cl, and launches it. It accepts either a folder containing `PARAM.SFO` + `USRDIR`, or its parent containing `PS3_GAME`.
 
 Prerequisites: Visual Studio 2022/Build Tools with Desktop C++, Clang tools and a Windows SDK; Git; Python 3; CMake. Ninja is installed automatically if missing.
 
 While running, press **F1** for the Graphics & Input panel. Resolution changes currently apply on the next launch; borderless/windowed and VSync are live. Mouse compatibility mode maps movement onto the selected PS3 analogue stick and maps LMB/RMB/MMB to Cross/Circle/R1 while retaining physical-controller input.
 
-Each launch also writes a timestamped native boot log under `logs\` containing startup-stage markers and combined stdout/stderr. Preserve that file if the first native run stops or crashes; it is the primary next-debugging artifact. The normal run path now writes a conservative first-pass blocker classification into the boot log automatically. `python tools/boot_triage.py <boot-log>` can re-analyse a saved log independently.
+Each launch writes a timestamped `logs\boot-*.txt` plus `logs\boot-*.summary.json`. Preserve both if the first native run stops, crashes, times out or is interrupted. The structured summary records the last stage, first frame, first symptom, best subsystem-specific triage signal, conservative subsystem classification, outcome, exit/timeout/interruption state and the exact build provenance. `python tools/boot_triage.py <boot-log>` can re-analyse a saved log independently.
 
 See `docs/reversing/` for binary findings and `docs/superpowers/specs/` for the port architecture.
 

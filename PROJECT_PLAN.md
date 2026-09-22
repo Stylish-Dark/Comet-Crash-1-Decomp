@@ -36,11 +36,12 @@ A reproducible Windows-native Comet Crash port that:
    - CI scaffold compilation with the real pinned PPU lifter.
 
 5. **Diagnostics layer**
-   - Durable boot logging.
-   - Stage markers.
-   - Crash reporting.
-   - First-frame watchdog.
-   - Automatic last-stage/first-signal summary.
+   - Durable text boot logging plus machine-readable summary sidecar.
+   - Stage markers and first-frame outcome tracking.
+   - Provenance binding to the exact port/toolchain build.
+   - Native crash context and capped hang watchdog snapshots.
+   - Conservative subsystem triage that distinguishes chronological symptoms from later specific evidence.
+   - Durable timeout/Ctrl+C termination paths.
 
 ## Phases
 
@@ -90,6 +91,7 @@ Resolution/display polish, safe aspect-ratio work, frame pacing/high refresh, pa
 - Python unit/regression tests for pipeline, patchers, validation and audits.
 - `compileall` for Python syntax.
 - Repository-safety gate for proprietary-material exclusion.
+- Linux and Windows unit/`compileall` gates plus repository safety.
 - Windows CI compile/link against exact pinned ps3recomp and real pinned PPU lifter output from a non-proprietary fixture.
 - Real Windows boot logs for runtime progress.
 - Behavioural comparison with PS3/RPCS3 once gameplay is reachable.

@@ -57,3 +57,11 @@ Generated PPU code must contain no generic lifter `TODO:` holes and no `unsuppor
 ## D016 — ps3recomp cache is disposable and reproducible
 
 `external/ps3recomp` is a pinned toolchain cache, not a user workspace. Existing checkouts are restored to the exact locked upstream tree before each pipeline run, then Comet-specific runtime patches are reapplied deterministically. Local edits inside that cache are not preserved.
+
+## D017 — Runtime evidence is provenance-bound and conservative
+
+Every native boot artifact should identify the build that produced it and preserve both chronological symptoms and the first subsystem-specific signal. Generic crashes/watchdogs are evidence that execution failed or stalled, not evidence for a particular subsystem. Build provenance, structured boot outcomes and conservative triage are part of the debugging contract.
+
+## D018 — Generated-source audits are byte-safe
+
+Generated ps3recomp source is not assumed to be UTF-8 because upstream tooling may write using the host default code page. Audits whose signatures are ASCII-only operate on a reversible one-byte decoding so Windows code-page punctuation cannot turn a valid generated lift into an audit crash.

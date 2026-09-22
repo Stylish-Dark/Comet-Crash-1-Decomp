@@ -56,4 +56,23 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added `tools/boot_triage.py`, a deterministic saved-log classifier for the runtime categories already used by the work queue. It extracts the authoritative footer when present, detects the last boot stage/first signal/exit code/first-frame state, and reports a suspected subsystem plus rationale. Generic crash/watchdog symptoms deliberately remain `unknown` rather than inventing a cause.
 - Added 6 focused triage regressions; standalone local gate: **6/6 tests passed** and `compileall` passed for the new module/tests.
 - The real first Windows boot remains externally blocked; next cycle should consume the actual log with the triage tool and fix only the first evidenced blocker.
-\n- Integrated `boot_triage.classify_signal` directly into `tools/comet_port.py`'s durable `run_logged` footer and console summary. Native runs now automatically append `suspected_subsystem` and `triage_rationale`; no second command is required for the initial classification.\n- Extended boot-log regression coverage for both generic-watchdog=`unknown` and HLE=`hle` cases. A standalone integration harness exercised both paths successfully (**2/2**).\n- Engineering checkpoint: `63690db12956f0fc0c6182bccfd6a69e84d9b6c8` (`boot: classify native failures automatically`).\n
+
+- Integrated `boot_triage.classify_signal` directly into `tools/comet_port.py`'s durable `run_logged` footer and console summary. Native runs now automatically append `suspected_subsystem` and `triage_rationale`; no second command is required for the initial classification.
+- Extended boot-log regression coverage for both generic-watchdog=`unknown` and HLE=`hle` cases. A standalone integration harness exercised both paths successfully (**2/2**).
+- Engineering checkpoint: `63690db12956f0fc0c6182bccfd6a69e84d9b6c8` (`boot: classify native failures automatically`).
+
+## 2026-09-23 — First-boot evidence pipeline hardened and cross-platform validated
+
+- Changed triage to preserve the first chronological symptom while separately selecting the first subsystem-specific signal; a generic watchdog can no longer hide a later HLE/RSX/SPU signature. Commit: `de067fb`.
+- Added durable Ctrl+C handling and optional native-run timeout. Timeout termination escalates through the same terminate -> 5-second grace -> kill path. Fixed the Windows batch forwarding bug found during read-back. Commits: `8803900`, `7927639`, `878cb7f`.
+- Added structured `.summary.json` output and explicit boot outcomes, including first-frame state, signals, subsystem/rationale, interruption/timeout state and exit code. Commit: `53353af`.
+- Enriched native crash/hang evidence: crash stage, frame count, last HLE breadcrumb, guest-VM AV target/offset, plus capped watchdog snapshots at 10/30/60/120/300 seconds. Commit: `dd06107`.
+- Added `build/build_provenance.json` and embedded it into boot evidence: port Git commit/dirty state, exact ps3recomp pin, HLE coverage and generated PPU/SPU unit counts. Commit: `1484521`.
+- Opened validation PR #4 to run the full regression suite on Windows before the real-lifter/native-link gate.
+- First validation run exposed two real defects:
+  - boot-summary footer metadata was being reparsed as live runtime evidence;
+  - the Windows pinned lifter emitted host-code-page source containing byte `0x97`, while `audit_ppu_lift.py` incorrectly required UTF-8.
+- Fixed both defects on the validation branch. PPU audit now performs reversible Latin-1 byte scanning because its markers are ASCII-only.
+- Final GitHub Actions run `35748082438` passed: **118/118 tests**, `compileall`, repository safety, Windows unit suite, all Comet runtime patchers, real pinned PPU lifter fixture/audit, and final clang-cl/Ninja link of `CometCrashPC.exe`.
+- PR #4 merged into `main` as `97132306700d999289b1a6503807fbdc767a3570`.
+- The next decisive evidence remains the first real Windows run against the user's supported NPEB00142 v1.00 game data.

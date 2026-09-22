@@ -30,10 +30,13 @@ The static-analysis, lift, compatibility, reproducibility and pre-boot diagnosti
 - Preserved controller input and added mouse compatibility-mode injection through the original `cellPadGetData` path.
 - Added persistent host settings and an F1 Graphics & Input overlay.
 - Hardened fresh-machine bootstrap, exact toolchain reset, dependency verification, Ninja discovery and clean analysis/lift/build state.
-- Added durable boot logs, stage markers, native crash diagnostics, first-frame hang watchdog and automatic failure summaries.
-- Added `tools/boot_triage.py`, which classifies saved boot evidence into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, input, or `unknown` without guessing from generic crash/watchdog symptoms.
-- Added Windows CI that clones the exact ps3recomp pin, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, and compiles/links `CometCrashPC.exe`. The CI SPU fixture remains synthetic.
-- Most recent recorded local regression gate: **86/86 tests passing**, plus `compileall`. Repository-safety checks have also passed in a real Git checkout.
+- Added durable boot logs, stage markers, native crash diagnostics, capped 10/30/60/120/300-second hang snapshots and automatic failure summaries.
+- Added `tools/boot_triage.py`, which preserves the first chronological symptom, prefers the first later subsystem-specific signal for classification, and classifies evidence into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, input, or `unknown` without guessing from generic crash/watchdog symptoms.
+- Native runs now preserve diagnostics on Ctrl+C and support an optional bounded timeout; timeout escalates terminate → 5-second grace → kill.
+- Every completed run writes both the human-readable boot log and a structured `.summary.json` sidecar containing the outcome, first-frame state, signals, subsystem/rationale, timeout/interruption state and exit code.
+- Successful builds write `build/build_provenance.json` with the port Git commit/dirty state, exact ps3recomp commit, HLE coverage and generated PPU/SPU unit counts; run logs embed that provenance.
+- Added Windows CI that clones the exact ps3recomp pin, runs the full unit/`compileall` suite on Windows, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, and compiles/links `CometCrashPC.exe`. The CI SPU fixture remains synthetic.
+- Latest authoritative validation (GitHub Actions run `35748082438`): **118/118 tests passed**, `compileall` passed, repository safety passed, the Windows unit suite passed, the real pinned-lifter fixture passed, and clang-cl/Ninja linked `CometCrashPC.exe` successfully.
 
 ## Current working state
 
@@ -45,11 +48,12 @@ scripts\build_and_run.cmd "D:\Games\Comet Crash"
 
 It performs toolchain bootstrap, EBOOT reconstruction, strict validation, clean analysis, analysis-baseline verification, clean PPU/SPU lift, compatibility/audit gates, clean native build, and launch.
 
-The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` and records:
-- startup metadata;
-- last `[boot-stage]`;
-- first concrete crash/watchdog/unimplemented signal when detected;
-- host exit code;\n- automatic evidence-based `suspected_subsystem` and `triage_rationale` fields.
+The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-HHMMSS.summary.json`. Evidence includes:
+- startup/runtime metadata and embedded build provenance;
+- last `[boot-stage]` and whether the first guest frame was ever presented;
+- first chronological symptom plus the first subsystem-specific `triage_signal` when one appears later;
+- evidence-based `suspected_subsystem` and `triage_rationale`;
+- timeout/interruption state, host exit code and a coarse `boot_outcome` such as `failure-before-frame`, `clean-visible-exit`, `visible-output-then-failure`, `timed-out`, or `interrupted`.
 
 ## Established findings
 
@@ -95,9 +99,9 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Repository state reconstructed at GitHub `main` commit `a4cbef69f03fce29999a7df48015f7acbc7abaab`.
+Latest validated engineering merge on `main`: `97132306700d999289b1a6503807fbdc767a3570` — **ci: validate runtime diagnostics on Windows**.
 
-The immediately preceding engineering checkpoint is `a4cbef69f03fce29999a7df48015f7acbc7abaab` — **Gate analysis against known Comet baseline**.
+That validation closed two cross-platform defects: boot-summary footer lines being reparsed as runtime signals, and Windows-generated PPU source failing the audit because the host default encoding was not UTF-8.
 
 ## Immediate next action
 
@@ -107,4 +111,4 @@ Run the supported title on Windows:
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"
 ```
 
-Preserve the generated boot log. The normal `run` path now records the initial evidence-based subsystem classification automatically; `python tools/boot_triage.py <boot-log>` remains available for re-analysis. The next AI work unit is to verify that classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
+Preserve both the generated `.txt` log and `.summary.json` sidecar. For a deliberately bounded attempt, `scripts\build_and_run.cmd "<game folder>" 60` applies a 60-second timeout to the native-run phase while still preserving diagnostics. The next AI work unit is to inspect the real evidence, verify its classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.

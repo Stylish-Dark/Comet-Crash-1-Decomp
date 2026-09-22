@@ -6,16 +6,16 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 [ ] **Capture first native Windows boot evidence**
 - Input: supported NPEB00142 v1.00 extracted game directory.
-- Run `scripts\build_and_run.cmd "<game folder>"`.
-- Preserve `logs\boot-*.txt`.
-- Confirm the boot-log footer contains `suspected_subsystem` and `triage_rationale`; the normal run path now writes them automatically. `python tools/boot_triage.py <boot-log>` remains available for manual re-analysis.
-- Success for this work unit: a complete boot log with the last boot stage, first concrete failure/success signal, and triage classification.
+- Run `scripts\build_and_run.cmd "<game folder>"`. If a bounded attempt is preferable, pass a native-run timeout as the second argument, e.g. `scripts\build_and_run.cmd "<game folder>" 60`.
+- Preserve both `logs\boot-*.txt` and the adjacent `logs\boot-*.summary.json`.
+- Confirm the summary contains build provenance, `boot_outcome`, first-frame state, `first_signal`, `triage_signal`, `suspected_subsystem`, `triage_rationale`, timeout/interruption state and exit code.
+- Success for this work unit: a provenance-bound boot artifact that identifies how far the native title actually reached and the first concrete runtime blocker, if any.
 - Blocker: requires a Windows machine plus the user's local game data.
 
 ## Next
 
 [ ] **Verify triage and fix the first evidenced native blocker**
-- Use the boot log and `tools/boot_triage.py`; do not speculate ahead.
+- Use the `.summary.json` plus the full text log; `tools/boot_triage.py` remains available for independent re-analysis. Do not speculate ahead.
 - Classify into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, or input.
 - Make the smallest faithful fix.
 - Add a focused regression test or deterministic audit.
@@ -57,4 +57,10 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Add Windows real-lifter compile/link CI gate.
 [x] Add native crash, hang and boot-summary diagnostics.
 [x] Establish `STATE.md`, `WORK_QUEUE.md` and `PROJECT_PLAN.md` as the durable handoff structure.
-[x] Add deterministic saved-boot-log subsystem triage with conservative `unknown` handling for generic crash/watchdog symptoms.\n[x] Integrate that triage directly into `comet_port.py run` so every native boot log automatically records subsystem/rationale.
+[x] Add deterministic saved-boot-log subsystem triage with conservative `unknown` handling for generic crash/watchdog symptoms.
+[x] Integrate triage directly into `comet_port.py run` and prefer later subsystem-specific evidence over an earlier generic watchdog.
+[x] Preserve boot diagnostics across optional timeout and Ctrl+C; bound timeout termination with kill escalation.
+[x] Emit structured `.summary.json` boot outcomes and embed exact build provenance.
+[x] Enrich native crash/watchdog evidence with stage, frames, HLE breadcrumb and guest-VM AV location.
+[x] Run the full 118-test suite on Linux and Windows CI; verify real pinned PPU lifter staging and clang-cl/Ninja native scaffold link.
+[x] Fix Windows host-encoding drift in generated PPU auditing and prevent footer metadata from being reparsed as runtime signals.
