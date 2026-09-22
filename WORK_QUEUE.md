@@ -8,7 +8,7 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - Input: supported NPEB00142 v1.00 extracted game directory.
 - Run `scripts\build_and_run.cmd "<game folder>"`.
 - Preserve `logs\boot-*.txt`.
-- Run `python tools/boot_triage.py <boot-log>` to obtain the initial evidence-based subsystem classification.
+- Confirm the boot-log footer contains `suspected_subsystem` and `triage_rationale`; the normal run path now writes them automatically. `python tools/boot_triage.py <boot-log>` remains available for manual re-analysis.
 - Success for this work unit: a complete boot log with the last boot stage, first concrete failure/success signal, and triage classification.
 - Blocker: requires a Windows machine plus the user's local game data.
 
@@ -57,4 +57,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Add Windows real-lifter compile/link CI gate.
 [x] Add native crash, hang and boot-summary diagnostics.
 [x] Establish `STATE.md`, `WORK_QUEUE.md` and `PROJECT_PLAN.md` as the durable handoff structure.
-[x] Add deterministic saved-boot-log subsystem triage with conservative `unknown` handling for generic crash/watchdog symptoms.
+[x] Add deterministic saved-boot-log subsystem triage with conservative `unknown` handling for generic crash/watchdog symptoms.\n[x] Integrate that triage directly into `comet_port.py run` so every native boot log automatically records subsystem/rationale.

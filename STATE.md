@@ -49,7 +49,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` and records:
 - startup metadata;
 - last `[boot-stage]`;
 - first concrete crash/watchdog/unimplemented signal when detected;
-- host exit code.
+- host exit code;\n- automatic evidence-based `suspected_subsystem` and `triage_rationale` fields.
 
 ## Established findings
 
@@ -107,4 +107,4 @@ Run the supported title on Windows:
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"
 ```
 
-Preserve the generated boot log, then run `python tools/boot_triage.py <boot-log>`. The next AI work unit is to verify that evidence-based classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
+Preserve the generated boot log. The normal `run` path now records the initial evidence-based subsystem classification automatically; `python tools/boot_triage.py <boot-log>` remains available for re-analysis. The next AI work unit is to verify that classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
