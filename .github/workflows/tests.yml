@@ -30,6 +30,12 @@ jobs:
           git -C external/ps3recomp checkout --detach $lock.commit
           python -m pip install -r external/ps3recomp/requirements.txt
 
+      - name: Run unit suite on Windows
+        shell: pwsh
+        run: |
+          python -m unittest discover -v
+          python -m compileall -q tools tests
+
       - name: Apply pinned Comet runtime patches
         shell: pwsh
         run: |
