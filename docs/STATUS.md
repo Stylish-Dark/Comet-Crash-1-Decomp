@@ -26,7 +26,7 @@ The repository remains pinned to upstream commit `d3ed1a5c946a9c5370b51631e13371
 - First full lift completed: 3,744 PPU functions emitted after boundary recovery/tail wrappers.
 - The small SPU lift has 28 reachable functions with zero unsupported instructions.
 - The MultiStream MP3 SPU has 1,099 functions reachable from entry 0x3050; all 446 unsupported `.word` markers are outside that reachable set.
-- The v0.12.1 PPU lifter left exactly two real VMX holes (`vsrab`, `vsrb`); `tools/patch_ppu_lift.py` patches them alias-safely and the lift command now applies that automatically.
+- The exact pinned PPU lifter still leaves the two known Comet VMX holes (`vsrab`, `vsrb`); `tools/patch_ppu_lift.py` patches them alias-safely and the lift command applies that automatically. A post-patch PPU completeness audit then fails the lift if any generated `/* TODO: ... */;` instruction remains.
 - The Windows host layer has persistent settings, an F1 in-game Graphics & Input overlay, live windowed/borderless switching, a live VSync switch (via a deterministic ps3recomp D3D12 source patch), and mouse/controller coexistence through an exact `cellPadGetData` HLE override.
 - Mouse movement currently uses compatibility-mode analogue injection. Direct absolute world/UI-pointer injection remains a later refinement after the native boot path is proven.
 - `scripts/build_and_run.cmd` automates the entire user-owned-game -> native EXE pipeline on Windows.
@@ -36,5 +36,7 @@ The repository remains pinned to upstream commit `d3ed1a5c946a9c5370b51631e13371
 - Fresh-Windows preflight is hardened: VS environment detection uses `VSCMD_VER`; Ninja may come from PATH or the Python wheel and its concrete executable is passed to CMake; clang-cl is configured with no strict-aliasing assumptions and FP contraction disabled.
 - CI now has a Windows scaffold compile/link job against the exact locked ps3recomp commit. It applies every Comet runtime patch and uses synthetic generated PPU/SPU fixtures only, so compiler/CMake/linkage drift can be caught without proprietary title data.
 - First-boot diagnostics are now durable: the run command mirrors combined native stdout/stderr into `logs/boot-YYYYMMDD-HHMMSS.txt`, records ELF/runtime-path metadata, and the runner emits `[boot-stage]` checkpoints through PPU entry plus the first presented guest frame.
+
+GitHub PR run `35679740111` passed the exact-pin Windows scaffold gate: the pinned ps3recomp checkout plus all five Comet runtime patches compiled and linked `CometCrashPC.exe` successfully using non-proprietary synthetic generated-code fixtures.
 
 **Not yet claimed:** successful native Windows boot/playability. This Linux execution environment has no Windows SDK/D3D12 runtime, so the real EXE must still be built/run on Windows. The next engineering phase is first-boot logging and resolving any title-specific HLE/RSX/SPURS runtime failures until missions are playable.
