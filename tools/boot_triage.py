@@ -45,6 +45,7 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("spurs/spu", (
         "cellspurs",
         "[spu]",
+        "unsupported spu",
         "spu ",
         "jobchain",
         "job chain",
@@ -124,6 +125,7 @@ def _detect_first_signal(line: str) -> str | None:
 def summarize_lines(lines: list[str]) -> dict[str, object]:
     last_stage: str | None = None
     first_signal: str | None = None
+    first_specific_signal: str | None = None
     host_exit_code: int | None = None
     footer: dict[str, str] = {}
 
@@ -131,8 +133,13 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         line = raw.rstrip("\r\n")
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
-        if first_signal is None:
-            first_signal = _detect_first_signal(line)
+        detected = _detect_first_signal(line)
+        if detected is not None:
+            if first_signal is None:
+                first_signal = detected
+            category, _ = classify_signal(detected)
+            if category != "unknown" and first_specific_signal is None:
+                first_specific_signal = detected
 
         m = SUMMARY_RE.match(line)
         if m:
@@ -144,13 +151,16 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         last_stage = footer["last_boot_stage"]
     if footer.get("first_signal") and footer["first_signal"] != "<none>":
         first_signal = footer["first_signal"]
+    if footer.get("triage_signal") and footer["triage_signal"] != "<none>":
+        first_specific_signal = footer["triage_signal"]
     if "host_exit_code" in footer:
         try:
             host_exit_code = int(footer["host_exit_code"], 0)
         except ValueError:
             host_exit_code = None
 
-    subsystem, rationale = classify_signal(first_signal)
+    triage_signal = first_specific_signal or first_signal
+    subsystem, rationale = classify_signal(triage_signal)
     first_frame_presented = any(
         line.strip() == f"{BOOT_STAGE_PREFIX}first guest frame presented"
         for line in lines
@@ -159,6 +169,7 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
     return {
         "last_boot_stage": last_stage,
         "first_signal": first_signal,
+        "triage_signal": triage_signal,
         "host_exit_code": host_exit_code,
         "first_frame_presented": first_frame_presented,
         "suspected_subsystem": subsystem,
@@ -184,6 +195,7 @@ def main() -> int:
     else:
         print(f"last boot stage:      {report['last_boot_stage'] or '<none>'}")
         print(f"first signal:         {report['first_signal'] or '<none>'}")
+        print(f"triage signal:        {report['triage_signal'] or '<none>'}")
         print(f"host exit code:       {report['host_exit_code'] if report['host_exit_code'] is not None else '<unknown>'}")
         print(f"first frame presented:{' yes' if report['first_frame_presented'] else ' no'}")
         print(f"suspected subsystem:  {report['suspected_subsystem']}")

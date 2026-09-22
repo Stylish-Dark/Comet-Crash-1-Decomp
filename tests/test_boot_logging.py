@@ -54,9 +54,24 @@ class BootLogTests(unittest.TestCase):
             text=log.read_text(encoding='utf-8')
             self.assertIn('# last_boot_stage=entering recompiled title',text)
             self.assertIn('# first_signal=[watchdog] no guest frame after 10s',text)
+            self.assertIn('# triage_signal=[watchdog] no guest frame after 10s',text)
             self.assertIn('# suspected_subsystem=unknown',text)
             self.assertIn('watchdog confirms a hang but does not identify its subsystem',text)
             self.assertIn('# host_exit_code=9',text)
+
+    def test_later_specific_signal_drives_live_triage(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=('print("[boot-stage] entering recompiled title"); '
+                  'print("[watchdog] no guest frame after 10s"); '
+                  'print("[HLE] UNIMPLEMENTED nid=0xCAFEBABE"); '
+                  'raise SystemExit(9)')
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],log)
+            text=log.read_text(encoding='utf-8')
+            self.assertIn('# first_signal=[watchdog] no guest frame after 10s',text)
+            self.assertIn('# triage_signal=[HLE] UNIMPLEMENTED nid=0xCAFEBABE',text)
+            self.assertIn('# suspected_subsystem=hle',text)
 
     def test_run_logged_classifies_hle_failure(self):
         with tempfile.TemporaryDirectory() as td:

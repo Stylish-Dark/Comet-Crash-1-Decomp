@@ -35,8 +35,25 @@ class BootTriageTests(unittest.TestCase):
         report = b.summarize_lines(lines)
         self.assertEqual(report["last_boot_stage"], "HLE NID table initialized")
         self.assertEqual(report["first_signal"], "[HLE] UNIMPLEMENTED nid=0xDEADBEEF")
+        self.assertEqual(report["triage_signal"], "[HLE] UNIMPLEMENTED nid=0xDEADBEEF")
         self.assertEqual(report["host_exit_code"], 7)
         self.assertEqual(report["suspected_subsystem"], "hle")
+
+    def test_later_specific_signal_overrides_generic_first_symptom(self):
+        report = b.summarize_lines([
+            "[boot-stage] entering recompiled title",
+            "[watchdog] no guest frame after 10s",
+            "[HLE] UNIMPLEMENTED nid=0xCAFEBABE",
+            "[crash] code=0xC0000005",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["first_signal"], "[watchdog] no guest frame after 10s")
+        self.assertEqual(report["triage_signal"], "[HLE] UNIMPLEMENTED nid=0xCAFEBABE")
+        self.assertEqual(report["suspected_subsystem"], "hle")
+
+    def test_unsupported_spu_is_specific(self):
+        category, _ = b.classify_signal("unsupported SPU opcode at 0x100")
+        self.assertEqual(category, "spurs/spu")
 
     def test_first_frame_is_reported(self):
         report = b.summarize_lines([

@@ -88,12 +88,19 @@ def update_boot_summary(summary: dict[str,str|None], line: str) -> None:
     text=line.strip()
     if text.startswith('[boot-stage] '):
         summary['last_boot_stage']=text[len('[boot-stage] '):]
+    lower=text.lower()
+    detected=False
+    for marker in BOOT_SIGNAL_MARKERS:
+        if marker.lower() in lower:
+            detected=True
+            break
+    if not detected:
+        return
     if summary.get('first_signal') is None:
-        lower=text.lower()
-        for marker in BOOT_SIGNAL_MARKERS:
-            if marker.lower() in lower:
-                summary['first_signal']=text
-                break
+        summary['first_signal']=text
+    subsystem,_=classify_boot_signal(text)
+    if subsystem!='unknown' and summary.get('first_specific_signal') is None:
+        summary['first_specific_signal']=text
 
 def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
     """Run a native boot while mirroring combined stdout/stderr to a durable log."""
@@ -110,7 +117,7 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         log.write('# Comet Crash native boot log\n')
         log.write(json.dumps(header,indent=2,sort_keys=True)+'\n\n')
         log.flush()
-        summary: dict[str,str|None]={'last_boot_stage':None,'first_signal':None}
+        summary: dict[str,str|None]={'last_boot_stage':None,'first_signal':None,'first_specific_signal':None}
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
         assert proc.stdout is not None
@@ -122,15 +129,20 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         rc=proc.wait()
         last=summary['last_boot_stage'] or '<none>'
         signal=summary['first_signal'] or '<none>'
-        subsystem,rationale=classify_boot_signal(summary['first_signal'])
+        triage_signal=summary['first_specific_signal'] or summary['first_signal']
+        triage_display=triage_signal or '<none>'
+        subsystem,rationale=classify_boot_signal(triage_signal)
         log.write(f'\n# last_boot_stage={last}\n')
         log.write(f'# first_signal={signal}\n')
+        log.write(f'# triage_signal={triage_display}\n')
         log.write(f'# suspected_subsystem={subsystem}\n')
         log.write(f'# triage_rationale={rationale}\n')
         log.write(f'# host_exit_code={rc}\n'); log.flush()
     print(f'[boot-summary] last_stage={last}',flush=True)
     if summary['first_signal']:
         print(f'[boot-summary] first_signal={summary["first_signal"]}',flush=True)
+    if triage_signal:
+        print(f'[boot-summary] triage_signal={triage_signal}',flush=True)
     print(f'[boot-summary] suspected_subsystem={subsystem}',flush=True)
     print(f'[boot-summary] triage_rationale={rationale}',flush=True)
     if rc:
