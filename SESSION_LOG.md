@@ -33,3 +33,8 @@
 - Added CI-scaffold regression tests. Local gate: **66/66 tests passed**, `compileall` passed, and workflow YAML parses.
 
 Next action: run the one-command Windows pipeline and use the generated boot log to identify the first actual native blocker.
+
+- Verified GitHub `main` currently contains the recovered advanced tree plus subsequent hardening commits through `c20cf171` (`Add Windows scaffold build gate`).
+- Corrected stale continuity wording/test counts: current local regression gate is **66/66**.
+- Recorded an explicit execution-window safety rule: stop substantive work before the session becomes risky, push all completed work, update continuity/next/session state, and only then end the work session.
+- No substantive code produced after `c20cf171` was left only in chat; the VMX pin-compatibility check had begun but no new source change was made from it.

@@ -6,7 +6,7 @@ Produce a Windows-native static-recompilation port of **Comet Crash 1** from the
 
 ## Current state
 
-This recovered checkpoint is materially ahead of the temporary scaffold that replaced the GitHub repository. It is the authoritative engineering state to preserve and restore.
+The recovered advanced tree is fully restored on GitHub `main`. The repository is again the canonical project state; the obsolete temporary scaffold has been superseded.
 
 Current project state:
 
@@ -20,7 +20,7 @@ Current project state:
 - F1 host Graphics & Input overlay and persistent settings are implemented;
 - the one-command Windows pipeline is `scripts/build_and_run.cmd`;
 - first-boot diagnostics now produce a durable boot log and fine-grained native initialization stage markers;
-- current local regression gate: **61/61 tests passing**, plus `compileall` and repository-safety checks.
+- current local regression gate: **66/66 tests passing**, plus `compileall`; the repository safety gate has passed in a real Git checkout.
 
 **Not yet established:** successful native Windows boot, visible title/menu output, or playable missions. This environment cannot execute the Windows/D3D12 build.
 
@@ -117,3 +117,14 @@ After the run:
 - `NEXT.md` — immediate work queue.
 - `DECISIONS.md` — durable decisions/rejected approaches.
 - `SESSION_LOG.md` — chronological checkpoints.
+
+## Session checkpoint discipline
+
+For long work sessions, do not run until the tool/execution window is exhausted. Before the session becomes risky:
+
+1. stop substantive work;
+2. commit and push all completed source/test/documentation changes to GitHub;
+3. update `CONTINUITY.md`, `NEXT.md`, and `SESSION_LOG.md` with the exact current state, last verified test result, unresolved work, and next action;
+4. only then report the checkpoint and stop the session.
+
+GitHub is the continuity boundary. Uncommitted or chat-only progress must never be treated as durable project state.

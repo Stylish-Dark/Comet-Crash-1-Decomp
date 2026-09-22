@@ -40,9 +40,16 @@ Current mouse implementation injects onto the existing PS3 pad abstraction while
 
 ## D010 — First-boot evidence outranks further speculative static work
 
-With 61/61 local tests green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
+With 66/66 local tests green and the lift/HLE gates clean, the next engineering decisions must be driven by a real Windows native boot log. Do not invent the next blocker in advance.
 
 ## D011 — GitHub/repository continuity is canonical
 
 The repository must always carry enough structured state for a fresh conversation to resume without chat history. `CONTINUITY.md` is read first; meaningful milestones update `NEXT.md` and `SESSION_LOG.md` immediately.
-\n## D012 — Recovered advanced tree supersedes the temporary scaffold\n\nThe SHA-verified recovered 68-file source tree restored at `151ede4` is canonical. Do not reintroduce the earlier M1-only scaffold or treat it as a newer project state.\n
+
+## D012 — Recovered advanced tree supersedes the temporary scaffold
+
+The SHA-verified recovered 68-file source tree restored at `151ede4` is canonical. Do not reintroduce the earlier M1-only scaffold or treat it as a newer project state.
+
+## D013 — Checkpoint before the execution window becomes risky
+
+For long sessions, stop before the tool/execution limit is approached. Push completed work first, then update `CONTINUITY.md`, `NEXT.md`, and `SESSION_LOG.md` so a fresh conversation can resume exactly. Chat-only or uncommitted progress is never considered a safe checkpoint.
