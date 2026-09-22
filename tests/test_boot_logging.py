@@ -149,6 +149,18 @@ class BootLogTests(unittest.TestCase):
         args=comet_port.parser().parse_args(['run','game','EBOOT.ELF','--timeout','45'])
         self.assertEqual(args.timeout,45.0)
 
+    def test_native_crash_records_runtime_context(self):
+        src=(ROOT/'port'/'main.cpp').read_text(encoding='utf-8')
+        self.assertIn('[crash] last_stage=%s frames=%ld last_hle=',src)
+        self.assertIn('access_target_region=guest_vm',src)
+        self.assertIn('guest_offset=0x%llX',src)
+        self.assertIn('access_target_region=outside_guest_vm',src)
+
+    def test_watchdog_has_capped_long_hang_snapshots(self):
+        src=(ROOT/'port'/'main.cpp').read_text(encoding='utf-8')
+        self.assertIn('10000u,20000u,30000u,60000u,180000u',src)
+        self.assertIn('Cumulative snapshots at 10s, 30s, 60s, 120s and 300s',src)
+
     def test_native_runner_has_stage_markers_and_first_frame_marker(self):
         src=(ROOT/'port'/'main.cpp').read_text(encoding='utf-8')
         for marker in [

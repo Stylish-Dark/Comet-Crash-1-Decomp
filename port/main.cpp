@@ -95,7 +95,9 @@ static void boot_stage(const char* stage){
 }
 
 static DWORD WINAPI boot_watchdog(LPVOID){
-    static const DWORD waits_ms[]={10000u,20000u};
+    /* Cumulative snapshots at 10s, 30s, 60s, 120s and 300s.  Keep this
+     * capped so a deliberately long session does not spam the boot log. */
+    static const DWORD waits_ms[]={10000u,20000u,30000u,60000u,180000u};
     unsigned elapsed=0;
     for(DWORD wait_ms:waits_ms){
         Sleep(wait_ms); elapsed+=(unsigned)(wait_ms/1000u);
@@ -127,11 +129,24 @@ static LONG WINAPI crash_filter(EXCEPTION_POINTERS* ep){
     uintptr_t rva=(image&&address)?(uintptr_t)address-(uintptr_t)image:0;
     fprintf(stderr,"\n[crash] code=0x%08lX address=%p image_rva=0x%llX thread=%lu\n",
             (unsigned long)code,address,(unsigned long long)rva,(unsigned long)GetCurrentThreadId());
+    {
+        const char* stage=g_last_boot_stage?g_last_boot_stage:"<none>";
+        const char* hle=g_last_hle_name&&*g_last_hle_name?g_last_hle_name:"<none>";
+        fprintf(stderr,"[crash] last_stage=%s frames=%ld last_hle=0x%08X (%s)\n",
+                stage,(long)g_frames_presented,g_last_hle_nid,hle);
+    }
     if(code==EXCEPTION_ACCESS_VIOLATION&&ep&&ep->ExceptionRecord){
         ULONG_PTR op=ep->ExceptionRecord->ExceptionInformation[0];
         ULONG_PTR target=ep->ExceptionRecord->ExceptionInformation[1];
         const char* kind=op==0?"read":op==1?"write":op==8?"execute":"unknown";
         fprintf(stderr,"[crash] access_violation=%s target=0x%llX\n",kind,(unsigned long long)target);
+        uintptr_t vm=(uintptr_t)vm_base;
+        if(vm_base&&target>=vm&&target<vm+VM_SIZE){
+            fprintf(stderr,"[crash] access_target_region=guest_vm guest_offset=0x%llX\n",
+                    (unsigned long long)(target-vm));
+        }else{
+            fprintf(stderr,"[crash] access_target_region=outside_guest_vm\n");
+        }
     }
     fflush(stderr);
     return EXCEPTION_CONTINUE_SEARCH;
