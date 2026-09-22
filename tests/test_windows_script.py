@@ -25,5 +25,6 @@ class NativeRunTimeoutTests(unittest.TestCase):
  def test_optional_native_run_timeout_is_forwarded(self):
   s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
   self.assertIn('boot-timeout-seconds',s)
-  self.assertIn('RUN_TIMEOUT_ARG',s)
-  self.assertIn('!RUN_TIMEOUT_ARG!',s)
+  self.assertIn('boot-timeout-seconds',s)
+  self.assertIn('--timeout "%~2"',s)
+  self.assertNotIn('RUN_TIMEOUT_ARG',s)

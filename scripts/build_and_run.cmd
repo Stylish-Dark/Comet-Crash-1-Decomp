@@ -5,8 +5,9 @@ set "ROOT=%~dp0.."
 cd /d "%ROOT%"
 
 if "%~1"=="" (
-  echo Usage: scripts\build_and_run.cmd ^<extracted Comet Crash game folder^>
+  echo Usage: scripts\build_and_run.cmd ^<extracted Comet Crash game folder^> [boot-timeout-seconds]
   echo Example: scripts\build_and_run.cmd "D:\Games\Comet Crash"
+  echo Example with timeout: scripts\build_and_run.cmd "D:\Games\Comet Crash" 60
   exit /b 2
 )
 set "GAME=%~f1"
@@ -84,7 +85,11 @@ py -3 "%ROOT%\tools\comet_port.py" build --clean || exit /b !errorlevel!
 
 echo [7/7] Starting Comet Crash PC...
 echo        F1 = Graphics/Input menu
-py -3 "%ROOT%\tools\comet_port.py" run "%TITLE_ROOT%" "%ELF%" !RUN_TIMEOUT_ARG!
+if "%~2"=="" (
+  py -3 "%ROOT%\tools\comet_port.py" run "%TITLE_ROOT%" "%ELF%"
+) else (
+  py -3 "%ROOT%\tools\comet_port.py" run "%TITLE_ROOT%" "%ELF%" --timeout "%~2"
+)
 set "RC=%ERRORLEVEL%"
 echo.
 echo Comet Crash PC exited with code %RC%.
