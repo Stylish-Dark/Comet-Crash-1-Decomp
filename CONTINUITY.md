@@ -20,7 +20,7 @@ Current project state:
 - F1 host Graphics & Input overlay and persistent settings are implemented;
 - the one-command Windows pipeline is `scripts/build_and_run.cmd`;
 - first-boot diagnostics now produce a durable boot log and fine-grained native initialization stage markers;
-- current CI regression gate: **71/71 tests passing**, `compileall` passing, repository safety passing, and the Windows scaffold compile/link job passing against the exact pinned `ps3recomp` checkout.
+- current CI regression gate: **74/74 tests passing**, `compileall` passing, repository safety passing, and the Windows scaffold compile/link job passing against the exact pinned `ps3recomp` checkout.
 
 **Not yet established:** successful native Windows boot, visible title/menu output, or playable missions. This environment cannot execute the Windows/D3D12 build.
 
@@ -62,7 +62,7 @@ Do not silently move this pin. Runtime source patchers deliberately fail on upst
 - `tools/decrypt_comet_self.py` — local FREE-NPDRM SELF reconstruction.
 - `tools/ps3_probe.py` — PPU/import/SPU/callsite probing.
 - `tools/comet_port.py` — decrypt → validate → analyse → lift → build → run pipeline.
-- `tools/patch_ppu_lift.py` — explicit Comet VMX fixes.
+- `tools/patch_ppu_lift.py` — explicit Comet VMX fixes; generated-source handling is byte-preserving across Windows default encodings.
 - `tools/audit_spu_lift.py` — reachable SPU unsupported-instruction gate.
 - `tools/audit_ppu_lift.py` — post-compatibility PPU completeness gate; a fresh lift fails if any generated `/* TODO: ... */;` instruction hole remains or if the expected PPU chunks are missing.
 - `tools/audit_hle_coverage.py` — exact 171-import coverage gate; port overrides count only when their NID is actually registered, not merely declared as a constant.
@@ -74,7 +74,7 @@ Do not silently move this pin. Runtime source patchers deliberately fail on upst
 - Boot diagnostics now write `logs/boot-YYYYMMDD-HHMMSS.txt` by default and include stage markers through PPU entry plus the first presented guest frame.
 - Windows bootstrap now keys developer-environment setup off `VSCMD_VER` rather than a stray `cl.exe`, discovers Ninja either on PATH or from the PyPI `ninja` wheel, and passes the exact Ninja executable to CMake.
 - clang-cl builds explicitly disable strict-aliasing assumptions and floating-point contraction to retain the upstream recompilation semantics; the irrelevant `/experimental:c11atomics` clang-cl flag was removed.
-- GitHub CI now includes a Windows compile/link gate: it clones the exact ps3recomp pin, applies all five Comet runtime patchers, stages synthetic (non-proprietary) generated-code fixtures, and builds `CometCrashPC.exe` with clang-cl/Ninja. PR run `35679740111` passed both Linux and Windows jobs; the Windows job compiled and linked the executable successfully.
+- GitHub CI now includes a Windows compile/link gate: it clones the exact ps3recomp pin, applies all five Comet runtime patchers, uses a non-proprietary one-instruction PPC fixture to run the real pinned `ppu_lifter.py`, applies the same PPU compatibility patch and completeness audit as the Comet pipeline, then compiles/links `CometCrashPC.exe` with clang-cl/Ninja. PR run `35680385634` passed both Linux and Windows jobs.
 
 ## Working hypotheses / unresolved questions
 
