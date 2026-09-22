@@ -29,3 +29,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Regression gate remains **69/69 tests passed** plus `compileall`.
 - Hardened `bootstrap_ps3recomp.py` for existing toolchain caches: it now resets `origin` to the locked repository, fetches, checks out the locked commit detached, performs `git reset --hard` to that commit, and `git clean -ffd` before any Comet runtime patches are reapplied. This eliminates state leakage from interrupted previous builds.
 - Added bootstrap regression coverage. Local gate: **70/70 tests passed** plus `compileall`.
+- Removed the existing-checkout `--skip-deps` shortcut from `scripts/build_and_run.cmd`; step 1 now always runs the full bootstrap so a clone left behind by an interrupted dependency install cannot poison future runs.
+- Added launcher regression coverage. Local gate: **71/71 tests passed** plus `compileall`.

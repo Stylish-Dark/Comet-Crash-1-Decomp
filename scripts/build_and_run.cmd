@@ -61,13 +61,8 @@ if errorlevel 1 (
   )
 )
 
-if not exist "%ROOT%\external\ps3recomp\.git" (
-  echo [1/7] Fetching pinned ps3recomp toolchain...
-  call "%ROOT%\scripts\bootstrap.cmd" || exit /b !errorlevel!
-) else (
-  echo [1/7] Verifying pinned ps3recomp toolchain...
-  py -3 "%ROOT%\tools\bootstrap_ps3recomp.py" --skip-deps || exit /b !errorlevel!
-)
+echo [1/7] Preparing pinned ps3recomp toolchain and dependencies...
+call "%ROOT%\scripts\bootstrap.cmd" || exit /b !errorlevel!
 
 if not exist "%ROOT%\work" mkdir "%ROOT%\work"
 set "ELF=%ROOT%\work\EBOOT.ELF"
