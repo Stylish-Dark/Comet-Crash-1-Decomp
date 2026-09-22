@@ -38,6 +38,13 @@ class ManifestCompatibilityTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'unsupported app version'):
    c.require_supported_version(m,'01.00','02.00')
 
+class AnalysisGateTests(unittest.TestCase):
+ def test_analyze_enforces_known_binary_analysis_baseline(self):
+  s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()
+  self.assertIn('audit_known_analysis',s)
+  self.assertIn('Analysis baseline gate:',s)
+  self.assertIn('analysis drift from known Comet Crash baseline',s)
+
 class BuildPatchTests(unittest.TestCase):
  def test_build_uses_discovered_ninja_path(self):
   s=(Path(__file__).resolve().parents[1]/'tools'/'comet_port.py').read_text()

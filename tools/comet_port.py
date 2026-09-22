@@ -13,6 +13,7 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from audit_hle_coverage import audit as audit_hle
+from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
 from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
 
@@ -186,6 +187,11 @@ def cmd_analyze(a):
     require_toolkit(a.ps3recomp); validate_inputs(a.game,a.elf)
     reset_generated_dir(a.output); reset_generated_dir(a.spu)
     for c in analysis_commands(a.elf,a.ps3recomp,a.output,a.spu): run(c)
+    stem=a.elf.stem
+    baseline=audit_known_analysis(a.output/f'{stem}.loader.json',a.output/f'{stem}.imports.json',a.spu)
+    print(f'Analysis baseline gate: PPU={baseline["ppu"]["function_count"]} funcs, imports={baseline["imports"]}/{baseline["libraries"]} libs, SPUs={baseline["spu_images"]}')
+    if not baseline['ok']:
+        raise RuntimeError('analysis drift from known Comet Crash baseline: '+'; '.join(baseline['errors']))
     local=probe_elf(a.elf); (a.output/'local_probe.json').write_text(json.dumps(local,indent=2)+'\n')
 def cmd_lift(a):
     require_toolkit(a.ps3recomp); validate_supported_elf_file(a.elf)
