@@ -24,10 +24,13 @@ def patch_text(src: str):
     return TODO_RE.sub(repl, src), stats
 
 def patch_file(path: Path):
-    src = path.read_text(encoding='utf-8')
+    # ps3recomp writes generated source using the host default encoding. On
+    # Windows that can be CP-1252. Latin-1 gives a reversible one-byte mapping,
+    # while the TODO patterns and our replacements are strictly ASCII.
+    src = path.read_bytes().decode('latin-1')
     out, stats = patch_text(src)
     if out != src:
-        path.write_text(out, encoding='utf-8', newline='\n')
+        path.write_bytes(out.encode('latin-1'))
     return stats
 
 def main() -> int:
