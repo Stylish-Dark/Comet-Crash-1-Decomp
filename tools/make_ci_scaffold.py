@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from audit_ppu_lift import audit_path as audit_ppu_path
+from patch_ppu_lift import patch_file as patch_ppu_file
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -84,6 +85,13 @@ def stage(ps3recomp: Path, generated: Path, work: Path) -> None:
         raise RuntimeError(f"pinned lifter did not produce {header}")
     if not chunks:
         raise RuntimeError(f"pinned lifter produced no PPU source chunks under {recomp}")
+
+    patch_totals = {'vsrab': 0, 'vsrb': 0}
+    for source in chunks:
+        stats = patch_ppu_file(source)
+        for key, value in stats.items():
+            patch_totals[key] += value
+    print(f"CI PPU compatibility patch: {patch_totals}")
 
     report = audit_ppu_path(recomp)
     if report["unsupported_total"]:
