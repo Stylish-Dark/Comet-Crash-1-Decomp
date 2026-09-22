@@ -66,6 +66,29 @@ def reset_generated_dir(path: Path) -> None:
     shutil.rmtree(path,ignore_errors=True)
     path.mkdir(parents=True,exist_ok=True)
 
+BOOT_SIGNAL_MARKERS=(
+    '[crash]',
+    '[watchdog]',
+    '[HLE] UNIMPLEMENTED',
+    'unresolved indirect',
+    'HOTREAD',
+    'unsupported SPU',
+    'VM allocation failed',
+    'ppu_load_elf failed',
+    'D3D12 init FAILED',
+)
+
+def update_boot_summary(summary: dict[str,str|None], line: str) -> None:
+    text=line.strip()
+    if text.startswith('[boot-stage] '):
+        summary['last_boot_stage']=text[len('[boot-stage] '):]
+    if summary.get('first_signal') is None:
+        lower=text.lower()
+        for marker in BOOT_SIGNAL_MARKERS:
+            if marker.lower() in lower:
+                summary['first_signal']=text
+                break
+
 def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
     """Run a native boot while mirroring combined stdout/stderr to a durable log."""
     cmd=[str(x) for x in cmd]
@@ -81,15 +104,24 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None):
         log.write('# Comet Crash native boot log\n')
         log.write(json.dumps(header,indent=2,sort_keys=True)+'\n\n')
         log.flush()
+        summary: dict[str,str|None]={'last_boot_stage':None,'first_signal':None}
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
         assert proc.stdout is not None
         with proc.stdout:
             for line in proc.stdout:
                 print(line,end='',flush=True)
+                update_boot_summary(summary,line)
                 log.write(line); log.flush()
         rc=proc.wait()
-        log.write(f'\n# host_exit_code={rc}\n'); log.flush()
+        last=summary['last_boot_stage'] or '<none>'
+        signal=summary['first_signal'] or '<none>'
+        log.write(f'\n# last_boot_stage={last}\n')
+        log.write(f'# first_signal={signal}\n')
+        log.write(f'# host_exit_code={rc}\n'); log.flush()
+    print(f'[boot-summary] last_stage={last}',flush=True)
+    if summary['first_signal']:
+        print(f'[boot-summary] first_signal={summary["first_signal"]}',flush=True)
     if rc:
         raise subprocess.CalledProcessError(rc,cmd)
     return rc

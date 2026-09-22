@@ -39,3 +39,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added parser/launcher regressions. Local gate: **76/76 tests passed** plus `compileall`.
 - Functional testing exposed a real regression in `tools/comet_port.py`: `find_ninja` and `load_ps3recomp_lock` were referenced but not imported, which would have broken a real build/default pin check with `NameError`. Restored both imports.
 - Added regressions that call the default lock-based checkout verification and assert the runtime helpers are imported/callable, preventing source-only tests from missing this class again. Local gate: **78/78 tests passed** plus `compileall`.
+- Added incremental boot-log summarization in `run_logged`: it tracks the last boot stage and first concrete crash/watchdog/unimplemented signal while streaming output, appends them to the log, and prints the summary before raising on a non-zero native exit.
+- Added failure-path regression coverage. Local gate: **79/79 tests passed** plus `compileall`.

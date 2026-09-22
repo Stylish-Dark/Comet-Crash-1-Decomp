@@ -39,6 +39,23 @@ class BootLogTests(unittest.TestCase):
                 comet_port.run_logged([sys.executable,'-c','raise SystemExit(7)'],log)
             self.assertIn('# host_exit_code=7',log.read_text(encoding='utf-8'))
 
+
+    def test_summary_tracks_last_stage_and_first_signal(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=('import sys; '
+                  'print("[boot-stage] process entered"); '
+                  'print("[boot-stage] entering recompiled title"); '
+                  'print("[watchdog] no guest frame after 10s"); '
+                  'print("[crash] code=0xC0000005"); '
+                  'raise SystemExit(9)')
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],log)
+            text=log.read_text(encoding='utf-8')
+            self.assertIn('# last_boot_stage=entering recompiled title',text)
+            self.assertIn('# first_signal=[watchdog] no guest frame after 10s',text)
+            self.assertIn('# host_exit_code=9',text)
+
     def test_run_parser_accepts_explicit_log_path(self):
         args=comet_port.parser().parse_args(['run','game','EBOOT.ELF','--log','logs/custom.txt'])
         self.assertEqual(args.log,Path('logs/custom.txt'))
