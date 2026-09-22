@@ -38,3 +38,16 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Corrected stale continuity wording/test counts: current local regression gate is **66/66**.
 - Recorded an explicit execution-window safety rule: stop substantive work before the session becomes risky, push all completed work, update continuity/next/session state, and only then end the work session.
 - No substantive code produced after `c20cf171` was left only in chat; the VMX pin-compatibility check had begun but no new source change was made from it.
+
+## 2026-09-22 — Exact-pin PPU completeness and real Windows compile gate
+
+- Finished the exact-pin VMX compatibility check against `ps3recomp` commit `d3ed1a5c946a9c5370b51631e13371a1adf70396`: the disassembler still recognizes `vsrb` and `vsrab`, the lifter still has no handlers for either, and unsupported operations still fall through to the exact `/* TODO: ... */;` form consumed by `tools/patch_ppu_lift.py`.
+- Added `tools/audit_ppu_lift.py` and wired it immediately after the Comet PPU compatibility rewrite. A fresh lift now fails if no expected PPU chunks exist or if any generated `/* TODO: ... */;` remains.
+- Validated through PR #1 instead of pushing unproven code directly to `main`.
+- The first PR run caught an escaped-regex transfer bug in the new audit file and a CI-only C-vs-C++ linkage mismatch in the synthetic PPU fixture; both were fixed on the branch before merge.
+- The initial Windows run was already informative: pinned checkout, all five runtime patches and fixture staging passed, and compilation reached 145/154 objects before the synthetic linkage mismatch stopped it.
+- Corrected the fixture to match the exact generated `ppu_recomp.h` linkage contract.
+- PR run `35679740111` then passed completely: **71/71 unit tests**, `compileall`, repository safety, and the Windows scaffold compile/link job all succeeded. The Windows runner compiled and linked `CometCrashPC.exe` against the exact pinned runtime with all Comet patches applied.
+- Squash-merged PR #1 to `main` as `076ccac39ded89c96743ec6e2988ed9a28f3c64b` (`Gate fresh PPU lifts on unsupported instructions`).
+
+Next action remains the first real Windows build/run against the user's extracted NPEB00142 v1.00 files; static and synthetic pre-boot gates are now materially stronger.
