@@ -4,7 +4,7 @@ import argparse
 import re
 from pathlib import Path
 
-TODO_RE = re.compile(r'/\\*\\s*TODO:\\s*(.*?)\\s*\\*/;')
+TODO_RE = re.compile(r'/\*\s*TODO:\s*(.*?)\s*\*/;')
 
 
 def audit_text(src: str) -> list[dict[str, object]]:
@@ -12,7 +12,7 @@ def audit_text(src: str) -> list[dict[str, object]]:
     holes: list[dict[str, object]] = []
     for match in TODO_RE.finditer(src):
         holes.append({
-            'line': src.count('\\n', 0, match.start()) + 1,
+            'line': src.count('\n', 0, match.start()) + 1,
             'instruction': match.group(1).strip(),
             'text': match.group(0),
         })
