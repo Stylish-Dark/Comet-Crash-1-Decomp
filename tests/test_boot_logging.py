@@ -97,6 +97,12 @@ class BootLogTests(unittest.TestCase):
             self.assertEqual(data['boot_outcome'],'clean-visible-exit')
             self.assertEqual(data['host_exit_code'],0)
 
+    def test_timeout_uses_escalating_stop_helper(self):
+        src=(ROOT/'tools'/'comet_port.py').read_text(encoding='utf-8')
+        start=src.index('def timeout_proc()')
+        end=src.index('timer=threading.Timer',start)
+        self.assertIn('_stop_process(proc)',src[start:end])
+
     def test_run_logged_timeout_preserves_diagnostics(self):
         with tempfile.TemporaryDirectory() as td:
             log=Path(td)/'boot.txt'

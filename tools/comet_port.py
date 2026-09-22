@@ -150,7 +150,7 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
                     timed_out=True
                     print(f'[boot-timeout] terminating native process after {timeout_seconds:g}s',flush=True)
                     try:
-                        proc.terminate()
+                        _stop_process(proc)
                     except OSError:
                         pass
             timer=threading.Timer(timeout_seconds,timeout_proc)
