@@ -64,7 +64,7 @@ DWORD GetModuleFileNameA(HINSTANCE,char*,DWORD); SHORT GetAsyncKeyState(int); BO
 #ifndef COMET_FAKE_WIN_EXTRA
 #define COMET_FAKE_WIN_EXTRA
 typedef long LONG; typedef unsigned long ULONG; typedef uintptr_t ULONG_PTR; typedef void* LPVOID; typedef unsigned long long ULONGLONG;
-typedef struct _EXCEPTION_RECORD_FAKE { DWORD ExceptionCode; ULONG_PTR ExceptionInformation[2]; } EXCEPTION_RECORD;
+typedef struct _EXCEPTION_RECORD_FAKE { DWORD ExceptionCode; void* ExceptionAddress; ULONG_PTR ExceptionInformation[2]; } EXCEPTION_RECORD;
 typedef struct _EXCEPTION_POINTERS { EXCEPTION_RECORD* ExceptionRecord; void* ContextRecord; } EXCEPTION_POINTERS;
 #define EXCEPTION_ACCESS_VIOLATION 0xC0000005u
 #define EXCEPTION_CONTINUE_EXECUTION -1
@@ -81,6 +81,8 @@ void Sleep(DWORD);
 void* VirtualAlloc(void*,size_t,DWORD,DWORD);
 void* AddVectoredExceptionHandler(ULONG,LONG (WINAPI*)(EXCEPTION_POINTERS*));
 HANDLE CreateThread(void*,size_t,DWORD (WINAPI*)(LPVOID),LPVOID,DWORD,DWORD*);
+LONG (WINAPI* SetUnhandledExceptionFilter(LONG (WINAPI*)(EXCEPTION_POINTERS*)))(EXCEPTION_POINTERS*);
+DWORD GetCurrentThreadId(void);
 #ifdef __cplusplus
 }
 #endif

@@ -102,6 +102,23 @@ static void derive_root(const char* eboot){
 }
 
 #ifdef _WIN32
+static LONG WINAPI crash_filter(EXCEPTION_POINTERS* ep){
+    const DWORD code=ep&&ep->ExceptionRecord?ep->ExceptionRecord->ExceptionCode:0;
+    void* address=ep&&ep->ExceptionRecord?ep->ExceptionRecord->ExceptionAddress:nullptr;
+    HINSTANCE image=GetModuleHandleA(nullptr);
+    uintptr_t rva=(image&&address)?(uintptr_t)address-(uintptr_t)image:0;
+    fprintf(stderr,"\n[crash] code=0x%08lX address=%p image_rva=0x%llX thread=%lu\n",
+            (unsigned long)code,address,(unsigned long long)rva,(unsigned long)GetCurrentThreadId());
+    if(code==EXCEPTION_ACCESS_VIOLATION&&ep&&ep->ExceptionRecord){
+        ULONG_PTR op=ep->ExceptionRecord->ExceptionInformation[0];
+        ULONG_PTR target=ep->ExceptionRecord->ExceptionInformation[1];
+        const char* kind=op==0?"read":op==1?"write":op==8?"execute":"unknown";
+        fprintf(stderr,"[crash] access_violation=%s target=0x%llX\n",kind,(unsigned long long)target);
+    }
+    fflush(stderr);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 static LONG WINAPI vm_commit(EXCEPTION_POINTERS* ep){
     if(ep->ExceptionRecord->ExceptionCode==EXCEPTION_ACCESS_VIOLATION){
         ULONG_PTR fault=ep->ExceptionRecord->ExceptionInformation[1],base=(uintptr_t)vm_base;
@@ -129,6 +146,7 @@ int main(int argc,char**argv){
     timeBeginPeriod(1);
     setvbuf(stdout,NULL,_IONBF,0);
     setvbuf(stderr,NULL,_IONBF,0);
+    SetUnhandledExceptionFilter(crash_filter);
     boot_stage("process entered");
     fprintf(stderr,"[boot] ELF: %s\n",argv[1]);
     comet_host_init();
