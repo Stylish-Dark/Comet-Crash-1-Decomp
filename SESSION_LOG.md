@@ -43,3 +43,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added failure-path regression coverage. Local gate: **79/79 tests passed** plus `compileall`.
 - Closed strict-validation bypasses: `lift` now validates the supported ELF fingerprint independently, and `run` revalidates the game SFO plus ELF immediately before launching the native process.
 - Added direct-lift/direct-run gate regressions. Local gate: **81/81 tests passed** plus `compileall`.
+
+- Restored the exact Ninja executable handoff in `tools/comet_port.py`: `cmd_build` now uses `find_ninja()` and passes the resolved executable to CMake through `CMAKE_MAKE_PROGRAM`, including wheel-only Ninja installs. Added functional regression coverage. Local gate: **82/82 tests passed** plus `compileall`.
