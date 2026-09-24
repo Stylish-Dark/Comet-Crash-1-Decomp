@@ -152,7 +152,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xz-utils
           mkdir -p "$RUNNER_TEMP/llvm-mingw"
-          archive="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-24.04-x86_64.tar.xz"
+          archive="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
           curl -L --fail --retry 3 "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${archive}" -o "$RUNNER_TEMP/${archive}"
           tar -xJf "$RUNNER_TEMP/${archive}" --strip-components=1 -C "$RUNNER_TEMP/llvm-mingw"
           echo "LLVM_MINGW_ROOT=$RUNNER_TEMP/llvm-mingw" >> "$GITHUB_ENV"
