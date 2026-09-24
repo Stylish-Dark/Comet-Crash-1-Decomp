@@ -11,7 +11,8 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - Confirm the summary contains build provenance, `boot_outcome`, first-frame state, `first_signal`, `triage_signal`, `suspected_subsystem`, `triage_rationale`, timeout/interruption state and exit code.
 - Run `python tools/verify_boot_bundle.py <boot.summary.json>`; do not debug from an artifact that fails its log/provenance integrity checks.
 - Success for this work unit: a self-verified, provenance-bound boot artifact that identifies how far the native title actually reached and the first concrete runtime blocker, if any.
-- Blocker: requires a Windows machine plus the user's local game data.
+- Delivery is now available: `CometCrashPC-Windows-Builder` from validated Actions run `35972413605` creates a clean source checkout and runs the real local game-data pipeline.
+- Remaining external requirement: a Windows machine plus the user's local NPEB00142 v1.00 game data.
 
 ## Next
 

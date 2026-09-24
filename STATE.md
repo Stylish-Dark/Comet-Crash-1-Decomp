@@ -102,16 +102,22 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Latest validated engineering merge on `main`: `64df668d4a65df3e4237a438b74b81331504f551` — **ci: validate provenance and first-boot diagnostics**.
+Latest delivery merge on `main`: `6ea1d6f68e5e2f37548a7af7f4da85f1467687c6` — **delivery: publish usable Windows builder artifact**.
 
-GitHub Actions run `35969371258` is fully green at **131/131 tests** plus Linux/Windows safety/compile gates, pinned-lifter staging, native clang-cl/Ninja link, and linked-EXE provenance verification.
+GitHub Actions run `35972413605` passed **134/134 tests**, Linux repository safety, the Windows unit/safety gate, all pinned runtime patches, real pinned-lifter scaffold staging, native clang-cl/Ninja link, linked-EXE provenance verification, and both artifact uploads.
+
+Published artifacts from that run:
+- `CometCrashPC-Windows-Builder` — usable delivery package; exact source bundle + `BUILD_AND_RUN.cmd` + README. Artifact SHA-256: `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
+- `CometCrashPC-ci-scaffold` — explicitly non-playable synthetic-fixture validation executable.
 
 ## Immediate next action
 
-Run the supported title on Windows:
+Run the supported title on Windows either from the repository:
 
 ```bat
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"
 ```
+
+or extract the `CometCrashPC-Windows-Builder` artifact and drag the extracted NPEB00142 v1.00 game folder onto `BUILD_AND_RUN.cmd`.
 
 Preserve both the generated `.txt` log and `.summary.json` sidecar. For a deliberately bounded attempt, `scripts\build_and_run.cmd "<game folder>" 60` applies a 60-second timeout to the native-run phase while still preserving diagnostics. Before acting on the result, run `python tools/verify_boot_bundle.py <boot.summary.json>`. The next AI work unit is to inspect that verified real evidence, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.

@@ -91,3 +91,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 
 - Corrected the delivery gap: the CI-linked `CometCrashPC.exe` is a non-playable scaffold because it is linked against synthetic PPU/SPU fixtures. The workflow now preserves it only as `CometCrashPC-ci-scaffold` with an explicit warning.
 - Added `scripts/portable_builder.cmd` and a `CometCrashPC-Windows-Builder` artifact. The artifact contains an exact Git source bundle and a top-level `BUILD_AND_RUN.cmd`; with the user's local NPEB00142 v1.00 files it creates a clean checkout, runs the full decrypt/analyse/lift/build pipeline, prints the exact real EXE path, and launches it. Commit: `266422b`.
+
+## 2026-09-24 — Windows builder delivery completed
+
+- Corrected an important delivery distinction: the CI-linked EXE is a non-playable synthetic-fixture scaffold and must not be presented as the gameplay-test executable.
+- Added a portable Windows builder artifact containing an exact Git source bundle, `BUILD_AND_RUN.cmd`, and README. The script accepts the user's extracted NPEB00142 v1.00 folder, creates a clean checkout, runs the full local decrypt/analyse/lift/build pipeline, prints the resulting real EXE path, and launches it.
+- CI now separately uploads `CometCrashPC-ci-scaffold` with an explicit `README-NOT-PLAYABLE.txt`.
+- First validation attempt exposed a CRLF-sensitive edit miss in `build_and_run.cmd`; regression coverage caught that the real EXE path was not actually printed. Fixed on PR #6 before delivery.
+- Final Actions run `35972413605` passed **134/134 tests** and all Windows compile/provenance/artifact gates. Both artifact uploads succeeded.
+- `CometCrashPC-Windows-Builder` artifact id: `10796339939`; SHA-256 `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
+- PR #6 merged into `main` as `6ea1d6f68e5e2f37548a7af7f4da85f1467687c6`.
