@@ -25,11 +25,20 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Test Boot Fix 3 allocator-abort diagnostic**
+[x] **Test Boot Fix 3 allocator-abort diagnostic**
 - Boot Fix 2 reaches much farther through resource/model/shader loading.
 - New failure: title abort reporter called from return address `0x001A4E90`; actual branch-and-link is `0x001A4E8C -> 0x0019427C`.
 - Boot Fix 3 replaces only that one branch-and-link with a PPC NOP. This is diagnostic, not accepted permanent gameplay behaviour.
-- Success: reach stable menu/gameplay or obtain the next concrete blocker. If allocator corruption recurs elsewhere, remove the bypass and fix the underlying memory/runtime defect.
+- Result: allocator corruption recurred later in `mspace_free` with assertion `chunksize(p) == small_index2size(I)`. Therefore the bypass is not a valid fix and broader heap inconsistency is confirmed.
+
+## Current
+
+[ ] **Capture first corrupt-free metadata with Boot Fix 4**
+- Restore the exact reference ELF and original allocator abort; do not suppress allocator assertions.
+- Instrument generated `func_001A4C6C` with `tools/patch_comet_allocator_diag.py`.
+- Required log markers: `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]`.
+- Use caller LR, freed pointer, chunk header/flags, adjacent header and mspace state to distinguish invalid pointer/double-free from earlier heap overwrite.
+- Success: identify the earliest concrete heap invariant failure and patch its cause, not its abort reporter.
 
 ## Next
 

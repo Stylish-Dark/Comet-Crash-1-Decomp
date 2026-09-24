@@ -139,3 +139,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Re-lifted the full real title: 3,744 PPU functions, VMX `vsrab`/`vsrb` compatibility fixes applied, both real SPU images lifted. Generated PPU source shows `loc_001A4E8C` falls through as NOPs.
 - Preserved the Boot Fix 2 Windows thread-exit fix, linked against built-in `XINPUT9_1_0.dll`, and added an explicit static `sys_prx_register_library` compatibility registration.
 - Linux-hosted Windows cross-link completed successfully. Boot Fix 3 EXE SHA-256: `3f46d2c9eb9280bc6ef92b281a8a802d417cfc8762915496a8b41f56df8f7485`. Ready-to-run ZIP SHA-256: `79489db16e7541153a2e57896eb7aff31c997065e3270614fffd830935e49c72`.
+
+## 2026-09-25 — Boot Fix 3 proves broader heap corruption; Boot Fix 4 diagnostic built
+
+- User returned the Boot Fix 3 log. The prior Windows thread-exit fault remains cleared and the title again reaches D3D12, first frame, controller/save/trophy/NP initialization and extensive resource loading.
+- Because Boot Fix 3 suppressed only the first allocator abort, execution advanced until Dinkumware `mspace_free` hit `chunksize(p) == small_index2size(I) -- assertion failed`.
+- The later abort chain includes return address `0x001AB8D8`, allocator site `0x001A4FC4`, `free` wrapper `0x001A8190`, and call path through `0x0015625C -> 0x000C6030 -> 0x00109650`. This proves the first abort was not an isolated harmless free; allocator state is genuinely inconsistent.
+- Retired the Boot Fix 3 abort suppression as a debugging direction.
+- Added optional `tools/patch_comet_allocator_diag.py`, which instruments generated `func_001A4C6C` but preserves the original guest abort. It captures original mspace/mem/caller LR and emits chunk head/size/pinuse/cinuse, next chunk header, small/tree maps, dv/top sizes, least address, dv and top pointers.
+- Built Boot Fix 4 from the exact reference ELF SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6` with the Windows thread-exit fix retained. EXE SHA-256 `384e04af8924e50b552aad5b7b4811f88dd72a9602a09076a36155ecf477413b`; ready-to-run ZIP SHA-256 `6d82cbb3a401280b5a422ed1bb9d3462e8e0227aa93047097e3aa103245ba825`.
+- Next evidence required: the first `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]` lines from Boot Fix 4.
