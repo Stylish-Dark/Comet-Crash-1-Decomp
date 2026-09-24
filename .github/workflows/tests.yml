@@ -193,6 +193,10 @@ jobs:
           test -f build-cross/CometCrashPC.exe
           file build-cross/CometCrashPC.exe
 
+      - name: Set up model-side Python
+        uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+
       - name: Package compact model-side cross-build kit
         shell: bash
         run: |
@@ -201,14 +205,14 @@ jobs:
           git -C external/ps3recomp bundle create "$GITHUB_WORKSPACE/cross-kit/ps3recomp.bundle" HEAD
           archive="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
           cp "$RUNNER_TEMP/${archive}" cross-kit/toolchain/
-          python -m pip download -r requirements.txt -r external/ps3recomp/requirements.txt -d cross-kit/wheels
+          python -m pip download --only-binary=:all: -r requirements.txt -r external/ps3recomp/requirements.txt -d cross-kit/wheels
           cat > cross-kit/README.txt <<'EOF'
           Model-side CometCrashPC cross-build kit.
           Contains:
           - exact CometCrashPC source Git bundle
           - exact pinned ps3recomp Git bundle
           - compressed LLVM-MinGW Linux-host x86_64 Windows toolchain archive
-          - offline Python wheelhouse
+          - offline Python 3.13 wheelhouse
 
           Contains NO Comet Crash proprietary game data.
           EOF
