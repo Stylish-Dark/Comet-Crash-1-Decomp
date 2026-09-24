@@ -167,6 +167,7 @@ BOOT_SIGNAL_MARKERS=(
     'unsupported SPU',
     'VM allocation failed',
     'ppu_load_elf failed',
+    '[D3D12] ERROR:',
     'D3D12 init FAILED',
 )
 

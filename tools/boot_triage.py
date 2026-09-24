@@ -33,6 +33,7 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "hle dispatch",
     )),
     ("gcm/resc/rsx", (
+        "[d3d12] error:",
         "d3d12 init failed",
         "cellgcm",
         "cellresc",
@@ -84,6 +85,7 @@ SIGNAL_PATTERNS: tuple[str, ...] = (
     "unsupported SPU",
     "VM allocation failed",
     "ppu_load_elf failed",
+    "[D3D12] ERROR:",
     "D3D12 init FAILED",
 )
 

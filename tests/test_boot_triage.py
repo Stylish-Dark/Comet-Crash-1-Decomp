@@ -18,6 +18,16 @@ class BootTriageTests(unittest.TestCase):
         category, _ = b.classify_signal("D3D12 init FAILED hr=0x80004005")
         self.assertEqual(category, "gcm/resc/rsx")
 
+    def test_specific_d3d12_error_is_captured_before_generic_init_failure(self):
+        report=b.summarize_lines([
+            "[D3D12] ERROR: CreateCommandQueue failed (0x8007000E)",
+            "[rsx] D3D12 init FAILED (1280x720)",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["first_signal"],"[D3D12] ERROR: CreateCommandQueue failed (0x8007000E)")
+        self.assertEqual(report["triage_signal"],"[D3D12] ERROR: CreateCommandQueue failed (0x8007000E)")
+        self.assertEqual(report["suspected_subsystem"],"gcm/resc/rsx")
+
     def test_generic_watchdog_does_not_guess_subsystem(self):
         category, why = b.classify_signal("[watchdog] no guest frame after 10s")
         self.assertEqual(category, "unknown")
