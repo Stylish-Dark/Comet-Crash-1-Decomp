@@ -73,12 +73,21 @@ target_link_libraries(CometCrashPC PRIVATE
     ws2_32 xinput ole32 bcrypt
     dbghelp user32 gdi32 winmm)
 set_target_properties(CometCrashPC PROPERTIES LINKER_LANGUAGE CXX)
-target_compile_options(CometCrashPC PRIVATE
-    /W3 /wd4100 /wd4244 /wd4267 /Zc:__cplusplus
-    /clang:-fno-strict-aliasing
-    /clang:-ffp-contract=off)
+if(MSVC)
+    target_compile_options(CometCrashPC PRIVATE
+        /W3 /wd4100 /wd4244 /wd4267 /Zc:__cplusplus
+        /clang:-fno-strict-aliasing
+        /clang:-ffp-contract=off)
+    set(RECOMP_COMPILE_OPTIONS "/w;/bigobj")
+else()
+    target_compile_options(CometCrashPC PRIVATE
+        -Wall -Wextra -Wno-unused-parameter
+        -fno-strict-aliasing
+        -ffp-contract=off)
+    set(RECOMP_COMPILE_OPTIONS "-w;-Wa,-mbig-obj")
+endif()
 target_compile_definitions(CometCrashPC PRIVATE _CRT_SECURE_NO_WARNINGS)
-set_source_files_properties(${RECOMP_SOURCES} PROPERTIES COMPILE_OPTIONS "/w;/bigobj")
+set_source_files_properties(${RECOMP_SOURCES} PROPERTIES COMPILE_OPTIONS "${RECOMP_COMPILE_OPTIONS}")
 set_source_files_properties(${SPU_SOURCES} PROPERTIES
     INCLUDE_DIRECTORIES "${PS3RECOMP_DIR}/runtime/spu"
     COMPILE_DEFINITIONS SPU_USE_DISPATCH_MT

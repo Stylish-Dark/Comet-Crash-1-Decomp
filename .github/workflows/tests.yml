@@ -134,3 +134,94 @@ jobs:
             delivery/CometCrashPC-source.bundle
             delivery/BUILD_AND_RUN.cmd
             delivery/README.txt
+
+  linux-cross-windows:
+    runs-on: ubuntu-24.04
+    env:
+      LLVM_MINGW_VERSION: "20260922"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+
+      - name: Install cross-build dependencies
+        shell: bash
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install ninja
+          sudo apt-get update
+          sudo apt-get install -y xz-utils
+          mkdir -p "$RUNNER_TEMP/llvm-mingw"
+          archive="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
+          curl -L --fail --retry 3 "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${archive}" -o "$RUNNER_TEMP/${archive}"
+          tar -xJf "$RUNNER_TEMP/${archive}" --strip-components=1 -C "$RUNNER_TEMP/llvm-mingw"
+          echo "LLVM_MINGW_ROOT=$RUNNER_TEMP/llvm-mingw" >> "$GITHUB_ENV"
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          lock={}
+          for line in Path("config/ps3recomp.lock").read_text().splitlines():
+              line=line.strip()
+              if line and not line.startswith("#") and "=" in line:
+                  k,v=line.split("=",1); lock[k.strip()]=v.strip()
+          subprocess.run(["git","clone",lock["repository"],"external/ps3recomp"],check=True)
+          subprocess.run(["git","-C","external/ps3recomp","checkout","--detach",lock["commit"]],check=True)
+          PY
+          python -m pip install -r external/ps3recomp/requirements.txt
+
+      - name: Apply pinned Comet patches
+        run: |
+          python tools/patch_ps3recomp_host.py external/ps3recomp
+          python tools/patch_ps3recomp_spurs.py external/ps3recomp
+          python tools/patch_ps3recomp_vfs.py external/ps3recomp
+          python tools/patch_ps3recomp_resc.py external/ps3recomp
+          python tools/patch_ps3recomp_gcm.py external/ps3recomp
+
+      - name: Stage synthetic generated-code fixtures
+        run: python tools/make_ci_scaffold.py --ps3recomp external/ps3recomp
+
+      - name: Cross-compile Windows scaffold from Linux
+        shell: bash
+        run: |
+          cmake -S port -B build-cross -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/cmake/llvm-mingw-x86_64.cmake" \
+            -DPS3RECOMP_DIR="$GITHUB_WORKSPACE/external/ps3recomp" \
+            -DRECOMP_DIR="$GITHUB_WORKSPACE/generated/ci/recompiled" \
+            -DSPU_LIFTED_DIR="$GITHUB_WORKSPACE/generated/ci/spu" \
+            -DSPU_REGISTRY="$GITHUB_WORKSPACE/generated/ci/spu_workloads.c"
+          cmake --build build-cross
+          test -f build-cross/CometCrashPC.exe
+          file build-cross/CometCrashPC.exe
+
+      - name: Set up model-side Python
+        uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+
+      - name: Package compact model-side cross-build kit
+        shell: bash
+        run: |
+          mkdir -p cross-kit/wheels cross-kit/toolchain
+          git bundle create cross-kit/CometCrashPC-cross-source.bundle HEAD
+          git -C external/ps3recomp bundle create "$GITHUB_WORKSPACE/cross-kit/ps3recomp.bundle" HEAD
+          archive="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
+          cp "$RUNNER_TEMP/${archive}" cross-kit/toolchain/
+          python -m pip download --only-binary=:all: -r requirements.txt -r external/ps3recomp/requirements.txt -d cross-kit/wheels
+          cat > cross-kit/README.txt <<'EOF'
+          Model-side CometCrashPC cross-build kit.
+          Contains:
+          - exact CometCrashPC source Git bundle
+          - exact pinned ps3recomp Git bundle
+          - compressed LLVM-MinGW Linux-host x86_64 Windows toolchain archive
+          - offline Python 3.13 wheelhouse
+
+          Contains NO Comet Crash proprietary game data.
+          EOF
+
+      - name: Upload compact model-side cross-build kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: CometCrashPC-Linux-Cross-Build-Kit
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: cross-kit
