@@ -81,3 +81,7 @@ Pinned D3D12 setup failures are logged at the failing API site with HRESULT/Win3
 ## D022 — Windows guest PPU thread exit uses CRT thread termination, not longjmp
 
 Pinned ps3recomp creates Windows guest PPU host threads with `_beginthreadex()`. Real Comet Crash boot evidence showed that using `longjmp()` to escape a deep recompiled guest call chain during `sys_ppu_thread_exit` can raise `STATUS_BAD_FUNCTION_TABLE (0xC00000FF)` in the Windows unwinder. After the syscall has stored exit status and signalled joiners, Windows exits that matching CRT thread with `_endthreadex(0)`. POSIX retains the existing `longjmp()` path.
+
+## D023 — Allocator abort bypass is diagnostic only
+
+The observed Boot Fix 2 guest abort at return address `0x001A4E90` is not treated as permission to suppress allocator failures generally. Boot Fix 3 replaces only the evidenced branch-and-link at `0x001A4E8C` with a NOP so the next run can distinguish an isolated bad-free symptom from broader memory corruption. This patch is not accepted as permanent gameplay behaviour; recurring allocator corruption requires fixing the underlying runtime/memory defect.

@@ -128,3 +128,14 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Root cause identified in pinned ps3recomp: Windows guest thread exit used `longjmp()` across deep recompiled/COFF frames. LLVM-MinGW/Windows unwind metadata rejected that unwind.
 - Fix: for Windows only, after `sys_ppu_thread_exit` has recorded status and signalled joiners, terminate the matching CRT thread with `_endthreadex(0)`; POSIX keeps `longjmp()`. Local real-title incremental cross-build linked successfully with EXE SHA-256 `547e71e331385ecc17f245763eab77129ed43d60099293c8533e4211ae4a9029`.
 - Boot Fix 2 launcher removes the blocking `pause`; on process exit it automatically opens `boot-console.txt` in Notepad for easy upload/copy.
+
+## 2026-09-25 — Boot Fix 2 advanced; allocator abort isolated; Boot Fix 3 built
+
+- User returned the Boot Fix 2 log. The earlier Windows `STATUS_BAD_FUNCTION_TABLE` thread-exit failure did not recur, confirming the `_endthreadex()` fix cleared that blocker.
+- The title continued substantially farther through rendering and resource/model/shader loading.
+- New evidenced failure: the guest's own abort reporter was invoked with return address `0x001A4E90`. PPC disassembly identified the real call instruction as `0x001A4E8C: bl 0x0019427C`.
+- The surrounding function is the title allocator/free path. Multiple allocator consistency checks converge on that abort site.
+- Built an explicitly diagnostic Boot Fix 3 by replacing only the call at guest `0x001A4E8C` (`4B FE F3 F1`) with PPC NOP `60 00 00 00`. Original reference ELF SHA-256 remains the input fingerprint; diagnostic patched ELF SHA-256 is `f0f4ec0b1c1d8a673335964cb64db556f33485019631bf685e56407f0f022bb9`.
+- Re-lifted the full real title: 3,744 PPU functions, VMX `vsrab`/`vsrb` compatibility fixes applied, both real SPU images lifted. Generated PPU source shows `loc_001A4E8C` falls through as NOPs.
+- Preserved the Boot Fix 2 Windows thread-exit fix, linked against built-in `XINPUT9_1_0.dll`, and added an explicit static `sys_prx_register_library` compatibility registration.
+- Linux-hosted Windows cross-link completed successfully. Boot Fix 3 EXE SHA-256: `3f46d2c9eb9280bc6ef92b281a8a802d417cfc8762915496a8b41f56df8f7485`. Ready-to-run ZIP SHA-256: `79489db16e7541153a2e57896eb7aff31c997065e3270614fffd830935e49c72`.

@@ -70,7 +70,7 @@ target_include_directories(CometCrashPC PRIVATE
 target_link_libraries(CometCrashPC PRIVATE
     ps3recomp_runtime
     d3d12 dxgi d3dcompiler uuid dxguid
-    ws2_32 xinput ole32 bcrypt
+    ws2_32 xinput9_1_0 ole32 bcrypt
     dbghelp user32 gdi32 winmm)
 set_target_properties(CometCrashPC PROPERTIES LINKER_LANGUAGE CXX)
 if(MSVC)

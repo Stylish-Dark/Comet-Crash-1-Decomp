@@ -19,6 +19,7 @@ namespace {
 constexpr uint32_t NID_CELL_GCM_FUNC15                       = 0x3A33C1FDu; // _cellGcmFunc15
 constexpr uint32_t NID_CELL_RESC_SET_WAIT_FLIP               = 0x0D3C22CEu; // cellRescSetWaitFlip
 constexpr uint32_t NID_SYS_NET_FREE_THREAD_CONTEXT           = 0xFDB8F926u; // sys_net_free_thread_context
+constexpr uint32_t NID_SYS_PRX_REGISTER_LIBRARY              = 0x42B23552u; // sys_prx_register_library
 constexpr uint32_t NID_CELL_GAME_BOOT_CHECK                   = 0xF52639EAu; // cellGameBootCheck
 constexpr uint32_t NID_CELL_GAME_CONTENT_PERMIT               = 0x70ACEC67u; // cellGameContentPermit
 
@@ -113,6 +114,15 @@ void hle_cellRescSetWaitFlip(ppu_context* ctx) {
     ret(ctx, CELL_OK);
 }
 
+void hle_sysPrxRegisterLibrary(ppu_context* ctx) {
+    /* Comet invokes the SDK registration hook during CRT bring-up.  The
+     * executable's imports/exports are already statically resolved by this
+     * port, so acknowledge the registration request without pretending to
+     * provide a dynamic PRX loader. */
+    static bool once=false; if(!once){once=true;log_once("sys_prx_register_library","static exports already registered");}
+    ret(ctx, CELL_OK);
+}
+
 void hle_sysNetFreeThreadContext(ppu_context* ctx) {
     static bool once=false; if(!once){once=true;log_once("sys_net_free_thread_context","host cleanup success");}
     ret(ctx, CELL_OK);
@@ -175,6 +185,7 @@ void comet_compat_install_hle_overrides(void) {
     reg(NID_CELL_GCM_FUNC15, "_cellGcmFunc15 [Comet compat]", hle_cellGcmFunc15);
     reg(NID_CELL_RESC_SET_WAIT_FLIP, "cellRescSetWaitFlip [Comet compat]", hle_cellRescSetWaitFlip);
     reg(NID_SYS_NET_FREE_THREAD_CONTEXT, "sys_net_free_thread_context [Comet compat]", hle_sysNetFreeThreadContext);
+    reg(NID_SYS_PRX_REGISTER_LIBRARY, "sys_prx_register_library [Comet static]", hle_sysPrxRegisterLibrary);
     reg(NID_CELL_GAME_BOOT_CHECK, "cellGameBootCheck [Comet HG]", hle_cellGameBootCheck);
     reg(NID_CELL_GAME_CONTENT_PERMIT, "cellGameContentPermit [Comet HG]", hle_cellGameContentPermit);
 

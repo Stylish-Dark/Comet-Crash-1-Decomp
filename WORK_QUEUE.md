@@ -16,12 +16,20 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Re-test the first evidenced native blocker fix**
+[x] **Re-test the first evidenced native blocker fix**
 - First real run reached D3D12, first guest frame, controller polling and five frames.
 - Crash: `0xC00000FF STATUS_BAD_FUNCTION_TABLE` immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on guest thread 5.
 - Fix: Windows guest threads created with `_beginthreadex()` now terminate with `_endthreadex()` instead of `longjmp()` after exit state/join signalling; POSIX retains the existing jump unwind.
 - Run Boot Fix 2 and upload the automatically opened `boot-console.txt` if it exits/crashes.
-- Success: no `STATUS_BAD_FUNCTION_TABLE`; identify the next observed blocker or reach stable menu/gameplay.
+- Result: `STATUS_BAD_FUNCTION_TABLE` is gone. Boot Fix 2 ran farther and hit a title-side allocator abort instead.
+
+## Current
+
+[ ] **Test Boot Fix 3 allocator-abort diagnostic**
+- Boot Fix 2 reaches much farther through resource/model/shader loading.
+- New failure: title abort reporter called from return address `0x001A4E90`; actual branch-and-link is `0x001A4E8C -> 0x0019427C`.
+- Boot Fix 3 replaces only that one branch-and-link with a PPC NOP. This is diagnostic, not accepted permanent gameplay behaviour.
+- Success: reach stable menu/gameplay or obtain the next concrete blocker. If allocator corruption recurs elsewhere, remove the bypass and fix the underlying memory/runtime defect.
 
 ## Next
 

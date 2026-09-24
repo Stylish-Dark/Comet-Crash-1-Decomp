@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; fixing first evidenced post-frame runtime blocker.**
+**First native Windows boot reached; second evidenced post-frame blocker isolated and Boot Fix 3 built.**
 
-The first real Windows run has now reached D3D12 initialization, asset/shader loading, controller polling and the first presented guest frame. The first evidenced crash occurred after five frames when a guest PPU worker called `sceNpTerm()` then `sys_ppu_thread_exit(0)`.
+Boot Fix 2 confirmed the Windows guest-thread-exit crash is fixed. The title continued substantially farther through D3D12 rendering and model/shader/resource loading, then the guest allocator called the title abort reporter. The reported return address was `0x001A4E90`; disassembly shows the actual abort call is the preceding `bl` at `0x001A4E8C` to `0x0019427C`.
 
 ## Completed
 
@@ -40,6 +40,7 @@ The first real Windows run has now reached D3D12 initialization, asset/shader lo
 - Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
 - Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
 - First real native boot evidence reached `[boot-stage] first guest frame presented`, controller polling and five frames. It then failed with Windows `STATUS_BAD_FUNCTION_TABLE` (`0xC00000FF`) immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on a guest worker. The pinned runtime's Windows `longjmp()` thread-exit path was identified as the host failure and replaced with `_endthreadex()` for `_beginthreadex()`-created guest threads; POSIX retains `longjmp()`.
+- Boot Fix 2 advanced beyond that host unwind crash and continued loading/rendering resources until the title's allocator path called the guest abort reporter from return address `0x001A4E90`. The actual call instruction is `0x001A4E8C: bl 0x0019427C`. Boot Fix 3 is an explicitly diagnostic build that replaces only that call with a PPC NOP to determine whether the bad-free condition is isolated or evidence of broader heap corruption.
 - Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
 
 ## Current working state
@@ -82,7 +83,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The title archive has been extracted/validated model-side and the real game-specific Windows executable has been built. The current blocker is runtime verification of the patched second boot after the first run exposed `STATUS_BAD_FUNCTION_TABLE` during guest-thread exit.
+The title archive is available privately and model-side builds are reproducible. The current blocker is runtime evidence from Boot Fix 3: determine whether bypassing the single observed allocator abort lets the title reach stable menu/gameplay or exposes broader heap corruption.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -115,7 +116,7 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run the patched Boot Fix 2 package on Windows and preserve/upload `boot-console.txt`. The package automatically opens the log in Notepad when the process exits.
+Run Boot Fix 3 and upload `boot-console.txt` if it exits/crashes. The launcher automatically opens the log in Notepad; no console copying is required.
 
 Repository build path remains:
 
