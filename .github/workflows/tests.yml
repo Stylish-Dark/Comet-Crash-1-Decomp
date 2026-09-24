@@ -192,3 +192,31 @@ jobs:
           cmake --build build-cross
           test -f build-cross/CometCrashPC.exe
           file build-cross/CometCrashPC.exe
+
+      - name: Package model-side cross-build kit
+        shell: bash
+        run: |
+          mkdir -p cross-kit/wheels
+          git bundle create cross-kit/CometCrashPC-cross-source.bundle HEAD
+          cp -a "$LLVM_MINGW_ROOT" cross-kit/llvm-mingw
+          cp -a external/ps3recomp cross-kit/ps3recomp
+          python -m pip download -r requirements.txt -r external/ps3recomp/requirements.txt -d cross-kit/wheels
+          cat > cross-kit/README.txt <<'EOF'
+          Model-side CometCrashPC cross-build kit.
+          Contains:
+          - exact source Git bundle
+          - LLVM-MinGW Linux-host x86_64 Windows toolchain
+          - pinned ps3recomp checkout
+          - offline Python wheelhouse
+
+          Contains NO Comet Crash proprietary game data.
+          EOF
+
+      - name: Upload model-side cross-build kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: CometCrashPC-Linux-Cross-Build-Kit
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+          path: cross-kit
