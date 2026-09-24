@@ -2,6 +2,13 @@ import unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 class T(unittest.TestCase):
+ def test_cmake_supports_llvm_mingw_cross_build(self):
+  s=(ROOT/'port'/'CMakeLists.txt').read_text()
+  self.assertIn('if(MSVC)',s)
+  self.assertIn('-Wa,-mbig-obj',s)
+  tc=(ROOT/'cmake'/'llvm-mingw-x86_64.cmake').read_text()
+  self.assertIn('CMAKE_SYSTEM_NAME Windows',tc)
+  self.assertIn('x86_64-w64-mingw32-clang',tc)
  def test_cmake_requires_spu(self):
   s=(ROOT/'port'/'CMakeLists.txt').read_text(); self.assertIn('spu_workloads.c',s.lower() if False else s); self.assertIn('spu_recomp.c',s); self.assertIn('runtime/spu',s)
  def test_cmake_is_windows(self): self.assertIn('WIN32',(ROOT/'port'/'CMakeLists.txt').read_text())
