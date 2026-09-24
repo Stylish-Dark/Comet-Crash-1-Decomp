@@ -283,7 +283,10 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write(f'# host_exit_code={rc}\n'); log.flush()
     sidecar=log_path.with_suffix('.summary.json')
     sidecar.write_text(json.dumps({
+        'summary_schema_version':1,
         'log_path':str(log_path),
+        'boot_log_sha256':sha256_file(log_path),
+        'elf_sha256':(metadata or {}).get('elf_sha256'),
         'last_boot_stage':None if last=='<none>' else last,
         'first_signal':summary['first_signal'],
         'triage_signal':triage_signal,
@@ -295,6 +298,7 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         'boot_outcome':outcome,
         'host_exit_code':rc,
         'build_provenance':(metadata or {}).get('build_provenance'),
+        'provenance_verification':(metadata or {}).get('provenance_verification'),
     },indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
     print(f'[boot-summary-json] {sidecar}',flush=True)
     print(f'[boot-summary] last_stage={last}',flush=True)
