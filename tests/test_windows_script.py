@@ -28,3 +28,22 @@ class NativeRunTimeoutTests(unittest.TestCase):
   self.assertIn('boot-timeout-seconds',s)
   self.assertIn('--timeout "%~2"',s)
   self.assertNotIn('RUN_TIMEOUT_ARG',s)
+
+class DeliveryTests(unittest.TestCase):
+ def test_real_exe_path_is_printed(self):
+  s=(ROOT/'scripts'/'build_and_run.cmd').read_text()
+  self.assertIn('[output] REAL native EXE:',s)
+  self.assertIn('build\\CometCrashPC.exe',s)
+ def test_portable_builder_uses_source_bundle_and_real_pipeline(self):
+  s=(ROOT/'scripts'/'portable_builder.cmd').read_text()
+  self.assertIn('CometCrashPC-source.bundle',s)
+  self.assertIn('git clone',s)
+  self.assertIn('scripts\\build_and_run.cmd',s)
+  self.assertIn('build\\CometCrashPC.exe',s)
+ def test_ci_uploads_builder_and_marks_scaffold_nonplayable(self):
+  s=(ROOT/'.github'/'workflows'/'tests.yml').read_text()
+  self.assertIn('actions/upload-artifact@v4',s)
+  self.assertIn('CometCrashPC-Windows-Builder',s)
+  self.assertIn('CometCrashPC-ci-scaffold',s)
+  self.assertIn('README-NOT-PLAYABLE.txt',s)
+  self.assertIn('git bundle create delivery/CometCrashPC-source.bundle HEAD',s)

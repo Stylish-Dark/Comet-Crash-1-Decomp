@@ -68,3 +68,69 @@ jobs:
         shell: pwsh
         run: |
           python -c "from pathlib import Path; import sys; sys.path.insert(0,'tools'); import comet_port as c; pin=c.load_ps3recomp_lock()['commit']; h={'imports':171,'covered_imports':171,'missing':[]}; p=c.make_build_provenance(project_root=Path('.'),ps3recomp_commit=pin,hle=h,recomp=Path('generated/ci/recompiled'),spu=Path('generated/ci/spu'),executable=Path('build-ci/CometCrashPC.exe')); f=c.write_build_provenance(Path('build-ci'),p); c.verify_build_provenance(f,Path('build-ci/CometCrashPC.exe'),Path('.'),pin); print('linked EXE provenance: verified')"
+
+      - name: Prepare downloadable CI scaffold notice
+        shell: pwsh
+        run: |
+          @"
+          CometCrashPC CI SCAFFOLD - NOT A PLAYABLE COMET CRASH BUILD
+
+          This executable is compiled against non-proprietary synthetic PPU/SPU
+          fixtures solely to prove that the Windows host/runtime links correctly.
+          It does NOT contain the recompiled Comet Crash game code and is not the
+          executable to use for gameplay testing.
+
+          Use the CometCrashPC-Windows-Builder artifact instead. It builds the real
+          executable locally from your own legally obtained NPEB00142 v1.00 files.
+          "@ | Set-Content -Encoding UTF8 build-ci\README-NOT-PLAYABLE.txt
+
+      - name: Upload CI scaffold executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: CometCrashPC-ci-scaffold
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build-ci/CometCrashPC.exe
+            build-ci/build_provenance.json
+            build-ci/README-NOT-PLAYABLE.txt
+
+      - name: Prepare portable Windows builder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force delivery | Out-Null
+          git bundle create delivery/CometCrashPC-source.bundle HEAD
+          Copy-Item scripts/portable_builder.cmd delivery/BUILD_AND_RUN.cmd
+          @"
+          COMET CRASH PC - WINDOWS BUILDER
+
+          This package contains NO Comet Crash game files.
+
+          1. Extract this artifact.
+          2. Drag your extracted NPEB00142 v1.00 game folder onto BUILD_AND_RUN.cmd,
+             or run:
+                BUILD_AND_RUN.cmd "D:\Games\Comet Crash"
+          3. The script creates a clean source checkout, reconstructs/lifts your
+             locally owned game data, builds the real native executable, and launches it.
+          4. The real executable will be:
+                CometCrashPC-src\build\CometCrashPC.exe
+
+          Required on Windows:
+          - Visual Studio 2022 / Build Tools: Desktop C++, Clang tools, Windows SDK
+          - Git
+          - Python 3
+          - CMake
+
+          The game EBOOT/ELF/assets remain local and are never included in this artifact.
+          "@ | Set-Content -Encoding UTF8 delivery/README.txt
+
+      - name: Upload Windows builder
+        uses: actions/upload-artifact@v4
+        with:
+          name: CometCrashPC-Windows-Builder
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            delivery/CometCrashPC-source.bundle
+            delivery/BUILD_AND_RUN.cmd
+            delivery/README.txt
