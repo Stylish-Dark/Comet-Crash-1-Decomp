@@ -83,6 +83,10 @@ py -3 "%ROOT%\tools\comet_port.py" lift "%ELF%" --clean || exit /b !errorlevel!
 echo [6/7] Building native Windows runner...
 py -3 "%ROOT%\tools\comet_port.py" build --clean || exit /b !errorlevel!
 
+echo.
+echo [output] REAL native EXE: "%ROOT%\build\CometCrashPC.exe"
+echo [output] Provenance:      "%ROOT%\build\build_provenance.json"
+echo.
 echo [7/7] Starting Comet Crash PC...
 echo        F1 = Graphics/Input menu
 if "%~2"=="" (
