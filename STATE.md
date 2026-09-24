@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot / runtime blocker discovery.**
+**First native Windows boot reached; fixing first evidenced post-frame runtime blocker.**
 
-The static-analysis, lift, compatibility, reproducibility and pre-boot diagnostic work is sufficiently mature that the next high-value evidence is a real Windows run against the supported NPEB00142 v1.00 title.
+The first real Windows run has now reached D3D12 initialization, asset/shader loading, controller polling and the first presented guest frame. The first evidenced crash occurred after five frames when a guest PPU worker called `sceNpTerm()` then `sys_ppu_thread_exit(0)`.
 
 ## Completed
 
@@ -39,6 +39,7 @@ The static-analysis, lift, compatibility, reproducibility and pre-boot diagnosti
 - Added Linux-hosted Windows cross-compilation using LLVM-MinGW. Actions run `35975062675` cross-built the Windows scaffold successfully from Ubuntu. The compact toolchain kit was then downloaded into the model environment and rehearsed fully offline to a valid PE32+ x86-64 `CometCrashPC.exe`. This removes Visual Studio/Windows SDK installation from the user's build burden.
 - Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
 - Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
+- First real native boot evidence reached `[boot-stage] first guest frame presented`, controller polling and five frames. It then failed with Windows `STATUS_BAD_FUNCTION_TABLE` (`0xC00000FF`) immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on a guest worker. The pinned runtime's Windows `longjmp()` thread-exit path was identified as the host failure and replaced with `_endthreadex()` for `_beginthreadex()`-created guest threads; POSIX retains `longjmp()`.
 - Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
 
 ## Current working state
@@ -73,7 +74,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Unresolved questions
 
-- What is the first real runtime blocker on Windows, if any?
+- What is the next runtime blocker after the Windows PPU-thread exit fix, if any?
 - What role does the small active SPU program play?
 - Which runtime subsystem fails first if the title does not reach visible output: VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio or input?
 - Direct absolute mouse pointer behaviour remains deferred until vanilla gameplay is proven stable.
@@ -81,7 +82,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The supported title archive has now been supplied and persisted once in private project storage. GitHub tracks only its content-addressed manifest; the proprietary archive itself is never committed. The next model-side step is to extract/validate `PARAM.SFO` and `USRDIR/EBOOT.BIN` from that private archive and build the real Windows executable. A Windows development machine is not required.
+The title archive has been extracted/validated model-side and the real game-specific Windows executable has been built. The current blocker is runtime verification of the patched second boot after the first run exposed `STATUS_BAD_FUNCTION_TABLE` during guest-thread exit.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -114,7 +115,9 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run the supported title on Windows either from the repository:
+Run the patched Boot Fix 2 package on Windows and preserve/upload `boot-console.txt`. The package automatically opens the log in Notepad when the process exits.
+
+Repository build path remains:
 
 ```bat
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"

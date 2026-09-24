@@ -119,3 +119,12 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added `config/proprietary-inputs.json` as the repository-visible content-addressed reference. The public Git repository stores only filename/size/SHA-256/private-storage path, never the proprietary archive bytes.
 - Extended `.gitignore` to block RAR/private-input directories, preventing accidental future commits.
 - Future sessions should retrieve the private archive by the manifest path, verify SHA-256, and reuse the same object rather than asking for or uploading another copy.
+
+## 2026-09-24 — First real native boot: five frames reached; Windows unwind crash fixed
+
+- User ran the first real NPEB00142 native package and returned `boot-console.txt`.
+- The title successfully reserved guest VM, loaded the exact PPU ELF, initialized HLE/sysPrx/VFS/LV2, initialized SPURS/audio/D3D12, loaded game assets/shaders, began controller polling and emitted `[boot-stage] first guest frame presented`.
+- Crash evidence: five frames had been presented; immediately before failure, worker thread 5 called `sceNpTerm()` then `sys_ppu_thread_exit(tid=5,status=0)`. Windows raised `0xC00000FF STATUS_BAD_FUNCTION_TABLE`.
+- Root cause identified in pinned ps3recomp: Windows guest thread exit used `longjmp()` across deep recompiled/COFF frames. LLVM-MinGW/Windows unwind metadata rejected that unwind.
+- Fix: for Windows only, after `sys_ppu_thread_exit` has recorded status and signalled joiners, terminate the matching CRT thread with `_endthreadex(0)`; POSIX keeps `longjmp()`. Local real-title incremental cross-build linked successfully with EXE SHA-256 `547e71e331385ecc17f245763eab77129ed43d60099293c8533e4211ae4a9029`.
+- Boot Fix 2 launcher removes the blocking `pause`; on process exit it automatically opens `boot-console.txt` in Notepad for easy upload/copy.

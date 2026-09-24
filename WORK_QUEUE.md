@@ -4,7 +4,7 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Capture first native Windows boot evidence**
+[x] **Capture first native Windows boot evidence**
 - Input archive is now persisted once in private project storage and referenced by `config/proprietary-inputs.json`. Verify its SHA-256 before extraction; do not re-upload or commit the ROM on future source updates.
 - Run `scripts\build_and_run.cmd "<game folder>"`. If a bounded attempt is preferable, pass a native-run timeout as the second argument, e.g. `scripts\build_and_run.cmd "<game folder>" 60`.
 - Preserve both `logs\boot-*.txt` and the adjacent `logs\boot-*.summary.json`.
@@ -14,16 +14,25 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - Delivery is now available: `CometCrashPC-Windows-Builder` from validated Actions run `35972413605` creates a clean source checkout and runs the real local game-data pipeline.
 - No Windows toolchain is required from the user. The title archive is available privately; the remaining work is model-side extraction/validation/build and then user-side execution of the finished EXE.
 
+## Current
+
+[ ] **Re-test the first evidenced native blocker fix**
+- First real run reached D3D12, first guest frame, controller polling and five frames.
+- Crash: `0xC00000FF STATUS_BAD_FUNCTION_TABLE` immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on guest thread 5.
+- Fix: Windows guest threads created with `_beginthreadex()` now terminate with `_endthreadex()` instead of `longjmp()` after exit state/join signalling; POSIX retains the existing jump unwind.
+- Run Boot Fix 2 and upload the automatically opened `boot-console.txt` if it exits/crashes.
+- Success: no `STATUS_BAD_FUNCTION_TABLE`; identify the next observed blocker or reach stable menu/gameplay.
+
 ## Next
 
-[ ] **Verify triage and fix the first evidenced native blocker**
+[x] **Verify triage and fix the first evidenced native blocker**
 - Use the `.summary.json` plus the full text log; `tools/boot_triage.py` remains available for independent re-analysis. Do not speculate ahead.
 - Classify into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, or input.
 - Make the smallest faithful fix.
 - Add a focused regression test or deterministic audit.
 - Re-run relevant gates and checkpoint.
 
-[ ] **Reach and verify first visible output**
+[ ] **Verify stable visible output / menu rendering**
 - Confirm D3D12 initialization.
 - Confirm at least one presented guest frame.
 - Verify title/menu rendering stability.
