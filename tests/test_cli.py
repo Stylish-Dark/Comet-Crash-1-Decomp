@@ -17,6 +17,9 @@ class T(unittest.TestCase):
  def test_build_parser_accepts_clean(self):
   a=c.parser().parse_args(['build','--clean'])
   self.assertTrue(a.clean)
+ def test_run_parser_accepts_unprovenanced_diagnostic_override(self):
+  a=c.parser().parse_args(['run','game','elf','--allow-unprovenanced'])
+  self.assertTrue(a.allow_unprovenanced)
 
 class ManifestCompatibilityTests(unittest.TestCase):
  def test_accepts_current_and_legacy_reference_elf_hashes(self):
@@ -124,4 +127,6 @@ class RunValidationTests(unittest.TestCase):
   start=s.index('def cmd_run(a):')
   body=s[start:s.index('def parser():',start)]
   self.assertIn('validate_inputs(a.game,a.elf)',body)
-  self.assertLess(body.index('validate_inputs(a.game,a.elf)'),body.index('run_logged('))
+  self.assertIn('verify_build_provenance(',body)
+  self.assertLess(body.index('validate_inputs(a.game,a.elf)'),body.index('verify_build_provenance('))
+  self.assertLess(body.index('verify_build_provenance('),body.index('run_logged('))

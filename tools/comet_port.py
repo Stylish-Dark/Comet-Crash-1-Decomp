@@ -73,22 +73,30 @@ def reset_generated_dir(path: Path) -> None:
     path.mkdir(parents=True,exist_ok=True)
 
 def git_state(path: Path) -> dict[str,object]:
-    """Return commit/dirty provenance without mutating the checkout."""
+    """Return an exact tracked-source snapshot without mutating the checkout."""
     if not (path/'.git').exists():
-        return {'commit':None,'dirty':None}
+        return {'commit':None,'dirty':None,'tracked_diff_sha256':None}
     commit=subprocess.check_output(
         ['git','-C',str(path),'rev-parse','HEAD'],text=True,stderr=subprocess.STDOUT
     ).strip()
-    dirty=bool(subprocess.check_output(
-        ['git','-C',str(path),'status','--porcelain','--untracked-files=no'],
-        text=True,stderr=subprocess.STDOUT,
-    ).strip())
-    return {'commit':commit,'dirty':dirty}
+    diff=subprocess.check_output(
+        ['git','-C',str(path),'diff','--binary','HEAD','--','.'],
+        stderr=subprocess.STDOUT,
+    )
+    return {
+        'commit':commit,
+        'dirty':bool(diff),
+        'tracked_diff_sha256':hashlib.sha256(diff).hexdigest(),
+    }
 
 def make_build_provenance(*, project_root: Path, ps3recomp_commit: str,
-                          hle: dict[str,object], recomp: Path, spu: Path) -> dict[str,object]:
+                          hle: dict[str,object], recomp: Path, spu: Path,
+                          executable: Path) -> dict[str,object]:
+    executable=executable.resolve()
+    if not executable.is_file():
+        raise FileNotFoundError(f'native executable missing after build: {executable}')
     return {
-        'schema_version':1,
+        'schema_version':2,
         'built_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
         'port_git':git_state(project_root),
         'ps3recomp_commit':ps3recomp_commit,
@@ -99,12 +107,56 @@ def make_build_provenance(*, project_root: Path, ps3recomp_commit: str,
         },
         'generated_ppu_chunks':len(list(recomp.glob('ppu_recomp_*.cpp'))),
         'generated_spu_units':len(list(spu.glob('*/spu_recomp.c'))),
+        'native_executable':{
+            'name':executable.name,
+            'size':executable.stat().st_size,
+            'sha256':sha256_file(executable),
+        },
     }
 
 def write_build_provenance(build: Path, provenance: dict[str,object]) -> Path:
     path=build/'build_provenance.json'
     path.write_text(json.dumps(provenance,indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
     return path
+
+def verify_build_provenance(provenance_path: Path, executable: Path,
+                            project_root: Path, expected_ps3recomp_commit: str) -> dict[str,object]:
+    """Fail if a native executable is not exactly bound to the current source/toolchain state."""
+    if not provenance_path.is_file():
+        raise FileNotFoundError(f'build provenance missing: {provenance_path}; rebuild before running')
+    executable=executable.resolve()
+    if not executable.is_file():
+        raise FileNotFoundError(f'native executable missing: {executable}')
+    provenance=json.loads(provenance_path.read_text(encoding='utf-8'))
+    errors=[]
+    if provenance.get('schema_version') != 2:
+        errors.append(f'unsupported provenance schema {provenance.get("schema_version")!r}')
+    artifact=provenance.get('native_executable') or {}
+    actual_size=executable.stat().st_size
+    actual_sha=sha256_file(executable)
+    if artifact.get('size') != actual_size:
+        errors.append(f'executable size mismatch: built={artifact.get("size")}, actual={actual_size}')
+    if artifact.get('sha256') != actual_sha:
+        errors.append(f'executable SHA-256 mismatch: built={artifact.get("sha256")}, actual={actual_sha}')
+    if provenance.get('ps3recomp_commit') != expected_ps3recomp_commit:
+        errors.append(
+            f'ps3recomp provenance mismatch: built={provenance.get("ps3recomp_commit")}, '
+            f'expected={expected_ps3recomp_commit}'
+        )
+    hle=provenance.get('hle_coverage') or {}
+    if hle.get('imports') != 171 or hle.get('covered_imports') != 171 or hle.get('missing') != 0:
+        errors.append(f'HLE provenance is not complete for the 171-import Comet baseline: {hle}')
+    built_git=provenance.get('port_git') or {}
+    current_git=git_state(project_root)
+    if built_git.get('commit') != current_git.get('commit'):
+        errors.append(
+            f'port commit mismatch: built={built_git.get("commit")}, current={current_git.get("commit")}'
+        )
+    if built_git.get('tracked_diff_sha256') != current_git.get('tracked_diff_sha256'):
+        errors.append('tracked source diff changed since native build')
+    if errors:
+        raise RuntimeError('native build provenance check failed: '+'; '.join(errors))
+    return provenance
 
 BOOT_SIGNAL_MARKERS=(
     '[crash]',
@@ -381,12 +433,14 @@ def cmd_build(a):
     if not ninja: raise FileNotFoundError('Ninja not found on PATH or in the Python ninja package')
     print(f'Ninja: {ninja}')
     run(cmake_configure_command(a.ps3recomp,a.recomp,a.spu,a.spu_registry,a.build,ninja)); run(['cmake','--build',a.build])
+    executable=a.build/'CometCrashPC.exe'
     provenance=make_build_provenance(
         project_root=ROOT,
         ps3recomp_commit=ps3recomp_commit,
         hle=hle,
         recomp=a.recomp,
         spu=a.spu,
+        executable=executable,
     )
     provenance_path=write_build_provenance(a.build,provenance)
     print(f'Build provenance: {provenance_path}')
@@ -402,10 +456,35 @@ def cmd_run(a):
         stamp=dt.datetime.now().strftime('%Y%m%d-%H%M%S')
         log_path=ROOT/'logs'/f'boot-{stamp}.txt'
     provenance_path=a.build/'build_provenance.json'
-    if provenance_path.is_file():
-        build_provenance=json.loads(provenance_path.read_text(encoding='utf-8'))
-    else:
-        build_provenance={'status':'missing','path':str(provenance_path.resolve())}
+    expected_ps3recomp=load_ps3recomp_lock()['commit']
+    try:
+        build_provenance=verify_build_provenance(
+            provenance_path,
+            Path(exe),
+            ROOT,
+            expected_ps3recomp,
+        )
+        provenance_verification={'status':'verified'}
+    except (FileNotFoundError,RuntimeError,ValueError,json.JSONDecodeError) as e:
+        if not a.allow_unprovenanced:
+            raise
+        print(f'[provenance-warning] {e}',flush=True)
+        provenance_verification={
+            'status':'overridden',
+            'error':str(e),
+            'current_port_git':git_state(ROOT),
+            'actual_executable':{
+                'path':str(Path(exe).resolve()),
+                'exists':Path(exe).is_file(),
+                'size':Path(exe).stat().st_size if Path(exe).is_file() else None,
+                'sha256':sha256_file(Path(exe)) if Path(exe).is_file() else None,
+            },
+        }
+        build_provenance=(
+            json.loads(provenance_path.read_text(encoding='utf-8'))
+            if provenance_path.is_file()
+            else {'status':'missing','path':str(provenance_path.resolve())}
+        )
     metadata={
         'exe':str(Path(exe).resolve()),
         'elf':str(a.elf.resolve()),
@@ -413,6 +492,7 @@ def cmd_run(a):
         'title_root':str(title_root.resolve()),
         'runtime_environment':runtime_env,
         'build_provenance':build_provenance,
+        'provenance_verification':provenance_verification,
     }
     run_logged([exe,a.elf],log_path,env=env,metadata=metadata,timeout_seconds=a.timeout)
 def parser():
@@ -423,7 +503,7 @@ def parser():
     q=s.add_parser('analyze'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('-o','--output',type=Path,default=ROOT/'out'); q.add_argument('--spu',type=Path,default=ROOT/'work'/'spu'); q.set_defaults(func=cmd_analyze)
     q=s.add_parser('lift'); q.add_argument('elf',type=Path); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--analysis',type=Path,default=ROOT/'out'); q.add_argument('-o','--output',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu-images',type=Path,default=ROOT/'work'/'spu'); q.add_argument('--spu-output',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--clean',action='store_true'); q.set_defaults(func=cmd_lift)
     q=s.add_parser('build'); q.add_argument('--ps3recomp',type=Path,default=DEFAULT_PS3RECOMP); q.add_argument('--recomp',type=Path,default=ROOT/'generated'/'recompiled'); q.add_argument('--spu',type=Path,default=ROOT/'generated'/'spu'); q.add_argument('--spu-registry',type=Path,default=ROOT/'generated'/'spu_workloads.c'); q.add_argument('--imports',type=Path,default=ROOT/'out'/'EBOOT.imports.json'); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--clean',action='store_true',help='remove the CMake build directory before configuring'); q.set_defaults(func=cmd_build)
-    q=s.add_parser('run'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--exe',type=Path); q.add_argument('--log',type=Path,help='boot log path (default: logs/boot-YYYYMMDD-HHMMSS.txt)'); q.add_argument('--timeout',type=float,help='optional native-run timeout in seconds; the default is unlimited'); q.set_defaults(func=cmd_run)
+    q=s.add_parser('run'); q.add_argument('game',type=Path); q.add_argument('elf',type=Path); q.add_argument('--build',type=Path,default=ROOT/'build'); q.add_argument('--exe',type=Path); q.add_argument('--log',type=Path,help='boot log path (default: logs/boot-YYYYMMDD-HHMMSS.txt)'); q.add_argument('--timeout',type=float,help='optional native-run timeout in seconds; the default is unlimited'); q.add_argument('--allow-unprovenanced',action='store_true',help='diagnostic override: run even when executable/build provenance cannot be verified'); q.set_defaults(func=cmd_run)
     return p
 def main():
     a=parser().parse_args(); a.func(a)
