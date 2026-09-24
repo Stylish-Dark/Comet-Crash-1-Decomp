@@ -5,7 +5,7 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 ## Current
 
 [ ] **Capture first native Windows boot evidence**
-- Input: supported NPEB00142 v1.00 extracted game directory.
+- Input: supported NPEB00142 v1.00 extracted game directory. Use either the repository's `scripts\build_and_run.cmd` or the downloadable **CometCrashPC-Windows-Builder** artifact's top-level `BUILD_AND_RUN.cmd`.
 - Run `scripts\build_and_run.cmd "<game folder>"`. If a bounded attempt is preferable, pass a native-run timeout as the second argument, e.g. `scripts\build_and_run.cmd "<game folder>" 60`.
 - Preserve both `logs\boot-*.txt` and the adjacent `logs\boot-*.summary.json`.
 - Confirm the summary contains build provenance, `boot_outcome`, first-frame state, `first_signal`, `triage_signal`, `suspected_subsystem`, `triage_rationale`, timeout/interruption state and exit code.
@@ -69,3 +69,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Add self-verifying boot bundles that hash the finalized text log and re-derive the saved triage/outcome fields.
 [x] Add exact HRESULT diagnostics for nine previously generic/silent D3D12 initialization exits.
 [x] Run the expanded **131/131** Linux/Windows gate, including Windows repository safety, real pinned-lifter staging, native link, and linked-EXE provenance round-trip.
+[x] Publish a downloadable Windows builder artifact that reconstructs/builds the real EXE locally from user-owned game data, and separately preserve the synthetic CI scaffold with an explicit non-playable notice.
