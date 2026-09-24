@@ -36,6 +36,7 @@ The static-analysis, lift, compatibility, reproducibility and pre-boot diagnosti
 - Every completed run writes both the human-readable boot log and a structured `.summary.json` sidecar containing the outcome, first-frame state, signals, subsystem/rationale, timeout/interruption state and exit code.
 - Successful builds write `build/build_provenance.json` with the exact tracked-source snapshot, ps3recomp commit, HLE coverage, generated PPU/SPU unit counts, and the actual `CometCrashPC.exe` SHA-256/size. `run` now hard-fails if that executable/source/toolchain provenance no longer matches, unless the explicit `--allow-unprovenanced` diagnostic override is used and recorded.
 - Added Windows CI that clones the exact ps3recomp pin, runs the full unit/`compileall`/repository-safety suite on Windows, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, compiles/links `CometCrashPC.exe`, and then performs a real linked-EXE provenance round-trip. The CI SPU fixture remains synthetic. Successful runs now publish a clearly marked non-playable CI scaffold artifact plus a **CometCrashPC-Windows-Builder** artifact that builds the real executable locally from the user's own game data.
+- Added Linux-hosted Windows cross-compilation using LLVM-MinGW. Actions run `35975062675` cross-built the Windows scaffold successfully from Ubuntu. The compact toolchain kit was then downloaded into the model environment and rehearsed fully offline to a valid PE32+ x86-64 `CometCrashPC.exe`. This removes Visual Studio/Windows SDK installation from the user's build burden.
 - Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
 - Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
 - Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
@@ -80,7 +81,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The principal blocker is external runtime evidence: **a real Windows native boot against the user's extracted supported game data has not yet been captured.**
+The principal blocker is now the title input itself: **the supported NPEB00142 v1.00 `PARAM.SFO` and `USRDIR/EBOOT.BIN` have not yet been supplied to the model-side build environment.** A Windows development machine is no longer required for compilation.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -102,7 +103,7 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Latest delivery merge on `main`: `6ea1d6f68e5e2f37548a7af7f4da85f1467687c6` — **delivery: publish usable Windows builder artifact**.
+Latest engineering merge on `main`: `b8f4657238144acc03749c0fb2335c8a5cc61376` — **build: support Linux-hosted Windows cross-compilation**.
 
 GitHub Actions run `35972413605` passed **134/134 tests**, Linux repository safety, the Windows unit/safety gate, all pinned runtime patches, real pinned-lifter scaffold staging, native clang-cl/Ninja link, linked-EXE provenance verification, and both artifact uploads.
 

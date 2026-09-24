@@ -71,3 +71,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Add exact HRESULT diagnostics for nine previously generic/silent D3D12 initialization exits.
 [x] Run the expanded **131/131** Linux/Windows gate, including Windows repository safety, real pinned-lifter staging, native link, and linked-EXE provenance round-trip.
 [x] Publish a downloadable Windows builder artifact that reconstructs/builds the real EXE locally from user-owned game data, and separately preserve the synthetic CI scaffold with an explicit non-playable notice.
+[x] Add and validate Linux-hosted Windows cross-build support with LLVM-MinGW; download the offline build kit into the model environment and reproduce a valid Windows PE locally without Visual Studio.

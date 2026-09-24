@@ -101,3 +101,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Final Actions run `35972413605` passed **134/134 tests** and all Windows compile/provenance/artifact gates. Both artifact uploads succeeded.
 - `CometCrashPC-Windows-Builder` artifact id: `10796339939`; SHA-256 `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
 - PR #6 merged into `main` as `6ea1d6f68e5e2f37548a7af7f4da85f1467687c6`.
+
+## 2026-09-24 — Model-side Windows cross-build established
+
+- Moved the build path model-side after rejecting Visual Studio/toolchain setup as a user requirement.
+- Added an LLVM-MinGW CMake toolchain and compiler-conditional port flags while retaining the existing Windows clang-cl path.
+- Actions run `35975062675` successfully cross-built the Windows scaffold from Ubuntu.
+- Packaged and downloaded a compact offline kit containing the exact source bundle, pinned ps3recomp bundle, compressed LLVM-MinGW toolchain, and Python 3.13 wheelhouse.
+- Rehearsed the kit locally with networking unnecessary: repositories reconstructed, dependencies installed from local wheels, Comet patches applied, pinned lifter fixture generated, and a valid PE32+ x86-64 `CometCrashPC.exe` produced.
+- Therefore the real EXE can now be built entirely model-side once `PARAM.SFO` and `USRDIR/EBOOT.BIN` from the supported title are supplied.
+- PR #7 merged as `b8f4657238144acc03749c0fb2335c8a5cc61376`.
