@@ -63,3 +63,8 @@ jobs:
           cmake --build build-ci
           if errorlevel 1 exit /b %errorlevel%
           if not exist build-ci\CometCrashPC.exe exit /b 4
+
+      - name: Verify linked EXE provenance integration
+        shell: pwsh
+        run: |
+          python -c "from pathlib import Path; import sys; sys.path.insert(0,'tools'); import comet_port as c; pin=c.load_ps3recomp_lock()['commit']; h={'imports':171,'covered_imports':171,'missing':[]}; p=c.make_build_provenance(project_root=Path('.'),ps3recomp_commit=pin,hle=h,recomp=Path('generated/ci/recompiled'),spu=Path('generated/ci/spu'),executable=Path('build-ci/CometCrashPC.exe')); f=c.write_build_provenance(Path('build-ci'),p); c.verify_build_provenance(f,Path('build-ci/CometCrashPC.exe'),Path('.'),pin); print('linked EXE provenance: verified')"
