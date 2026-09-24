@@ -34,9 +34,11 @@ The static-analysis, lift, compatibility, reproducibility and pre-boot diagnosti
 - Added `tools/boot_triage.py`, which preserves the first chronological symptom, prefers the first later subsystem-specific signal for classification, and classifies evidence into VM/PPU, VFS, HLE, GCM/RESC/RSX, SPURS/SPU, synchronization, audio, input, or `unknown` without guessing from generic crash/watchdog symptoms.
 - Native runs now preserve diagnostics on Ctrl+C and support an optional bounded timeout; timeout escalates terminate → 5-second grace → kill.
 - Every completed run writes both the human-readable boot log and a structured `.summary.json` sidecar containing the outcome, first-frame state, signals, subsystem/rationale, timeout/interruption state and exit code.
-- Successful builds write `build/build_provenance.json` with the port Git commit/dirty state, exact ps3recomp commit, HLE coverage and generated PPU/SPU unit counts; run logs embed that provenance.
-- Added Windows CI that clones the exact ps3recomp pin, runs the full unit/`compileall` suite on Windows, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, and compiles/links `CometCrashPC.exe`. The CI SPU fixture remains synthetic.
-- Latest authoritative validation (GitHub Actions run `35748082438`): **118/118 tests passed**, `compileall` passed, repository safety passed, the Windows unit suite passed, the real pinned-lifter fixture passed, and clang-cl/Ninja linked `CometCrashPC.exe` successfully.
+- Successful builds write `build/build_provenance.json` with the exact tracked-source snapshot, ps3recomp commit, HLE coverage, generated PPU/SPU unit counts, and the actual `CometCrashPC.exe` SHA-256/size. `run` now hard-fails if that executable/source/toolchain provenance no longer matches, unless the explicit `--allow-unprovenanced` diagnostic override is used and recorded.
+- Added Windows CI that clones the exact ps3recomp pin, runs the full unit/`compileall`/repository-safety suite on Windows, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, compiles/links `CometCrashPC.exe`, and then performs a real linked-EXE provenance round-trip. The CI SPU fixture remains synthetic.
+- Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
+- Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
+- Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
 
 ## Current working state
 
@@ -95,13 +97,14 @@ Do not invent the next runtime defect without a boot log.
 - `config/ps3recomp.lock` — exact toolchain pin.
 - `tools/comet_port.py` — main pipeline.
 - `tools/boot_triage.py` — deterministic saved-boot-log classifier.
+- `tools/verify_boot_bundle.py` — integrity/provenance verifier for `.summary.json` + adjacent text log.
 - `scripts/build_and_run.cmd` — one-command Windows path.
 
 ## Most recent checkpoint
 
-Latest validated engineering merge on `main`: `97132306700d999289b1a6503807fbdc767a3570` — **ci: validate runtime diagnostics on Windows**.
+Latest validated engineering merge on `main`: `64df668d4a65df3e4237a438b74b81331504f551` — **ci: validate provenance and first-boot diagnostics**.
 
-That validation closed two cross-platform defects: boot-summary footer lines being reparsed as runtime signals, and Windows-generated PPU source failing the audit because the host default encoding was not UTF-8.
+GitHub Actions run `35969371258` is fully green at **131/131 tests** plus Linux/Windows safety/compile gates, pinned-lifter staging, native clang-cl/Ninja link, and linked-EXE provenance verification.
 
 ## Immediate next action
 
@@ -111,4 +114,4 @@ Run the supported title on Windows:
 scripts\build_and_run.cmd "<path to extracted Comet Crash>"
 ```
 
-Preserve both the generated `.txt` log and `.summary.json` sidecar. For a deliberately bounded attempt, `scripts\build_and_run.cmd "<game folder>" 60` applies a 60-second timeout to the native-run phase while still preserving diagnostics. The next AI work unit is to inspect the real evidence, verify its classification, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
+Preserve both the generated `.txt` log and `.summary.json` sidecar. For a deliberately bounded attempt, `scripts\build_and_run.cmd "<game folder>" 60` applies a 60-second timeout to the native-run phase while still preserving diagnostics. Before acting on the result, run `python tools/verify_boot_bundle.py <boot.summary.json>`. The next AI work unit is to inspect that verified real evidence, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.

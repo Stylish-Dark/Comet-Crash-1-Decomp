@@ -9,7 +9,8 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - Run `scripts\build_and_run.cmd "<game folder>"`. If a bounded attempt is preferable, pass a native-run timeout as the second argument, e.g. `scripts\build_and_run.cmd "<game folder>" 60`.
 - Preserve both `logs\boot-*.txt` and the adjacent `logs\boot-*.summary.json`.
 - Confirm the summary contains build provenance, `boot_outcome`, first-frame state, `first_signal`, `triage_signal`, `suspected_subsystem`, `triage_rationale`, timeout/interruption state and exit code.
-- Success for this work unit: a provenance-bound boot artifact that identifies how far the native title actually reached and the first concrete runtime blocker, if any.
+- Run `python tools/verify_boot_bundle.py <boot.summary.json>`; do not debug from an artifact that fails its log/provenance integrity checks.
+- Success for this work unit: a self-verified, provenance-bound boot artifact that identifies how far the native title actually reached and the first concrete runtime blocker, if any.
 - Blocker: requires a Windows machine plus the user's local game data.
 
 ## Next
@@ -64,3 +65,7 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Enrich native crash/watchdog evidence with stage, frames, HLE breadcrumb and guest-VM AV location.
 [x] Run the full 118-test suite on Linux and Windows CI; verify real pinned PPU lifter staging and clang-cl/Ninja native scaffold link.
 [x] Fix Windows host-encoding drift in generated PPU auditing and prevent footer metadata from being reparsed as runtime signals.
+[x] Enforce source/toolchain/HLE/native-EXE provenance before launch, with only an explicit recorded diagnostic override.
+[x] Add self-verifying boot bundles that hash the finalized text log and re-derive the saved triage/outcome fields.
+[x] Add exact HRESULT diagnostics for nine previously generic/silent D3D12 initialization exits.
+[x] Run the expanded **131/131** Linux/Windows gate, including Windows repository safety, real pinned-lifter staging, native link, and linked-EXE provenance round-trip.

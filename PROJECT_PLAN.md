@@ -38,9 +38,11 @@ A reproducible Windows-native Comet Crash port that:
 5. **Diagnostics layer**
    - Durable text boot logging plus machine-readable summary sidecar.
    - Stage markers and first-frame outcome tracking.
-   - Provenance binding to the exact port/toolchain build.
+   - Provenance binding to the exact tracked source/toolchain/HLE state and native EXE hash.
    - Native crash context and capped hang watchdog snapshots.
    - Conservative subsystem triage that distinguishes chronological symptoms from later specific evidence.
+   - Self-verifying text-log/summary bundles with independent re-triage.
+   - Exact D3D12 first-failure API/HRESULT diagnostics.
    - Durable timeout/Ctrl+C termination paths.
 
 ## Phases
@@ -92,7 +94,7 @@ Resolution/display polish, safe aspect-ratio work, frame pacing/high refresh, pa
 - `compileall` for Python syntax.
 - Repository-safety gate for proprietary-material exclusion.
 - Linux and Windows unit/`compileall` gates plus repository safety.
-- Windows CI compile/link against exact pinned ps3recomp and real pinned PPU lifter output from a non-proprietary fixture.
+- Windows CI compile/link against exact pinned ps3recomp and real pinned PPU lifter output from a non-proprietary fixture, followed by linked-EXE provenance verification.
 - Real Windows boot logs for runtime progress.
 - Behavioural comparison with PS3/RPCS3 once gameplay is reachable.
 

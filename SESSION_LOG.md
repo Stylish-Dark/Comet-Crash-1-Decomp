@@ -76,3 +76,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Final GitHub Actions run `35748082438` passed: **118/118 tests**, `compileall`, repository safety, Windows unit suite, all Comet runtime patchers, real pinned PPU lifter fixture/audit, and final clang-cl/Ninja link of `CometCrashPC.exe`.
 - PR #4 merged into `main` as `97132306700d999289b1a6503807fbdc767a3570`.
 - The next decisive evidence remains the first real Windows run against the user's supported NPEB00142 v1.00 game data.
+
+## 2026-09-24 — Native evidence integrity and D3D12 first-failure diagnostics
+
+- Added an execution-time native-build provenance gate. Build provenance schema v2 now binds the tracked Git source snapshot, exact ps3recomp pin, full 171/171 HLE coverage, generated PPU/SPU counts, and the actual `CometCrashPC.exe` size/SHA-256. A swapped/stale EXE, changed source snapshot, wrong toolchain pin, or incomplete HLE provenance stops `run` before native execution. Commit: `eac714b`.
+- Added explicit `--allow-unprovenanced` for deliberate diagnostics only; use of the override is recorded in the boot metadata rather than silently weakening the evidence contract.
+- Added `tools/verify_boot_bundle.py`. Boot summaries now carry schema version, finalized text-log SHA-256, ELF SHA-256 and provenance-verification state; the verifier re-triages the adjacent text log and rejects tampered/truncated/mismatched bundles. Commit: `5d3408d`.
+- Audited pinned ps3recomp D3D12 initialization and patched nine verified generic/silent failure exits with exact API/HRESULT or Win32 error diagnostics. Triage now captures `[D3D12] ERROR:` as the first graphics-specific signal instead of waiting for the later generic init failure. Commit: `66443b2`.
+- Opened PR #5 to validate the combined tree. Linux passed **131/131 tests**, `compileall`, and repository safety.
+- Windows passed the same unit/compile/safety gate, all deterministic Comet runtime patches, real pinned PPU lifter fixture/audit, clang-cl/Ninja link, and a new integration step that hashes the actual linked `CometCrashPC.exe` into provenance and successfully re-verifies it against the live Windows checkout/toolchain.
+- Authoritative validation: GitHub Actions run `35969371258`.
+- PR #5 merged into `main` as `64df668d4a65df3e4237a438b74b81331504f551`.
+- The remaining project boundary is still runtime evidence from the user's actual supported NPEB00142 v1.00 title; pre-boot evidence integrity is now materially stronger.

@@ -65,3 +65,15 @@ Every native boot artifact should identify the build that produced it and preser
 ## D018 — Generated-source audits are byte-safe
 
 Generated ps3recomp source is not assumed to be UTF-8 because upstream tooling may write using the host default code page. Audits whose signatures are ASCII-only operate on a reversible one-byte decoding so Windows code-page punctuation cannot turn a valid generated lift into an audit crash.
+
+## D019 — Native execution requires exact build provenance
+
+A normal `run` must reject an EXE that is not cryptographically bound to the current tracked source snapshot, exact ps3recomp pin and complete HLE baseline. A diagnostic override may exist, but its use must be explicit and preserved in the boot evidence.
+
+## D020 — Boot evidence must be self-verifying
+
+The structured boot summary is not trusted merely because it exists. It binds to the finalized text log by SHA-256 and is independently re-derived by `tools/verify_boot_bundle.py`. Runtime debugging should not proceed from a bundle that fails this integrity/provenance check.
+
+## D021 — Graphics initialization failures must retain the first exact API error
+
+Pinned D3D12 setup failures are logged at the failing API site with HRESULT/Win32 detail where available. The later aggregate “D3D12 init FAILED” line is not allowed to replace a more specific earlier graphics signal during triage.

@@ -35,7 +35,7 @@ Prerequisites: Visual Studio 2022/Build Tools with Desktop C++, Clang tools and 
 
 While running, press **F1** for the Graphics & Input panel. Resolution changes currently apply on the next launch; borderless/windowed and VSync are live. Mouse compatibility mode maps movement onto the selected PS3 analogue stick and maps LMB/RMB/MMB to Cross/Circle/R1 while retaining physical-controller input.
 
-Each launch writes a timestamped `logs\boot-*.txt` plus `logs\boot-*.summary.json`. Preserve both if the first native run stops, crashes, times out or is interrupted. The structured summary records the last stage, first frame, first symptom, best subsystem-specific triage signal, conservative subsystem classification, outcome, exit/timeout/interruption state and the exact build provenance. `python tools/boot_triage.py <boot-log>` can re-analyse a saved log independently.
+Each launch writes a timestamped `logs\boot-*.txt` plus `logs\boot-*.summary.json`. Preserve both if the first native run stops, crashes, times out or is interrupted. The structured summary records the last stage, first frame, first symptom, best subsystem-specific triage signal, conservative subsystem classification, outcome, exit/timeout/interruption state and the exact build provenance. Normal runs refuse stale/swapped EXEs whose hash/source/toolchain provenance does not match. Before sharing or debugging a result, run `python tools/verify_boot_bundle.py <boot.summary.json>`; `python tools/boot_triage.py <boot-log>` remains available for independent re-analysis.
 
 See `docs/reversing/` for binary findings and `docs/superpowers/specs/` for the port architecture.
 
