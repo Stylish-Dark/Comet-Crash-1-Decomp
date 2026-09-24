@@ -5,14 +5,14 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 ## Current
 
 [ ] **Capture first native Windows boot evidence**
-- Input: supported NPEB00142 v1.00 extracted game directory. Use either the repository's `scripts\build_and_run.cmd` or the downloadable **CometCrashPC-Windows-Builder** artifact's top-level `BUILD_AND_RUN.cmd`.
+- Input archive is now persisted once in private project storage and referenced by `config/proprietary-inputs.json`. Verify its SHA-256 before extraction; do not re-upload or commit the ROM on future source updates.
 - Run `scripts\build_and_run.cmd "<game folder>"`. If a bounded attempt is preferable, pass a native-run timeout as the second argument, e.g. `scripts\build_and_run.cmd "<game folder>" 60`.
 - Preserve both `logs\boot-*.txt` and the adjacent `logs\boot-*.summary.json`.
 - Confirm the summary contains build provenance, `boot_outcome`, first-frame state, `first_signal`, `triage_signal`, `suspected_subsystem`, `triage_rationale`, timeout/interruption state and exit code.
 - Run `python tools/verify_boot_bundle.py <boot.summary.json>`; do not debug from an artifact that fails its log/provenance integrity checks.
 - Success for this work unit: a self-verified, provenance-bound boot artifact that identifies how far the native title actually reached and the first concrete runtime blocker, if any.
 - Delivery is now available: `CometCrashPC-Windows-Builder` from validated Actions run `35972413605` creates a clean source checkout and runs the real local game-data pipeline.
-- Remaining external requirement: a Windows machine plus the user's local NPEB00142 v1.00 game data.
+- No Windows toolchain is required from the user. The title archive is available privately; the remaining work is model-side extraction/validation/build and then user-side execution of the finished EXE.
 
 ## Next
 

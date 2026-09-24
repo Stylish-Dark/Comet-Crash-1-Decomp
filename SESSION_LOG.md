@@ -111,3 +111,11 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Rehearsed the kit locally with networking unnecessary: repositories reconstructed, dependencies installed from local wheels, Comet patches applied, pinned lifter fixture generated, and a valid PE32+ x86-64 `CometCrashPC.exe` produced.
 - Therefore the real EXE can now be built entirely model-side once `PARAM.SFO` and `USRDIR/EBOOT.BIN` from the supported title are supplied.
 - PR #7 merged as `b8f4657238144acc03749c0fb2335c8a5cc61376`.
+
+## 2026-09-24 — Proprietary title input persisted without Git duplication
+
+- Received the user's NPEB00142 archive (`190862297` bytes; SHA-256 `d0b9d09a1bdcca45a06bf781330adfe19dab8fd78f986c2312aaa69e6f65e2dd`).
+- Persisted exactly one private copy at `/Projects/Comet Crash/private-inputs/Comet-Crash-NPEB00142-v1.00.rar`.
+- Added `config/proprietary-inputs.json` as the repository-visible content-addressed reference. The public Git repository stores only filename/size/SHA-256/private-storage path, never the proprietary archive bytes.
+- Extended `.gitignore` to block RAR/private-input directories, preventing accidental future commits.
+- Future sessions should retrieve the private archive by the manifest path, verify SHA-256, and reuse the same object rather than asking for or uploading another copy.

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "title_id": "NPEB00142",
+  "title_version": "1.00",
+  "purpose": "private user-owned build input; never commit proprietary game data to this repository",
+  "archive": {
+    "filename": "Comet-Crash-NPEB00142-v1.00.rar",
+    "size_bytes": 190862297,
+    "sha256": "d0b9d09a1bdcca45a06bf781330adfe19dab8fd78f986c2312aaa69e6f65e2dd"
+  },
+  "storage": {
+    "kind": "chatgpt-library",
+    "path": "/Projects/Comet Crash/private-inputs/Comet-Crash-NPEB00142-v1.00.rar",
+    "content_addressed": true,
+    "policy": "store once; future sessions retrieve by path and verify SHA-256 before use"
+  }
+}

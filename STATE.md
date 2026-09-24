@@ -81,7 +81,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The principal blocker is now the title input itself: **the supported NPEB00142 v1.00 `PARAM.SFO` and `USRDIR/EBOOT.BIN` have not yet been supplied to the model-side build environment.** A Windows development machine is no longer required for compilation.
+The supported title archive has now been supplied and persisted once in private project storage. GitHub tracks only its content-addressed manifest; the proprietary archive itself is never committed. The next model-side step is to extract/validate `PARAM.SFO` and `USRDIR/EBOOT.BIN` from that private archive and build the real Windows executable. A Windows development machine is not required.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -96,6 +96,7 @@ Do not invent the next runtime defect without a boot log.
 - `docs/reversing/input.md` — controller/input reversing.
 - `docs/reversing/spu.md` — SPU findings.
 - `config/ps3recomp.lock` — exact toolchain pin.
+- `config/proprietary-inputs.json` — SHA-256/size/storage reference for the private user-owned title archive; no proprietary bytes.
 - `tools/comet_port.py` — main pipeline.
 - `tools/boot_triage.py` — deterministic saved-boot-log classifier.
 - `tools/verify_boot_bundle.py` — integrity/provenance verifier for `.summary.json` + adjacent text log.

@@ -17,6 +17,8 @@
 *.SDAT
 *.psarc
 *.PSARC
+*.rar
+*.RAR
 EBOOT.BIN
 EBOOT.ELF
 *.orig.ELF
@@ -28,6 +30,7 @@ LIC.DAT
 /gamefiles/
 /input-game/
 /proprietary/
+/private-inputs/
 
 # Generated/local
 /build/
