@@ -35,6 +35,7 @@ jobs:
         run: |
           python -m unittest discover -v
           python -m compileall -q tools tests
+          python tools/repo_safety.py
 
       - name: Apply pinned Comet runtime patches
         shell: pwsh
