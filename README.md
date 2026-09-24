@@ -15,7 +15,16 @@ This repository contains only original port tooling/code and reverse-engineering
 - Reproducible decrypt -> analyse -> PPU/SPU lift -> Windows build -> run commands are implemented.
 - A Windows runtime boot/playability test is still required before this can be called playable; see `docs/STATUS.md`.
 
+## Downloadable Windows builder
+
+Successful Windows CI runs publish two artifacts:
+- **CometCrashPC-Windows-Builder** — the useful package. It contains an exact Git source bundle plus `BUILD_AND_RUN.cmd`. Give that script your own extracted NPEB00142 v1.00 folder; it creates a clean checkout, rebuilds the real native executable from your local game data, and launches it. The resulting executable is `CometCrashPC-src\build\CometCrashPC.exe`.
+- **CometCrashPC-ci-scaffold** — engineering validation only. Its EXE is compiled against synthetic non-proprietary PPU/SPU fixtures and is deliberately marked **not playable**.
+
+No Comet Crash binary, decrypted ELF, SPU image, or asset is included in either artifact.
+
 ## Windows quick start
+
 
 From a normal Command Prompt, run one command against your extracted game folder:
 
