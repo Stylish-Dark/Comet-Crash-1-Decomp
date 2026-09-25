@@ -61,10 +61,11 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 [ ] **Run Boot Fix 7 and identify the first pointer-corruption boundary**
 - Trace the allocation from `func_0012F590` through saved `r31/r23`, the caller's `r1`, and the caller's `sp+0x84` lifetime slot.
+- Hardened coverage now checks all **35** live-pointer call boundaries, including 13 branch/switch calls missed by the first Boot Fix 7 build.
 - First decisive marker wins: `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
 - Use the reported `site=0x...` / callee to patch the exact offender.
-- Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
-- Boot Fix 7 ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
+- Hardened Boot Fix 7 EXE SHA-256: `33d166770570791c7fb4c2151a3a29b52234f71750e1445f2223bf77b23d1545`.
+- Hardened Boot Fix 7 ZIP SHA-256: `d2d106e767490998e7ec37b025f2d8186c7381433d9bf3a1ce6686d8d0569d3b`.
 
 ## Next
 
