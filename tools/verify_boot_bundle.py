@@ -19,6 +19,9 @@ MATCH_FIELDS = (
     "memalign_signal",
     "malloc_source",
     "malloc_signal",
+    "parse_corruption_kind",
+    "parse_corruption_site",
+    "parse_corruption_signal",
     "boot_outcome",
 )
 

@@ -92,6 +92,20 @@ class BootBundleTests(unittest.TestCase):
             self.assertFalse(report['ok'])
             self.assertTrue(any('malloc_source mismatch' in x for x in report['errors']))
 
+    def test_tampered_parse_corruption_site_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            summary,log=self._make_bundle(Path(td))
+            with log.open('a',encoding='utf-8') as f:
+                f.write('[COMET-PARSE-SLOT-CHANGE] site=0x00130204 callee=0x0001C7D4 expected=0x43C81280 got=0x00000140\n')
+            data=json.loads(summary.read_text(encoding='utf-8'))
+            data['boot_log_sha256']=comet_port.sha256_file(log)
+            data['parse_corruption_kind']='slot-change'
+            data['parse_corruption_site']='0XDEADBEEF'
+            summary.write_text(json.dumps(data),encoding='utf-8')
+            report=v.verify_bundle(summary)
+            self.assertFalse(report['ok'])
+            self.assertTrue(any('parse_corruption_site mismatch' in x for x in report['errors']))
+
     def test_unverified_provenance_requires_explicit_acceptance(self):
         with tempfile.TemporaryDirectory() as td:
             summary,_=self._make_bundle(Path(td),provenance_status='overridden')

@@ -106,6 +106,20 @@ class BootLogTests(unittest.TestCase):
             self.assertIn('COMET-MALLOC-LOW',data['malloc_signal'])
             self.assertEqual(data['suspected_subsystem'],'vm/ppu')
 
+    def test_run_logged_records_parse_corruption_site(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=(
+                'print("[COMET-PARSE-REG-CLOBBER] site=0x0012F6B8 reg=r31 expected=0x43C81280 got=0x00000140"); '
+                'raise SystemExit(9)'
+            )
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],log)
+            data=json.loads(log.with_suffix('.summary.json').read_text(encoding='utf-8'))
+            self.assertEqual(data['parse_corruption_kind'],'reg-clobber')
+            self.assertEqual(data['parse_corruption_site'],'0X0012F6B8')
+            self.assertEqual(data['suspected_subsystem'],'vm/ppu')
+
     def test_run_logged_classifies_hle_failure(self):
         with tempfile.TemporaryDirectory() as td:
             log=Path(td)/'boot.txt'
@@ -146,7 +160,7 @@ class BootLogTests(unittest.TestCase):
                 comet_port.run_logged(
                     [sys.executable,'-c',code],
                     log,
-                    timeout_seconds=0.2,
+                    timeout_seconds=0.75,
                 )
             text=log.read_text(encoding='utf-8')
             self.assertIn('# last_boot_stage=entering recompiled title',text)

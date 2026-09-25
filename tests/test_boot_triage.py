@@ -149,5 +149,24 @@ class BootTriageTests(unittest.TestCase):
             self.assertEqual(report["host_exit_code"], 9)
 
 
+    def test_parse_sp_change_is_specific_and_extracts_site(self):
+        report=b.summarize_lines([
+            "[COMET-PARSE-SP-CHANGE] site=0x00130378 expected_sp=0xD00717E0 got_sp=0xD0071810 slot=0xD0071864 slot_now=0x43C81280",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["parse_corruption_kind"],"sp-change")
+        self.assertEqual(report["parse_corruption_site"],"0X00130378")
+        self.assertEqual(report["suspected_subsystem"],"vm/ppu")
+
+    def test_parse_slot_change_is_specific_and_extracts_site(self):
+        report=b.summarize_lines([
+            "[COMET-PARSE-SLOT-CHANGE] site=0x00130204 callee=0x0001C7D4 slot=0xD0071864 expected=0x43C81280 got=0x00000140 sp=0xD00717E0",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["parse_corruption_kind"],"slot-change")
+        self.assertEqual(report["parse_corruption_site"],"0X00130204")
+        self.assertIn("SLOT-CHANGE",report["parse_corruption_signal"])
+
+
 if __name__ == "__main__":
     unittest.main()
