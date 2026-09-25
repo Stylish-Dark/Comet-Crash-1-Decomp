@@ -243,3 +243,20 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Updated the focused regression test to lock the extra marker sites and counts.
 - Code commit: `7420f2ddaeb99121b0ce23cd0b366ee02e8ffd87`; test commit: `359342bffd02c507ca2a8c06512a80be265c5a56`.
 - Next runtime dependency remains one hardened Boot Fix 7 run; no allocator/free suppression was introduced.
+
+
+## 2026-09-25 — Terminal Boot Fix 7 validated; real-title lift gate repaired
+
+- PR #12 merged as `886573c84500d653ddf77451ff96e8c427560c53`. GitHub Actions run `36124843328` passed **162/162 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build.
+- Added ordering regression coverage proving the terminal pre-store/pre-free pointer guards execute before their actual pointer sinks.
+- Rebuilt the real Windows diagnostic from the exact title lift with the terminal guards included and all prior allocator diagnostics retained.
+- Terminal-guard EXE SHA-256: `4f40b8d966cf99cb112379cdf49512af5043b2adfa162485f6e6bbbd03e69b69`.
+- Ready-to-run terminal-guard ZIP SHA-256: `f7efd390fd80631b2925e5cc645dc1a72372b8281199b1b57ed6d222e69ddf86`.
+- Static review of `func_00130130` found two reads/frees of `sp+0x84`: `0x001301A8` on the short/error path and `0x00130418` on the long path. Control flow makes them mutually exclusive; the long path that reaches the evidenced failure branches around the early free, so the current evidence is not explained by a simple double-free.
+- No direct write to `sp+0x84` exists in the caller after parse return. The adjacent `sp+0x80` buffer passed to `func_0001C7D4` was audited; with count=1 its downstream write touches only `sp+0x80`, not `sp+0x84`.
+- A fresh exact-reference lift exposed a separate reproducibility bug: the pinned PPU lifter emits 3,936 deterministic data-like `.word` TODO fallbacks, while the old completeness gate treated every TODO as an unsupported instruction. There are zero remaining actionable mnemonic TODOs after the Comet compatibility patch.
+- Added strict raw-word baseline handling: expected count **3,936** and ordered-value SHA-256 `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`. Count/digest drift still fails; real instruction TODOs remain fatal.
+- Fresh exact-title end-to-end lift after the fix: **3,744 PPU functions**, zero actionable PPU unsupported TODOs, exact raw-word baseline, both SPU lifts complete, zero reachable unsupported SPU instructions.
+- The current Boot Fix 7 pointer patcher applied cleanly to that fresh real-title lift; the resulting 28.9 MB generated C++ compiled successfully for Windows.
+- PR #13 merged as `f9069a2e68ada5e5598977780d74f6a4c6070555`. GitHub Actions run `36127073310` passed **164/164 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build.
+- Next runtime dependency remains the first decisive parse-pointer marker from the terminal-guard Boot Fix 7 build. No allocator/free suppression was introduced.
