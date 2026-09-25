@@ -66,6 +66,19 @@ class BootBundleTests(unittest.TestCase):
             self.assertFalse(report['ok'])
             self.assertTrue(any('boot_outcome mismatch' in x for x in report['errors']))
 
+    def test_tampered_memalign_origin_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            summary,log=self._make_bundle(Path(td))
+            with log.open('a',encoding='utf-8') as f:
+                f.write('[COMET-MEMALIGN-CORE-LOW] result=0x00000140 least=0x40000000\n')
+            data=json.loads(summary.read_text(encoding='utf-8'))
+            data['boot_log_sha256']=comet_port.sha256_file(log)
+            data['memalign_origin']='wrapper-return'
+            summary.write_text(json.dumps(data),encoding='utf-8')
+            report=v.verify_bundle(summary)
+            self.assertFalse(report['ok'])
+            self.assertTrue(any('memalign_origin mismatch' in x for x in report['errors']))
+
     def test_unverified_provenance_requires_explicit_acceptance(self):
         with tempfile.TemporaryDirectory() as td:
             summary,_=self._make_bundle(Path(td),provenance_status='overridden')

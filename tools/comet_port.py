@@ -17,7 +17,11 @@ from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
 from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
-from boot_triage import classify_signal as classify_boot_signal, derive_outcome as derive_boot_outcome
+from boot_triage import (
+    MEMALIGN_MARKERS,
+    classify_signal as classify_boot_signal,
+    derive_outcome as derive_boot_outcome,
+)
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/'config'/'comet_crash.json'
@@ -170,6 +174,10 @@ BOOT_SIGNAL_MARKERS=(
     'ppu_load_elf failed',
     '[D3D12] ERROR:',
     'D3D12 init FAILED',
+    '[COMET-MEMALIGN-MALLOC-LOW]',
+    '[COMET-MEMALIGN-CORE-LOW]',
+    '[COMET-MEMALIGN-WRAPPER-LOW]',
+    '[COMET-ALLOC-CORRUPTION]',
 )
 
 def update_boot_summary(summary: dict[str,object], line: str) -> None:
@@ -180,6 +188,11 @@ def update_boot_summary(summary: dict[str,object], line: str) -> None:
         if stage=='first guest frame presented':
             summary['first_frame_presented']=True
     lower=text.lower()
+    hits=summary.setdefault('memalign_hits',{})
+    if isinstance(hits,dict):
+        for origin, marker in MEMALIGN_MARKERS:
+            if marker.lower() in lower and origin not in hits:
+                hits[origin]=text
     detected=False
     for marker in BOOT_SIGNAL_MARKERS:
         if marker.lower() in lower:
@@ -223,7 +236,13 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write('# Comet Crash native boot log\n')
         log.write(json.dumps(header,indent=2,sort_keys=True)+'\n\n')
         log.flush()
-        summary: dict[str,object]={'last_boot_stage':None,'first_signal':None,'first_specific_signal':None,'first_frame_presented':False}
+        summary: dict[str,object]={
+            'last_boot_stage':None,
+            'first_signal':None,
+            'first_specific_signal':None,
+            'first_frame_presented':False,
+            'memalign_hits':{},
+        }
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
         assert proc.stdout is not None
@@ -265,6 +284,15 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         triage_signal=summary['first_specific_signal'] or summary['first_signal']
         triage_display=triage_signal or '<none>'
         subsystem,rationale=classify_boot_signal(triage_signal)
+        memalign_origin=None
+        memalign_signal=None
+        hits=summary.get('memalign_hits')
+        if isinstance(hits,dict):
+            for origin,_ in MEMALIGN_MARKERS:
+                if origin in hits:
+                    memalign_origin=origin
+                    memalign_signal=hits[origin]
+                    break
         first_frame=bool(summary['first_frame_presented'])
         outcome=derive_boot_outcome(
             first_frame_presented=first_frame,
@@ -278,6 +306,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write(f'# triage_signal={triage_display}\n')
         log.write(f'# suspected_subsystem={subsystem}\n')
         log.write(f'# triage_rationale={rationale}\n')
+        log.write(f'# memalign_origin={memalign_origin or "<none>"}\n')
+        log.write(f'# memalign_signal={memalign_signal or "<none>"}\n')
         log.write(f'# first_frame_presented={"true" if first_frame else "false"}\n')
         log.write(f'# interrupted={interrupted or "<none>"}\n')
         log.write(f'# timed_out={"true" if timed_out else "false"}\n')
@@ -294,6 +324,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         'triage_signal':triage_signal,
         'suspected_subsystem':subsystem,
         'triage_rationale':rationale,
+        'memalign_origin':memalign_origin,
+        'memalign_signal':memalign_signal,
         'first_frame_presented':first_frame,
         'interrupted':interrupted,
         'timed_out':timed_out,
@@ -309,6 +341,9 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
     if triage_signal:
         print(f'[boot-summary] triage_signal={triage_signal}',flush=True)
     print(f'[boot-summary] suspected_subsystem={subsystem}',flush=True)
+    if memalign_origin:
+        print(f'[boot-summary] memalign_origin={memalign_origin}',flush=True)
+        print(f'[boot-summary] memalign_signal={memalign_signal}',flush=True)
     print(f'[boot-summary] boot_outcome={outcome}',flush=True)
     print(f'[boot-summary] triage_rationale={rationale}',flush=True)
     if interrupted:

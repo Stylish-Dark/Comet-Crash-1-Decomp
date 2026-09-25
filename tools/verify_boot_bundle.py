@@ -15,6 +15,8 @@ MATCH_FIELDS = (
     "host_exit_code",
     "first_frame_presented",
     "suspected_subsystem",
+    "memalign_origin",
+    "memalign_signal",
     "boot_outcome",
 )
 
