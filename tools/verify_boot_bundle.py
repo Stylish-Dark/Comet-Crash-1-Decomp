@@ -17,6 +17,8 @@ MATCH_FIELDS = (
     "suspected_subsystem",
     "memalign_origin",
     "memalign_signal",
+    "malloc_source",
+    "malloc_signal",
     "boot_outcome",
 )
 
