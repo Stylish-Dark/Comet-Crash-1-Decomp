@@ -31,6 +31,12 @@ class ParsePointerDiagPatchTests(unittest.TestCase):
         self.assertFalse(changed2)
         self.assertEqual(out2,out)
 
+    def test_terminal_guards_precede_their_sinks(self):
+        out,changed=p.patch_text(self.fixture())
+        self.assertTrue(changed)
+        self.assertLess(out.index('phase=pre-store'),out.index('[COMET-PARSE-STORE]'))
+        self.assertLess(out.index('phase=pre-free'),out.index('[COMET-PARSE-FINAL]'))
+
     def test_caller_watch_sites_cover_all_live_pointer_branch_calls(self):
         expected={
             '0x001301E8','0x001301F4','0x00130204','0x00130214','0x001302F0','0x00130304',
