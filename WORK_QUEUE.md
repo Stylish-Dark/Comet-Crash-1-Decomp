@@ -33,12 +33,21 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Capture first corrupt-free metadata with Boot Fix 4**
+[x] **Capture first corrupt-free metadata with Boot Fix 4**
 - Restore the exact reference ELF and original allocator abort; do not suppress allocator assertions.
 - Instrument generated `func_001A4C6C` with `tools/patch_comet_allocator_diag.py`.
 - Required log markers: `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]`.
 - Use caller LR, freed pointer, chunk header/flags, adjacent header and mspace state to distinguish invalid pointer/double-free from earlier heap overwrite.
-- Success: identify the earliest concrete heap invariant failure and patch its cause, not its abort reporter.
+- Result: first failing free receives `mem=0x00000140` / chunk `0x00000138` with zero metadata while allocator `least=0x40000000`. Static trace shows this low value comes from the aligned-allocation result stored by `func_0012F590`; the output field is not the source of corruption.
+
+## Current
+
+[ ] **Trace invalid aligned-allocation return with Boot Fix 5**
+- Keep the exact reference ELF and original allocator abort; retain the Boot Fix 4 first-free diagnostic.
+- Apply `tools/patch_comet_memalign_diag.py` to regenerated PPU source.
+- Capture `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, and/or `[COMET-MEMALIGN-WRAPPER-LOW]`.
+- Inputs of interest: wrapper caller LR, alignment, requested bytes, backing-malloc request, mspace/least, returned pointer, and core working registers.
+- Success: identify whether the low `0x140` originates in backing malloc, alignment carving/core return, or wrapper return propagation; fix that exact producer rather than adding a free-side guard.
 
 ## Next
 

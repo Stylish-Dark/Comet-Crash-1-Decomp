@@ -149,3 +149,12 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added optional `tools/patch_comet_allocator_diag.py`, which instruments generated `func_001A4C6C` but preserves the original guest abort. It captures original mspace/mem/caller LR and emits chunk head/size/pinuse/cinuse, next chunk header, small/tree maps, dv/top sizes, least address, dv and top pointers.
 - Built Boot Fix 4 from the exact reference ELF SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6` with the Windows thread-exit fix retained. EXE SHA-256 `384e04af8924e50b552aad5b7b4811f88dd72a9602a09076a36155ecf477413b`; ready-to-run ZIP SHA-256 `6d82cbb3a401280b5a422ed1bb9d3462e8e0227aa93047097e3aa103245ba825`.
 - Next evidence required: the first `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]` lines from Boot Fix 4.
+
+## 2026-09-25 — Boot Fix 4 isolates invalid low-pointer free
+
+- User returned the Boot Fix 4 log. The diagnostic fired at the original first allocator abort: `caller_lr=0x001A8190`, `mspace=0x00722220`, `mem=0x00000140`, derived chunk `0x00000138`, zero chunk head/size, while the allocator reports `least=0x40000000`, `dv=0x43C80568`, and `top=0x4557A698`.
+- This rules out an ordinary in-heap chunk merely having damaged size flags: the pointer itself is outside the allocator's heap range.
+- Regenerated the exact reference PPU lift from ELF SHA-256 `3b4b6fef...` using pinned ps3recomp `d3ed1a5c...` and traced the producer statically.
+- The failing free wrapper is `0x001A8178` -> `mspace_free`; its caller `0x00130130` frees the first field of an output structure populated by `0x0012F590`.
+- `0x0012F590` obtains that buffer from aligned allocator wrapper `0x001A80D0` (alignment `0x80`) and retains that allocation result for the output pointer. Therefore the next diagnostic must observe the allocation return path, not suppress or guard `free()`.
+- Added `tools/patch_comet_memalign_diag.py` plus regression coverage. It instruments wrapper `0x001A80D0`, core `0x001A75E8`, and the core's backing `malloc` call, emitting diagnostics only for nonzero returns below the allocator's `least` address.

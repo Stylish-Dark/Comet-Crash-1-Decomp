@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; allocator corruption confirmed and Boot Fix 4 diagnostic built.**
+**First native Windows boot reached; Boot Fix 4 identified an invalid low-pointer free; tracing its aligned-allocation producer.**
 
-Boot Fix 3 bypassed only the first allocator abort and then failed later in the same Dinkumware `mspace_free` path with `chunksize(p) == small_index2size(I) -- assertion failed`, proving the heap inconsistency is not an isolated abort site. The bypass is retired. Boot Fix 4 restores the exact reference ELF and original abort, but instruments the first allocator-corruption path with pointer/chunk/heap metadata before it aborts.
+Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. The current task is to instrument the aligned-allocation wrapper, backing malloc and core return to identify exactly where the invalid low result originates.
 
 ## Completed
 
@@ -42,7 +42,8 @@ Boot Fix 3 bypassed only the first allocator abort and then failed later in the 
 - First real native boot evidence reached `[boot-stage] first guest frame presented`, controller polling and five frames. It then failed with Windows `STATUS_BAD_FUNCTION_TABLE` (`0xC00000FF`) immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on a guest worker. The pinned runtime's Windows `longjmp()` thread-exit path was identified as the host failure and replaced with `_endthreadex()` for `_beginthreadex()`-created guest threads; POSIX retains `longjmp()`.
 - Boot Fix 2 advanced beyond that host unwind crash and continued loading/rendering resources until the title's allocator path called the guest abort reporter from return address `0x001A4E90`. The actual call instruction is `0x001A4E8C: bl 0x0019427C`.
 - Boot Fix 3 bypassed that one call, then later hit `mspace_free` assertion `chunksize(p) == small_index2size(I)` and aborted via return address `0x001AB8D8` / allocator site `0x001A4FC4`. This confirms broader allocator-state corruption and invalidates abort suppression as a fix.
-- Boot Fix 4 restores the original reference ELF and allocator abort. Generated PPU code is instrumented by `tools/patch_comet_allocator_diag.py` to emit `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]` immediately before the first abort, including caller LR, freed pointer, chunk header/size flags, adjacent chunk header, bin maps, dv/top sizes and heap pointers.
+- Boot Fix 4 restores the original reference ELF and allocator abort. Generated PPU code is instrumented by `tools/patch_comet_allocator_diag.py` to emit `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]` immediately before the first abort, including caller LR, freed pointer, chunk header/size flags, adjacent chunk header, bin maps, dv/top sizes and heap pointers. The returned evidence is `caller_lr=0x001A8190`, `mspace=0x00722220`, `mem=0x00000140`, `chunk=0x00000138`, zero chunk head/size, and `least=0x40000000` — an invalid low pointer, not an ordinary in-heap chunk.
+- Added `tools/patch_comet_memalign_diag.py` to instrument the exact regenerated aligned-allocation path at wrapper `0x001A80D0`, core `0x001A75E8`, and its backing `malloc` call. It emits low-result markers only when a nonzero result is below the allocator's `least` address, distinguishing a bad backing allocation from alignment-carving/return corruption.
 - Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
 
 ## Current working state
@@ -85,7 +86,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The title archive is available privately and model-side builds are reproducible. Broader guest heap corruption is now established. The current blocker is one Boot Fix 4 run to capture the first corrupt free's exact pointer/chunk/heap state so the underlying bad write or invalid free can be fixed.
+The title archive is available privately and model-side builds are reproducible. Boot Fix 4 proved the first failing free receives `0x00000140`, far below the heap's `least=0x40000000`. The current blocker is identifying which aligned-allocation stage first produces that low value; the new memalign diagnostic records wrapper/core/backing-malloc results without changing guest behavior.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -103,12 +104,14 @@ Do not invent the next runtime defect without a boot log.
 - `config/proprietary-inputs.json` — SHA-256/size/storage reference for the private user-owned title archive; no proprietary bytes.
 - `tools/comet_port.py` — main pipeline.
 - `tools/boot_triage.py` — deterministic saved-boot-log classifier.
+- `tools/patch_comet_allocator_diag.py` — first bad-free metadata diagnostic.
+- `tools/patch_comet_memalign_diag.py` — aligned-allocation low-return origin diagnostic.
 - `tools/verify_boot_bundle.py` — integrity/provenance verifier for `.summary.json` + adjacent text log.
 - `scripts/build_and_run.cmd` — one-command Windows path.
 
 ## Most recent checkpoint
 
-Latest engineering merge on `main`: `b8f4657238144acc03749c0fb2335c8a5cc61376` — **build: support Linux-hosted Windows cross-compilation**.
+Current canonical `main` before this cycle: `07928b3411e10d95680c24fccb299f8d9aca1107`. The latest runtime evidence is Boot Fix 4's invalid-low-pointer free; the memalign-origin diagnostic is the next committed work unit.
 
 GitHub Actions run `35972413605` passed **134/134 tests**, Linux repository safety, the Windows unit/safety gate, all pinned runtime patches, real pinned-lifter scaffold staging, native clang-cl/Ninja link, linked-EXE provenance verification, and both artifact uploads.
 
@@ -118,7 +121,7 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run Boot Fix 4 and upload `boot-console.txt`. Search targets are `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]`; the launcher opens the log in Notepad automatically.
+Build/run Boot Fix 5 with both allocator diagnostics enabled. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. The goal is to establish the first stage that turns a valid allocation into `0x00000140`.
 
 Repository build path remains:
 
