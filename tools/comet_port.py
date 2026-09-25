@@ -466,10 +466,17 @@ def cmd_lift(a):
         for k,v in st.items(): ppu_patch[k]+=v
     print(f'Comet Crash PPU compatibility patch: {ppu_patch}')
     ppu_report=audit_ppu_path(a.output)
-    print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}')
+    print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}, raw-word={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}')
     if ppu_report['unsupported_total']:
         sample=', '.join(str(x['instruction']) for x in ppu_report['unsupported'][:5])
         raise RuntimeError(f'PPU lift still contains {ppu_report["unsupported_total"]} unsupported TODO instruction(s): {sample}')
+    known=json.loads((ROOT/'docs'/'reference'/'known-analysis.json').read_text(encoding='utf-8')).get('ppu_lift',{})
+    expected_raw_count=int(known.get('raw_word_todo_count',-1))
+    expected_raw_sha=str(known.get('raw_word_todo_sha256','')).lower()
+    if ppu_report['raw_word_total'] != expected_raw_count or ppu_report['raw_word_sha256'].lower() != expected_raw_sha:
+        raise RuntimeError('PPU raw-word TODO baseline mismatch: '
+                           f'got count={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}, '
+                           f'expected count={expected_raw_count} sha256={expected_raw_sha}')
     images=list(a.spu_images.glob('*.elf'))
     if not images: raise FileNotFoundError(f'no extracted SPU ELFs in {a.spu_images}; run analyze first')
     a.spu_output.mkdir(parents=True,exist_ok=True); a.spu_registry.parent.mkdir(parents=True,exist_ok=True)
