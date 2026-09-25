@@ -20,6 +20,8 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "[comet-parse-reg-clobber]",
         "[comet-parse-sp-change]",
         "[comet-parse-slot-change]",
+        "[comet-parse-write]",
+        "[comet-parse-write-hle]",
         "[comet-alloc-corruption]",
     )),
     ("vfs", (
@@ -99,6 +101,8 @@ SIGNAL_PATTERNS: tuple[str, ...] = (
     "[COMET-MALLOC-LOW]",
     "[COMET-PARSE-REG-CLOBBER]",
     "[COMET-PARSE-SP-CHANGE]",
+    "[COMET-PARSE-WRITE]",
+    "[COMET-PARSE-WRITE-HLE]",
     "[COMET-PARSE-SLOT-CHANGE]",
     "[COMET-ALLOC-CORRUPTION]",
 )
@@ -111,6 +115,8 @@ MEMALIGN_MARKERS: tuple[tuple[str, str], ...] = (
 
 MALLOC_LOW_RE = re.compile(r"\[COMET-MALLOC-LOW\].*?\bsource=([^\s]+)")
 PARSE_CORRUPTION_RE = re.compile(r"\[COMET-PARSE-(REG-CLOBBER|SP-CHANGE|SLOT-CHANGE)\].*?\bsite=(0x[0-9A-Fa-f]+)")
+PARSE_WRITE_RE = re.compile(r"\[COMET-PARSE-WRITE\].*?\bguest_fn=(0x[0-9A-Fa-f]+)")
+PARSE_WRITE_HLE_RE = re.compile(r"\[COMET-PARSE-WRITE-HLE\]")
 SUMMARY_RE = re.compile(r"^#\s*([a-z_]+)=(.*)$")
 
 
@@ -122,6 +128,15 @@ def extract_malloc_source(line: str) -> str | None:
 def extract_parse_corruption(line: str) -> tuple[str, str] | None:
     m=PARSE_CORRUPTION_RE.search(line)
     return (m.group(1).lower(), m.group(2).upper()) if m else None
+
+
+def extract_parse_write(line: str) -> tuple[str, str] | None:
+    m=PARSE_WRITE_RE.search(line)
+    if m:
+        return ("guest-write", m.group(1).upper())
+    if PARSE_WRITE_HLE_RE.search(line):
+        return ("hle-write", "HLE")
+    return None
 
 
 def classify_signal(signal: str | None) -> tuple[str, str]:
@@ -186,6 +201,9 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
     parse_corruption_kind: str | None = None
     parse_corruption_site: str | None = None
     parse_corruption_signal: str | None = None
+    parse_write_kind: str | None = None
+    parse_write_function: str | None = None
+    parse_write_signal: str | None = None
 
     for raw in lines:
         line = raw.rstrip("\r\n")
@@ -197,6 +215,10 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
         lower = line.lower()
+        write_hit=extract_parse_write(line)
+        if write_hit is not None and parse_write_kind is None:
+            parse_write_kind,parse_write_function=write_hit
+            parse_write_signal=line.strip()
         parse_hit=extract_parse_corruption(line)
         if parse_hit is not None and parse_corruption_kind is None:
             parse_corruption_kind,parse_corruption_site=parse_hit
@@ -273,6 +295,9 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         "parse_corruption_kind": parse_corruption_kind,
         "parse_corruption_site": parse_corruption_site,
         "parse_corruption_signal": parse_corruption_signal,
+        "parse_write_kind": parse_write_kind,
+        "parse_write_function": parse_write_function,
+        "parse_write_signal": parse_write_signal,
         "boot_outcome": outcome,
     }
 
@@ -305,6 +330,8 @@ def main() -> int:
         print(f"malloc signal:         {report['malloc_signal'] or '<none>'}")
         print(f"parse corruption:      {report['parse_corruption_kind'] or '<none>'}")
         print(f"parse corruption site: {report['parse_corruption_site'] or '<none>'}")
+        print(f"parse writer:          {report['parse_write_kind'] or '<none>'}")
+        print(f"parse writer function: {report['parse_write_function'] or '<none>'}")
         print(f"boot outcome:         {report['boot_outcome']}")
         print(f"rationale:            {report['rationale']}")
     return 0
