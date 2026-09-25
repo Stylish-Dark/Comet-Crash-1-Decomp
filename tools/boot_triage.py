@@ -16,6 +16,7 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "ppu dispatch",
         "ppu exception",
         "[comet-memalign-",
+        "[comet-malloc-low]",
         "[comet-alloc-corruption]",
     )),
     ("vfs", (
@@ -92,6 +93,7 @@ SIGNAL_PATTERNS: tuple[str, ...] = (
     "[COMET-MEMALIGN-MALLOC-LOW]",
     "[COMET-MEMALIGN-CORE-LOW]",
     "[COMET-MEMALIGN-WRAPPER-LOW]",
+    "[COMET-MALLOC-LOW]",
     "[COMET-ALLOC-CORRUPTION]",
 )
 
@@ -101,7 +103,13 @@ MEMALIGN_MARKERS: tuple[tuple[str, str], ...] = (
     ("wrapper-return", "[COMET-MEMALIGN-WRAPPER-LOW]"),
 )
 
+MALLOC_LOW_RE = re.compile(r"\[COMET-MALLOC-LOW\].*?\bsource=([^\s]+)")
 SUMMARY_RE = re.compile(r"^#\s*([a-z_]+)=(.*)$")
+
+
+def extract_malloc_source(line: str) -> str | None:
+    m=MALLOC_LOW_RE.search(line)
+    return m.group(1) if m else None
 
 
 def classify_signal(signal: str | None) -> tuple[str, str]:
@@ -161,6 +169,8 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
     host_exit_code: int | None = None
     footer: dict[str, str] = {}
     memalign_hits: dict[str, str] = {}
+    malloc_source: str | None = None
+    malloc_signal: str | None = None
 
     for raw in lines:
         line = raw.rstrip("\r\n")
@@ -172,6 +182,10 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
         lower = line.lower()
+        source=extract_malloc_source(line)
+        if source is not None and malloc_source is None:
+            malloc_source=source
+            malloc_signal=line.strip()
         for origin, marker in MEMALIGN_MARKERS:
             if marker.lower() in lower and origin not in memalign_hits:
                 memalign_hits[origin] = line.strip()
@@ -235,6 +249,8 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         "rationale": rationale,
         "memalign_origin": memalign_origin,
         "memalign_signal": memalign_signal,
+        "malloc_source": malloc_source,
+        "malloc_signal": malloc_signal,
         "boot_outcome": outcome,
     }
 
@@ -263,6 +279,8 @@ def main() -> int:
         print(f"suspected subsystem:  {report['suspected_subsystem']}")
         print(f"memalign origin:       {report['memalign_origin'] or '<none>'}")
         print(f"memalign signal:       {report['memalign_signal'] or '<none>'}")
+        print(f"malloc source:         {report['malloc_source'] or '<none>'}")
+        print(f"malloc signal:         {report['malloc_signal'] or '<none>'}")
         print(f"boot outcome:         {report['boot_outcome']}")
         print(f"rationale:            {report['rationale']}")
     return 0
