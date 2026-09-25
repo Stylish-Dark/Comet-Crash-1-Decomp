@@ -4,7 +4,7 @@ This file is retained for compatibility with older project handoffs.
 
 **The authoritative queue is now `WORK_QUEUE.md`.**
 
-Current dependency: run **Boot Fix 7** and capture the first pointer-lifetime failure marker. Boot Fix 6 proved that `mspace_malloc`/memalign do not return the invalid `0x140` value. Boot Fix 7 now distinguishes:
+Current dependency: run the **hardened Boot Fix 7** build and capture the first pointer-lifetime failure marker. The watcher now covers all 35 live-pointer call boundaries, including the branch/switch paths that can rejoin the failing free. Boot Fix 6 proved that `mspace_malloc`/memalign do not return the invalid `0x140` value. Boot Fix 7 now distinguishes:
 - `[COMET-PARSE-REG-CLOBBER]` — saved allocation register changed;
 - `[COMET-PARSE-SP-CHANGE]` — caller stack pointer drifted;
 - `[COMET-PARSE-SLOT-CHANGE]` — caller `sp+0x84` allocation slot was overwritten.
