@@ -222,3 +222,14 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Built Boot Fix 7 locally from the exact reference ELF plus all prior allocator diagnostics and the new pointer-lifetime probe.
 - Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
 - Ready-to-run Boot Fix 7 ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
+
+
+## 2026-09-25 — Boot Fix 7 hardened to full live-pointer call coverage
+
+- Audited the real generated `func_00130130` after the first Boot Fix 7 build and found a concrete diagnostic coverage gap: 13 branch/switch call sites at `0x00130440..0x00130548` can loop back into the same `0x00130418` free path but were not included in the original 22-call watcher set.
+- Expanded `tools/patch_comet_parse_pointer_diag.py` from 22 to **35** caller-side watchpoints so every known live-pointer call boundary feeding the failing free is checked for caller-SP drift and `sp+0x84` slot mutation.
+- Added a regression locking the exact 35-site set; the full repository suite passed **161/161 tests** locally.
+- Incrementally cross-linked the real Windows executable after applying the 13 missing watchpoints to the exact generated real-title PPU source.
+- Hardened Boot Fix 7 EXE SHA-256: `33d166770570791c7fb4c2151a3a29b52234f71750e1445f2223bf77b23d1545`.
+- Hardened ready-to-run ZIP SHA-256: `d2d106e767490998e7ec37b025f2d8186c7381433d9bf3a1ce6686d8d0569d3b`.
+- Next evidence remains the first `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]` marker from the hardened build; that exact call site will determine the next code fix.
