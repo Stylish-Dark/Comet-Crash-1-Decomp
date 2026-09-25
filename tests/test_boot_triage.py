@@ -72,6 +72,28 @@ class BootTriageTests(unittest.TestCase):
         self.assertEqual(report["triage_signal"], "[HLE] UNIMPLEMENTED nid=0xCAFEBABE")
         self.assertEqual(report["suspected_subsystem"], "hle")
 
+    def test_memalign_origin_prefers_earliest_producing_stage(self):
+        report = b.summarize_lines([
+            "[COMET-MEMALIGN-MALLOC-LOW] result=0x00000140 least=0x40000000",
+            "[COMET-MEMALIGN-CORE-LOW] result=0x00000140 least=0x40000000",
+            "[COMET-MEMALIGN-WRAPPER-LOW] result=0x00000140 least=0x40000000",
+            "[COMET-ALLOC-CORRUPTION] mem=0x00000140 least=0x40000000",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["memalign_origin"], "backing-malloc")
+        self.assertIn("MEMALIGN-MALLOC-LOW", report["memalign_signal"])
+        self.assertEqual(report["triage_signal"], report["memalign_signal"])
+        self.assertEqual(report["suspected_subsystem"], "vm/ppu")
+
+    def test_memalign_core_is_origin_when_backing_malloc_is_not_low(self):
+        report = b.summarize_lines([
+            "[COMET-MEMALIGN-CORE-LOW] result=0x00000140 least=0x40000000",
+            "[COMET-MEMALIGN-WRAPPER-LOW] result=0x00000140 least=0x40000000",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["memalign_origin"], "alignment-core")
+        self.assertIn("MEMALIGN-CORE-LOW", report["memalign_signal"])
+
     def test_unsupported_spu_is_specific(self):
         category, _ = b.classify_signal("unsupported SPU opcode at 0x100")
         self.assertEqual(category, "spurs/spu")
