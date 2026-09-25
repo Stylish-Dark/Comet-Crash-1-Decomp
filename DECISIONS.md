@@ -89,3 +89,7 @@ The observed Boot Fix 2 guest abort at return address `0x001A4E90` is not treate
 ## D024 — Do not advance past repeated allocator assertions; instrument the first invariant failure
 
 Boot Fix 3 demonstrated that suppressing the first allocator abort merely carries corrupted heap state forward into another Dinkumware `mspace_free` assertion. Further abort-site NOPs are prohibited as a debugging strategy. Restore the original abort and capture the first failing free's caller, pointer, chunk metadata and mspace state; fix the invalid free or earlier corrupting write instead.
+
+## D025 — Offline source artifacts must be self-contained and smoke-cloned
+
+A source bundle is not considered a valid continuity artifact merely because `git bundle create` succeeds. Artifact-producing CI uses a full-history checkout, creates bundles from all relevant refs, and performs a fresh clone/HEAD verification before upload. This prevents model-side builds from depending on omitted shallow-history parents.

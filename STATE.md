@@ -36,6 +36,7 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Every completed run writes both the human-readable boot log and a structured `.summary.json` sidecar containing the outcome, first-frame state, signals, subsystem/rationale, timeout/interruption state and exit code.
 - Successful builds write `build/build_provenance.json` with the exact tracked-source snapshot, ps3recomp commit, HLE coverage, generated PPU/SPU unit counts, and the actual `CometCrashPC.exe` SHA-256/size. `run` now hard-fails if that executable/source/toolchain provenance no longer matches, unless the explicit `--allow-unprovenanced` diagnostic override is used and recorded.
 - Added Windows CI that clones the exact ps3recomp pin, runs the full unit/`compileall`/repository-safety suite on Windows, applies Comet runtime patches, runs the **real pinned PPU lifter** on a non-proprietary PPC fixture, applies the same PPU patch/audit path, compiles/links `CometCrashPC.exe`, and then performs a real linked-EXE provenance round-trip. The CI SPU fixture remains synthetic. Successful runs now publish a clearly marked non-playable CI scaffold artifact plus a **CometCrashPC-Windows-Builder** artifact that builds the real executable locally from the user's own game data.
+- Fixed offline artifact continuity: Actions now fetches full Git history, creates self-contained Git bundles from all refs, and smoke-clones each bundle before upload. The prior shallow bundle could contain a commit whose parent was omitted; PR #8 removed that hidden dependency.
 - Added Linux-hosted Windows cross-compilation using LLVM-MinGW. Actions run `35975062675` cross-built the Windows scaffold successfully from Ubuntu. The compact toolchain kit was then downloaded into the model environment and rehearsed fully offline to a valid PE32+ x86-64 `CometCrashPC.exe`. This removes Visual Studio/Windows SDK installation from the user's build burden.
 - Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
 - Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
@@ -111,9 +112,9 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Current canonical engineering state includes `d3a751caa663278eeaffd4820322d30155174704` (memalign-origin diagnostic) and `e09dc393c93daa96435d07adc5e366193104b447` (goto-safe diagnostic fix). Boot Fix 5 was built from this diagnostic intent plus the exact pinned toolchain and private title data.
+Current canonical `main` includes `31c8552afd8ff977a535d92a373e0baab2ba5a23` (**ci: make offline source bundles self-contained**). The Boot Fix 5 diagnostic code itself is checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
 
-GitHub Actions run `35972413605` passed **134/134 tests**, Linux repository safety, the Windows unit/safety gate, all pinned runtime patches, real pinned-lifter scaffold staging, native clang-cl/Ninja link, linked-EXE provenance verification, and both artifact uploads.
+GitHub Actions run `36096273445` passed **144/144 tests**, compileall/repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build. Both source-bundle paths were smoke-cloned successfully before upload, proving the offline bundles are self-contained.
 
 Published artifacts from that run:
 - `CometCrashPC-Windows-Builder` — usable delivery package; exact source bundle + `BUILD_AND_RUN.cmd` + README. Artifact SHA-256: `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
@@ -121,7 +122,7 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run the ready-to-run Boot Fix 5 package. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. Boot Fix 5 EXE SHA-256: `d05bf3d6672c2105bd223cce0096a259f6822ca94a1911efdae9bfbc4c5e2bb8`; ZIP SHA-256: `5d9cfcfa14a42d79e38badd76973958309664924c7f37a92d7db7df99ee736d8`.
+Run the ready-to-run Boot Fix 5 package. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. Canonical model-side rebuild: EXE SHA-256 `e0986be50ad7c0d3d16c93e9c2a542bbe0c1b52631be03a2ce8b2d08971db1d4`; ZIP SHA-256 `ec6121dd22e3f035fb8a9e4443e1522c125494a675f35b1fd99e9d0374e21c55`.
 
 Repository build path remains:
 

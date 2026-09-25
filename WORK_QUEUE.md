@@ -44,7 +44,7 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 [ ] **Run Boot Fix 5 and classify the invalid aligned-allocation return**
 - Keep the exact reference ELF and original allocator abort; retain the Boot Fix 4 first-free diagnostic.
-- `tools/patch_comet_memalign_diag.py` is implemented, regression-tested against the exact regenerated PPU anchors, and Boot Fix 5 is built.
+- `tools/patch_comet_memalign_diag.py` is implemented, regression-tested against the exact regenerated PPU anchors, and Boot Fix 5 is built. The current downloadable rebuild is source-bound to diagnostic commit `31024b8`; EXE SHA-256 `e0986be5...`, ZIP SHA-256 `ec6121dd...`.
 - Capture `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, and/or `[COMET-MEMALIGN-WRAPPER-LOW]`.
 - Inputs of interest: wrapper caller LR, alignment, requested bytes, backing-malloc request, mspace/least, returned pointer, and core working registers.
 - Success: identify whether the low `0x140` originates in backing malloc, alignment carving/core return, or wrapper return propagation; fix that exact producer rather than adding a free-side guard.
@@ -107,3 +107,5 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] Run the expanded **131/131** Linux/Windows gate, including Windows repository safety, real pinned-lifter staging, native link, and linked-EXE provenance round-trip.
 [x] Publish a downloadable Windows builder artifact that reconstructs/builds the real EXE locally from user-owned game data, and separately preserve the synthetic CI scaffold with an explicit non-playable notice.
 [x] Add and validate Linux-hosted Windows cross-build support with LLVM-MinGW; download the offline build kit into the model environment and reproduce a valid Windows PE locally without Visual Studio.
+
+[x] **Make offline source bundles self-contained** — PR #8 / Actions `36096273445`: full-history checkout, `git bundle --all`, smoke-clone verification on Windows and Linux; **144/144** unit tests green.

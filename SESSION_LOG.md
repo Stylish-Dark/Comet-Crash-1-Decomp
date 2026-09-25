@@ -167,3 +167,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Boot Fix 5 EXE SHA-256: `d05bf3d6672c2105bd223cce0096a259f6822ca94a1911efdae9bfbc4c5e2bb8`.
 - Ready-to-run Boot Fix 5 ZIP SHA-256: `5d9cfcfa14a42d79e38badd76973958309664924c7f37a92d7db7df99ee736d8`.
 - Next evidence: run Boot Fix 5 and upload `boot-console.txt`; inspect the first of `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, or `[COMET-MEMALIGN-WRAPPER-LOW]`.
+
+## 2026-09-25 — Canonical Boot Fix 5 rebuild and offline-bundle repair
+
+- User explicitly reaffirmed that GitHub must be the canonical project state; reconstructed work from `STATE.md` / `WORK_QUEUE.md` before continuing.
+- Found a continuity defect in the previously published offline source bundles: Actions' shallow checkout allowed a bundled commit to reference an omitted parent, so a fresh `git clone <bundle>` could fail.
+- PR #8 changed all artifact-producing checkouts to full history, creates source bundles with `git bundle --all`, and smoke-clones/verifies them before upload. It also ensures the Linux cross-build applies the Windows PPU-thread-exit patch.
+- Validation run `36096273445`: **144/144 tests**, compileall/repository safety, Windows scaffold/native-link/provenance, Linux→Windows cross-build, and both source-bundle smoke clones passed.
+- PR #8 merged as `31c8552afd8ff977a535d92a373e0baab2ba5a23`.
+- Downloaded the corrected cross-build artifact, successfully cloned its self-contained Comet source bundle and pinned ps3recomp bundle, and checked out Boot Fix 5 diagnostic commit `31024b8193c95a3d432b3cfdc291168991fc088d`.
+- Rebuilt Boot Fix 5 from exact reference ELF `3b4b6fef...`: full real PPU lift with `vsrab`/`vsrb` fixes, Boot Fix 4 allocator diagnostic, aligned-allocation wrapper/core/backing-malloc diagnostics, and both real SPU workloads.
+- Cross-link completed successfully. Rebuilt EXE SHA-256: `e0986be50ad7c0d3d16c93e9c2a542bbe0c1b52631be03a2ce8b2d08971db1d4`. Ready-to-run ZIP SHA-256: `ec6121dd22e3f035fb8a9e4443e1522c125494a675f35b1fd99e9d0374e21c55`.
+- The EXE was checked for all five diagnostic strings: MEMALIGN-MALLOC-LOW, MEMALIGN-CORE-LOW, MEMALIGN-WRAPPER-LOW, ALLOC-CORRUPTION and ALLOC-STATE.
