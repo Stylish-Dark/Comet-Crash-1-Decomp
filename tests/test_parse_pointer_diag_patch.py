@@ -10,7 +10,7 @@ class ParsePointerDiagPatchTests(unittest.TestCase):
         for site,func in p.PARSE_R23_SITES.items():
             parse.append(f'        ctx->lr = {site}; func_{func}(ctx); DRAIN_TRAMPOLINE(ctx);')
         parse += [p.STORE,'        return;','}']
-        caller=[p.CALLER_ENTRY,p.CALLER_SP,p.BASELINE_CALL]
+        caller=[p.CALLER_ENTRY,p.CALLER_SP,p.BASELINE_CALL,p.ZERO_RESULT_BRANCH,p.EARLY_FREE]
         for site,func in p.CALLER_SITES.items():
             caller.append(f'        ctx->lr = {site}; func_{func}(ctx); DRAIN_TRAMPOLINE(ctx);')
         caller += [p.FINAL_FREE,'        return;','}']
@@ -27,6 +27,10 @@ class ParsePointerDiagPatchTests(unittest.TestCase):
         self.assertIn('site=0x0012FC7C reg=r23 phase=pre-store',out)
         self.assertIn('site=0x00130418 phase=pre-free',out)
         self.assertIn('site=0x00130418 callee=0x001A8178 phase=pre-free',out)
+        self.assertIn('comet_parse_watch_arm(comet_pc_slot,comet_pc_expected);',out)
+        self.assertIn('extern \"C\" void comet_parse_watch_arm(uint32_t,uint32_t);',out)
+        self.assertEqual(out.count('comet_parse_watch_disarm();'),2)
+        self.assertLess(out.index('comet_parse_watch_arm'),out.index('ctx->lr = 0x001301E8'))
         out2,changed2=p.patch_text(out)
         self.assertFalse(changed2)
         self.assertEqual(out2,out)
