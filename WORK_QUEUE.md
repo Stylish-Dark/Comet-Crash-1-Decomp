@@ -42,13 +42,23 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Run Boot Fix 5 and classify the invalid aligned-allocation return**
+[x] **Build Boot Fix 6 and trace the exact low mspace_malloc return producer**
 - Keep the exact reference ELF and original allocator abort; retain the Boot Fix 4 first-free diagnostic.
-- `tools/patch_comet_memalign_diag.py` is implemented, regression-tested against the exact regenerated PPU anchors, and Boot Fix 5 is built. The current downloadable rebuild is source-bound to diagnostic commit `31024b8`; EXE SHA-256 `e0986be5...`, ZIP SHA-256 `ec6121dd...`.
+- Boot Fix 5 memalign instrumentation remains enabled. Boot Fix 6 adds `tools/patch_comet_malloc_source_diag.py`, which tags all 26 live `r31` producers in `func_001A5A90`.
 - Capture `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, and/or `[COMET-MEMALIGN-WRAPPER-LOW]`.
 - The runner/triage path now records `memalign_origin` as `backing-malloc`, `alignment-core`, or `wrapper-return`, plus the exact `memalign_signal`; `verify_boot_bundle.py` independently re-derives these fields from the raw text log.
 - Inputs of interest: wrapper caller LR, alignment, requested bytes, backing-malloc request, mspace/least, returned pointer, and core working registers.
-- Success: identify whether the low `0x140` originates in backing malloc, alignment carving/core return, or wrapper return propagation; fix that exact producer rather than adding a free-side guard.
+- Static work already narrows the shape: `0x140 == 0x138 + 8`, matching a normal dlmalloc `chunk + 8` return from a poisoned chunk pointer. Boot Fix 6 identifies exactly which allocator path selected that chunk.
+- Boot Fix 6 EXE SHA-256: `202788a1ba26d4164bc4a598608c7809d8b5cf02202e02c9ade435cb85da08be`; ready-to-run ZIP SHA-256: `f6697e3a8c03574a853cd7318bb7beef26ed40a22c4b1f755edc9c9254ec26b1`.
+- Success: capture `[COMET-MALLOC-LOW] source=...` and use that exact producer to trace the corrupted bin/DV/tree/top metadata back to its writer.
+
+## Current
+
+[ ] **Run Boot Fix 6 and trace the poisoned allocator metadata writer**
+- Capture the first `[COMET-MALLOC-LOW]` and adjacent `[COMET-MALLOC-STATE]` lines.
+- Map `malloc_source` directly to the tagged basic block in `func_001A5A90`.
+- Identify whether the bad chunk came from a smallbin, treebin, DV, top or another allocator path.
+- Instrument or repair the exact metadata writer; do not guard the low free and do not suppress allocator assertions.
 
 ## Next
 

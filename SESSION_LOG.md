@@ -191,3 +191,18 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - PR #9 merged as `97c732d2a76f2a942a419e33509abcbc82710a87`.
 - GitHub Actions run `36097615167`: **148/148 tests passed**; compileall/repository safety, Windows unit/native-link/provenance, and Linux→Windows cross-build all passed.
 - Runtime blocker remains deliberately unchanged: one Boot Fix 5 Windows run is required to determine where the invalid low `0x140` allocation result is first produced.
+
+
+## 2026-09-25 — Boot Fix 6: exact mspace_malloc return producer traced
+
+- Recovered the user's canonical private NPEB00142 v1.00 archive from project Library and verified the exact reference ELF SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`.
+- Reconstructed the pinned source/toolchain locally from the self-contained CI bundles and regenerated the real PPU lift for direct inspection.
+- Exact ELF disassembly and generated C++ confirm `func_001A5A90` is the title's `mspace_malloc`; successful allocator paths return through `r31`, commonly as `chunk + 8`. The observed bad user pointer `0x00000140` therefore corresponds structurally to a bogus chunk pointer `0x00000138`.
+- Added `tools/patch_comet_malloc_source_diag.py`, which tags all 26 live writes to `r31` in `func_001A5A90` and logs the exact producer block, request, chunk header/links, bin maps, DV/top state and relevant registers when a nonzero return is below `mspace->least`.
+- Extended boot triage/summary verification with `malloc_source` and `malloc_signal`; altered summaries are rejected when they disagree with the raw boot log.
+- PR #10 merged as `d5f51b36ae827cad6cd31846f96c4d35fa58aacd`.
+- GitHub Actions run `36099036501`: **154/154 tests passed**; repository safety, Windows native-link/provenance and Linux→Windows cross-build all passed.
+- Built a real Windows Boot Fix 6 executable from the exact reference ELF with Boot Fix 4 free diagnostics, Boot Fix 5 memalign diagnostics and the new malloc-source diagnostic all embedded.
+- Boot Fix 6 EXE SHA-256: `202788a1ba26d4164bc4a598608c7809d8b5cf02202e02c9ade435cb85da08be`.
+- Ready-to-run ZIP SHA-256: `f6697e3a8c03574a853cd7318bb7beef26ed40a22c4b1f755edc9c9254ec26b1`.
+- Next runtime evidence is no longer merely “does backing malloc return low?”; it will identify the precise allocator branch that selected the poisoned chunk, allowing the corruption writer to be traced instead of guessed.
