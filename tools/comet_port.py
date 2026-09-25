@@ -19,6 +19,7 @@ from check_env import find_ninja
 from bootstrap_ps3recomp import load_lock as load_ps3recomp_lock
 from boot_triage import (
     MEMALIGN_MARKERS,
+    extract_malloc_source,
     classify_signal as classify_boot_signal,
     derive_outcome as derive_boot_outcome,
 )
@@ -177,6 +178,7 @@ BOOT_SIGNAL_MARKERS=(
     '[COMET-MEMALIGN-MALLOC-LOW]',
     '[COMET-MEMALIGN-CORE-LOW]',
     '[COMET-MEMALIGN-WRAPPER-LOW]',
+    '[COMET-MALLOC-LOW]',
     '[COMET-ALLOC-CORRUPTION]',
 )
 
@@ -188,6 +190,10 @@ def update_boot_summary(summary: dict[str,object], line: str) -> None:
         if stage=='first guest frame presented':
             summary['first_frame_presented']=True
     lower=text.lower()
+    source=extract_malloc_source(text)
+    if source is not None and summary.get('malloc_source') is None:
+        summary['malloc_source']=source
+        summary['malloc_signal']=text
     hits=summary.setdefault('memalign_hits',{})
     if isinstance(hits,dict):
         for origin, marker in MEMALIGN_MARKERS:
@@ -242,6 +248,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
             'first_specific_signal':None,
             'first_frame_presented':False,
             'memalign_hits':{},
+            'malloc_source':None,
+            'malloc_signal':None,
         }
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
@@ -308,6 +316,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write(f'# triage_rationale={rationale}\n')
         log.write(f'# memalign_origin={memalign_origin or "<none>"}\n')
         log.write(f'# memalign_signal={memalign_signal or "<none>"}\n')
+        log.write(f'# malloc_source={summary.get("malloc_source") or "<none>"}\n')
+        log.write(f'# malloc_signal={summary.get("malloc_signal") or "<none>"}\n')
         log.write(f'# first_frame_presented={"true" if first_frame else "false"}\n')
         log.write(f'# interrupted={interrupted or "<none>"}\n')
         log.write(f'# timed_out={"true" if timed_out else "false"}\n')
@@ -326,6 +336,8 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         'triage_rationale':rationale,
         'memalign_origin':memalign_origin,
         'memalign_signal':memalign_signal,
+        'malloc_source':summary.get('malloc_source'),
+        'malloc_signal':summary.get('malloc_signal'),
         'first_frame_presented':first_frame,
         'interrupted':interrupted,
         'timed_out':timed_out,
@@ -344,6 +356,9 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
     if memalign_origin:
         print(f'[boot-summary] memalign_origin={memalign_origin}',flush=True)
         print(f'[boot-summary] memalign_signal={memalign_signal}',flush=True)
+    if summary.get('malloc_source'):
+        print(f'[boot-summary] malloc_source={summary["malloc_source"]}',flush=True)
+        print(f'[boot-summary] malloc_signal={summary["malloc_signal"]}',flush=True)
     print(f'[boot-summary] boot_outcome={outcome}',flush=True)
     print(f'[boot-summary] triage_rationale={rationale}',flush=True)
     if interrupted:
