@@ -13,6 +13,7 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from patch_ps3recomp_thread_exit import patch_file as patch_thread_exit_runtime
+from patch_ps3recomp_parse_watch import patch_file as patch_parse_watch_runtime
 from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
@@ -21,6 +22,7 @@ from boot_triage import (
     MEMALIGN_MARKERS,
     extract_malloc_source,
     extract_parse_corruption,
+    extract_parse_write,
     classify_signal as classify_boot_signal,
     derive_outcome as derive_boot_outcome,
 )
@@ -180,6 +182,8 @@ BOOT_SIGNAL_MARKERS=(
     '[COMET-MEMALIGN-CORE-LOW]',
     '[COMET-MEMALIGN-WRAPPER-LOW]',
     '[COMET-MALLOC-LOW]',
+    '[COMET-PARSE-WRITE]',
+    '[COMET-PARSE-WRITE-HLE]',
     '[COMET-PARSE-REG-CLOBBER]',
     '[COMET-PARSE-SP-CHANGE]',
     '[COMET-PARSE-SLOT-CHANGE]',
@@ -194,6 +198,10 @@ def update_boot_summary(summary: dict[str,object], line: str) -> None:
         if stage=='first guest frame presented':
             summary['first_frame_presented']=True
     lower=text.lower()
+    write_hit=extract_parse_write(text)
+    if write_hit is not None and summary.get('parse_write_kind') is None:
+        summary['parse_write_kind'],summary['parse_write_function']=write_hit
+        summary['parse_write_signal']=text
     parse_hit=extract_parse_corruption(text)
     if parse_hit is not None and summary.get('parse_corruption_kind') is None:
         summary['parse_corruption_kind'],summary['parse_corruption_site']=parse_hit
@@ -261,6 +269,9 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
             'parse_corruption_kind':None,
             'parse_corruption_site':None,
             'parse_corruption_signal':None,
+            'parse_write_kind':None,
+            'parse_write_function':None,
+            'parse_write_signal':None,
         }
         proc=subprocess.Popen(cmd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                               text=True,errors='replace',bufsize=1)
@@ -332,6 +343,9 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         log.write(f'# parse_corruption_kind={summary.get("parse_corruption_kind") or "<none>"}\n')
         log.write(f'# parse_corruption_site={summary.get("parse_corruption_site") or "<none>"}\n')
         log.write(f'# parse_corruption_signal={summary.get("parse_corruption_signal") or "<none>"}\n')
+        log.write(f'# parse_write_kind={summary.get("parse_write_kind") or "<none>"}\n')
+        log.write(f'# parse_write_function={summary.get("parse_write_function") or "<none>"}\n')
+        log.write(f'# parse_write_signal={summary.get("parse_write_signal") or "<none>"}\n')
         log.write(f'# first_frame_presented={"true" if first_frame else "false"}\n')
         log.write(f'# interrupted={interrupted or "<none>"}\n')
         log.write(f'# timed_out={"true" if timed_out else "false"}\n')
@@ -355,6 +369,9 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
         'parse_corruption_kind':summary.get('parse_corruption_kind'),
         'parse_corruption_site':summary.get('parse_corruption_site'),
         'parse_corruption_signal':summary.get('parse_corruption_signal'),
+        'parse_write_kind':summary.get('parse_write_kind'),
+        'parse_write_function':summary.get('parse_write_function'),
+        'parse_write_signal':summary.get('parse_write_signal'),
         'first_frame_presented':first_frame,
         'interrupted':interrupted,
         'timed_out':timed_out,
@@ -376,6 +393,10 @@ def run_logged(cmd, log_path: Path, env=None, metadata: dict|None=None, timeout_
     if summary.get('malloc_source'):
         print(f'[boot-summary] malloc_source={summary["malloc_source"]}',flush=True)
         print(f'[boot-summary] malloc_signal={summary["malloc_signal"]}',flush=True)
+    if summary.get('parse_write_kind'):
+        print(f'[boot-summary] parse_write_kind={summary["parse_write_kind"]}',flush=True)
+        print(f'[boot-summary] parse_write_function={summary["parse_write_function"]}',flush=True)
+        print(f'[boot-summary] parse_write_signal={summary["parse_write_signal"]}',flush=True)
     if summary.get('parse_corruption_kind'):
         print(f'[boot-summary] parse_corruption_kind={summary["parse_corruption_kind"]}',flush=True)
         print(f'[boot-summary] parse_corruption_site={summary["parse_corruption_site"]}',flush=True)
@@ -508,6 +529,8 @@ def cmd_build(a):
     print(f'Comet GCM report patch: {"applied" if gcm_changed else "already present"}')
     thread_exit_changed=patch_thread_exit_runtime(a.ps3recomp)
     print(f'Comet Windows PPU thread-exit patch: {"applied" if thread_exit_changed else "already present"}')
+    parse_watch_changed=patch_parse_watch_runtime(a.ps3recomp)
+    print(f'Comet parse-slot runtime watch: {"applied" if parse_watch_changed else "already present"}')
     if not a.imports.exists():
         raise FileNotFoundError(f'Comet import manifest missing at {a.imports}; run analyze first')
     hle=audit_hle(a.ps3recomp,a.imports,[ROOT/'port'/'comet_host.cpp',ROOT/'port'/'comet_compat.cpp'])

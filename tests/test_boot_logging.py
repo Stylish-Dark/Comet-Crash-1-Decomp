@@ -190,6 +190,22 @@ class BootLogTests(unittest.TestCase):
         self.assertIn('# interrupted=',src)
         self.assertIn('_stop_process(proc)',src)
 
+    def test_run_logged_records_parse_writer(self):
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'boot.txt'
+            code=(
+                'print("[COMET-PARSE-WRITE] slot=0xD0071864 addr=0xD0071864 value=0x00000140 width=4 expected=0x43C81280 before=0x43C81280 guest_fn=0x0019ABCD"); '
+                'raise SystemExit(9)'
+            )
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],p)
+            text=p.read_text(encoding='utf-8')
+            data=json.loads(p.with_suffix('.summary.json').read_text(encoding='utf-8'))
+            self.assertIn('# parse_write_kind=guest-write',text)
+            self.assertEqual(data['parse_write_kind'],'guest-write')
+            self.assertEqual(data['parse_write_function'],'0X0019ABCD')
+            self.assertIn('COMET-PARSE-WRITE',data['parse_write_signal'])
+
     def test_run_parser_accepts_explicit_log_path(self):
         args=comet_port.parser().parse_args(['run','game','EBOOT.ELF','--log','logs/custom.txt'])
         self.assertEqual(args.log,Path('logs/custom.txt'))

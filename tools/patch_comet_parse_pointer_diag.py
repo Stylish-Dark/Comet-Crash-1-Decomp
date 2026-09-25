@@ -19,7 +19,10 @@ R31_CALL="""        ctx->lr = 0x0012F6B8; func_001953CC(ctx); DRAIN_TRAMPOLINE(c
 STORE="        vm_write32(ctx->gpr[27] + 0x0, ctx->gpr[23]);"
 CALLER_ENTRY="""void func_00130130(ppu_context* ctx) {
         uint64_t _cs_26 = ctx->gpr[26];"""
-CALLER_ENTRY_REPL="""void func_00130130(ppu_context* ctx) {
+CALLER_ENTRY_REPL="""extern \"C\" void comet_parse_watch_arm(uint32_t,uint32_t);
+extern \"C\" void comet_parse_watch_disarm(void);
+
+void func_00130130(ppu_context* ctx) {
         uint32_t comet_pc_sp=0,comet_pc_slot=0,comet_pc_expected=0;
         int comet_pc_change_reported=0,comet_pc_sp_reported=0;
         uint64_t _cs_26 = ctx->gpr[26];"""
@@ -27,6 +30,9 @@ CALLER_SP="        vm_write64(ctx->gpr[1] + -0x260, ctx->gpr[1]); ctx->gpr[1] +=
 BASELINE_CALL="        ctx->lr = 0x0013016C; func_0012F590(ctx); DRAIN_TRAMPOLINE(ctx);"
 FINAL_FREE="""        ctx->gpr[3] = vm_read32(ctx->gpr[1] + 0x84);
         ctx->lr = 0x00130418; func_001A8178(ctx); DRAIN_TRAMPOLINE(ctx);"""
+ZERO_RESULT_BRANCH="        if (((ctx->cr >> 0) & 2)) goto loc_001301B0;"
+EARLY_FREE="""        ctx->gpr[3] = vm_read32(ctx->gpr[1] + 0x84);
+        ctx->lr = 0x001301A8; func_001A8178(ctx); DRAIN_TRAMPOLINE(ctx);"""
 PARSE_R23_SITES={'0x0012F6E4':'00195950','0x0012F6FC':'00194868','0x0012F704':'000E70B4','0x0012F718':'0019FDEC','0x0012FC7C':'0012F264'}
 CALLER_SITES={
 '0x001301E8':'0015470C','0x001301F4':'00011BCC','0x00130204':'0001C7D4','0x00130214':'0001C6E4',
@@ -79,6 +85,8 @@ def patch_text(text:str)->tuple[str,bool]:
         body=_one(body,BASELINE_CALL,BASELINE_CALL+r'''
         comet_pc_slot=comet_pc_sp+0x84u; comet_pc_expected=vm_read32(comet_pc_slot);
         fprintf(stderr,"[COMET-PARSE-OUT] slot=0x%08X value=0x%08X sp=0x%08X current_sp=0x%08X\n",comet_pc_slot,comet_pc_expected,comet_pc_sp,(uint32_t)ctx->gpr[1]);''','baseline')
+        body=_one(body,ZERO_RESULT_BRANCH,ZERO_RESULT_BRANCH+'\n        comet_parse_watch_arm(comet_pc_slot,comet_pc_expected);','watch arm')
+        body=_one(body,EARLY_FREE,'        comet_parse_watch_disarm();\n'+EARLY_FREE,'early free disarm')
         for site,func in CALLER_SITES.items():
             call=f'        ctx->lr = {site}; func_{func}(ctx); DRAIN_TRAMPOLINE(ctx);'
             repl=call+f'''
@@ -88,6 +96,7 @@ def patch_text(text:str)->tuple[str,bool]:
         body=_one(body,FINAL_FREE,r'''        if(!comet_pc_sp_reported&&(uint32_t)ctx->gpr[1]!=comet_pc_sp){fprintf(stderr,"[COMET-PARSE-SP-CHANGE] site=0x00130418 phase=pre-free expected_sp=0x%08X got_sp=0x%08X slot=0x%08X slot_now=0x%08X\\n",comet_pc_sp,(uint32_t)ctx->gpr[1],comet_pc_slot,vm_read32(comet_pc_slot)); comet_pc_sp_reported=1;}
         if(!comet_pc_change_reported&&vm_read32(comet_pc_slot)!=comet_pc_expected){fprintf(stderr,"[COMET-PARSE-SLOT-CHANGE] site=0x00130418 callee=0x001A8178 phase=pre-free slot=0x%08X expected=0x%08X got=0x%08X sp=0x%08X\\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1]); comet_pc_change_reported=1;}
         fprintf(stderr,"[COMET-PARSE-FINAL] slot=0x%08X expected=0x%08X slot_now=0x%08X sp=0x%08X expected_sp=0x%08X sp84=0x%08X\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1],comet_pc_sp,vm_read32(ctx->gpr[1]+0x84));
+        comet_parse_watch_disarm();
         ctx->gpr[3] = vm_read32(ctx->gpr[1] + 0x84);
         ctx->lr = 0x00130418; func_001A8178(ctx); DRAIN_TRAMPOLINE(ctx);''','final')
         return body

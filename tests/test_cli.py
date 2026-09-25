@@ -58,6 +58,8 @@ class BuildPatchTests(unittest.TestCase):
   self.assertIn('patch_ps3recomp_spurs',s)
   self.assertIn('cellSpurs.c',s)
   self.assertIn('Comet SPURS urgent-command patch',s)
+  self.assertIn('patch_ps3recomp_parse_watch',s)
+  self.assertIn('Comet parse-slot runtime watch',s)
   self.assertIn('audit_hle_coverage',s)
   self.assertIn('HLE coverage gate',s)
 

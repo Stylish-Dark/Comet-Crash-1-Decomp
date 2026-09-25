@@ -22,6 +22,9 @@ MATCH_FIELDS = (
     "parse_corruption_kind",
     "parse_corruption_site",
     "parse_corruption_signal",
+    "parse_write_kind",
+    "parse_write_function",
+    "parse_write_signal",
     "boot_outcome",
 )
 

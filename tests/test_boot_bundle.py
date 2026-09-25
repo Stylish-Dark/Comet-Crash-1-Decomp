@@ -106,6 +106,20 @@ class BootBundleTests(unittest.TestCase):
             self.assertFalse(report['ok'])
             self.assertTrue(any('parse_corruption_site mismatch' in x for x in report['errors']))
 
+    def test_tampered_parse_writer_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            summary,log=self._make_bundle(Path(td))
+            with log.open('a',encoding='utf-8') as f:
+                f.write('[COMET-PARSE-WRITE] slot=0xD0071864 addr=0xD0071864 value=0x00000140 width=4 expected=0x43C81280 before=0x43C81280 guest_fn=0x0019ABCD\n')
+            data=json.loads(summary.read_text(encoding='utf-8'))
+            data['boot_log_sha256']=comet_port.sha256_file(log)
+            data['parse_write_kind']='guest-write'
+            data['parse_write_function']='0XDEADBEEF'
+            summary.write_text(json.dumps(data),encoding='utf-8')
+            report=v.verify_bundle(summary)
+            self.assertFalse(report['ok'])
+            self.assertTrue(any('parse_write_function mismatch' in x for x in report['errors']))
+
     def test_unverified_provenance_requires_explicit_acceptance(self):
         with tempfile.TemporaryDirectory() as td:
             summary,_=self._make_bundle(Path(td),provenance_status='overridden')
