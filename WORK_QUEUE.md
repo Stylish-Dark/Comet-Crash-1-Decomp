@@ -54,11 +54,17 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Run Boot Fix 6 and trace the poisoned allocator metadata writer**
-- Capture the first `[COMET-MALLOC-LOW]` and adjacent `[COMET-MALLOC-STATE]` lines.
-- Map `malloc_source` directly to the tagged basic block in `func_001A5A90`.
-- Identify whether the bad chunk came from a smallbin, treebin, DV, top or another allocator path.
-- Instrument or repair the exact metadata writer; do not guard the low free and do not suppress allocator assertions.
+[x] **Run Boot Fix 6 and rule out low allocator returns**
+- Result: no `[COMET-MALLOC-LOW]` or `[COMET-MEMALIGN-*]` marker appeared before the same `0x140` free. The low pointer is introduced after successful allocation, not by dlmalloc/memalign.
+
+## Current
+
+[ ] **Run Boot Fix 7 and identify the first pointer-corruption boundary**
+- Trace the allocation from `func_0012F590` through saved `r31/r23`, the caller's `r1`, and the caller's `sp+0x84` lifetime slot.
+- First decisive marker wins: `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
+- Use the reported `site=0x...` / callee to patch the exact offender.
+- Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
+- Boot Fix 7 ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
 
 ## Next
 
