@@ -68,6 +68,28 @@ class PpuCompletenessAuditTests(unittest.TestCase):
         self.assertEqual(holes[0]['kind'],'unsupported-spr-noop')
         self.assertEqual(holes[0]['instruction'],'mfspr r3, 999')
 
+    def test_raw_word_todos_are_baselined_separately(self):
+        import audit_ppu_lift as audit
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'ppu_recomp_000.cpp'
+            p.write_text('/* TODO: .word 0x00000140 */;\n/* TODO: .word 0xDEADBEEF */;\n',encoding='utf-8')
+            r=audit.audit_path(Path(td))
+            self.assertEqual(r['unsupported_total'],0)
+            self.assertEqual(r['raw_word_total'],2)
+            self.assertEqual(r['raw_word_sha256'],audit.raw_word_digest(['00000140','deadbeef']))
+
+    def test_real_instruction_todo_still_fails_beside_raw_words(self):
+        import audit_ppu_lift as audit
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'ppu_recomp_000.cpp'
+            p.write_text('/* TODO: .word 0x00000140 */;\n/* TODO: mystery r1, r2 */;\n',encoding='utf-8')
+            r=audit.audit_path(Path(td))
+            self.assertEqual(r['raw_word_total'],1)
+            self.assertEqual(r['unsupported_total'],1)
+            self.assertEqual(r['unsupported'][0]['instruction'],'mystery r1, r2')
+
     def test_directory_audit_requires_generated_chunks(self):
         import audit_ppu_lift as audit
         import tempfile
