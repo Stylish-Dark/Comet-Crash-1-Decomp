@@ -179,3 +179,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Rebuilt Boot Fix 5 from exact reference ELF `3b4b6fef...`: full real PPU lift with `vsrab`/`vsrb` fixes, Boot Fix 4 allocator diagnostic, aligned-allocation wrapper/core/backing-malloc diagnostics, and both real SPU workloads.
 - Cross-link completed successfully. Rebuilt EXE SHA-256: `e0986be50ad7c0d3d16c93e9c2a542bbe0c1b52631be03a2ce8b2d08971db1d4`. Ready-to-run ZIP SHA-256: `ec6121dd22e3f035fb8a9e4443e1522c125494a675f35b1fd99e9d0374e21c55`.
 - The EXE was checked for all five diagnostic strings: MEMALIGN-MALLOC-LOW, MEMALIGN-CORE-LOW, MEMALIGN-WRAPPER-LOW, ALLOC-CORRUPTION and ALLOC-STATE.
+
+
+## 2026-09-25 — Boot Fix 5 evidence classification hardened
+
+- Continued from canonical GitHub state with Boot Fix 5 still awaiting one real Windows run; no new runtime defect was invented without evidence.
+- Added first-class memalign triage for `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, and `[COMET-MEMALIGN-WRAPPER-LOW]`.
+- Boot logs and `.summary.json` now record `memalign_origin` (`backing-malloc`, `alignment-core`, or `wrapper-return`) and the exact `memalign_signal`.
+- `verify_boot_bundle.py` now re-derives those fields from the raw log, so an altered/misclassified summary is rejected.
+- Added focused regression coverage for causal-stage precedence, live logging/sidecar output, and summary tamper detection.
+- PR #9 merged as `97c732d2a76f2a942a419e33509abcbc82710a87`.
+- GitHub Actions run `36097615167`: **148/148 tests passed**; compileall/repository safety, Windows unit/native-link/provenance, and Linux→Windows cross-build all passed.
+- Runtime blocker remains deliberately unchanged: one Boot Fix 5 Windows run is required to determine where the invalid low `0x140` allocation result is first produced.

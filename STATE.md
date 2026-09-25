@@ -6,7 +6,7 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; Boot Fix 5 aligned-allocation diagnostic built and awaiting runtime evidence.**
+**First native Windows boot reached; Boot Fix 5 aligned-allocation diagnostic built and awaiting runtime evidence; memalign-origin triage is now automated.**
 
 Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. The aligned-allocation wrapper, backing malloc and core return are now instrumented. Boot Fix 5 is built from the exact reference ELF and awaits one Windows run to identify exactly where the invalid low result originates.
 
@@ -39,13 +39,14 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Fixed offline artifact continuity: Actions now fetches full Git history, creates self-contained Git bundles from all refs, and smoke-clones each bundle before upload. The prior shallow bundle could contain a commit whose parent was omitted; PR #8 removed that hidden dependency.
 - Added Linux-hosted Windows cross-compilation using LLVM-MinGW. Actions run `35975062675` cross-built the Windows scaffold successfully from Ubuntu. The compact toolchain kit was then downloaded into the model environment and rehearsed fully offline to a valid PE32+ x86-64 `CometCrashPC.exe`. This removes Visual Studio/Windows SDK installation from the user's build burden.
 - Added `tools/verify_boot_bundle.py`; each `.summary.json` now binds to the finalized text log SHA-256 and can independently re-derive/compare the boot outcome, signals, subsystem and provenance status before debugging begins.
+- Boot Fix 5 allocator evidence is now first-class triage data: `boot_triage.py` and live logging capture the low-return stage as `memalign_origin` (`backing-malloc`, `alignment-core`, or `wrapper-return`) plus the exact `memalign_signal`; bundle verification re-derives both from the raw log and rejects tampered summaries.
 - Pinned D3D12 initialization now exposes exact HRESULT-bearing failure lines for nine previously generic/silent setup exits, and triage captures those specific errors before the later generic `D3D12 init FAILED` line.
 - First real native boot evidence reached `[boot-stage] first guest frame presented`, controller polling and five frames. It then failed with Windows `STATUS_BAD_FUNCTION_TABLE` (`0xC00000FF`) immediately after `sceNpTerm()` -> `sys_ppu_thread_exit(0)` on a guest worker. The pinned runtime's Windows `longjmp()` thread-exit path was identified as the host failure and replaced with `_endthreadex()` for `_beginthreadex()`-created guest threads; POSIX retains `longjmp()`.
 - Boot Fix 2 advanced beyond that host unwind crash and continued loading/rendering resources until the title's allocator path called the guest abort reporter from return address `0x001A4E90`. The actual call instruction is `0x001A4E8C: bl 0x0019427C`.
 - Boot Fix 3 bypassed that one call, then later hit `mspace_free` assertion `chunksize(p) == small_index2size(I)` and aborted via return address `0x001AB8D8` / allocator site `0x001A4FC4`. This confirms broader allocator-state corruption and invalidates abort suppression as a fix.
 - Boot Fix 4 restores the original reference ELF and allocator abort. Generated PPU code is instrumented by `tools/patch_comet_allocator_diag.py` to emit `[COMET-ALLOC-CORRUPTION]` and `[COMET-ALLOC-STATE]` immediately before the first abort, including caller LR, freed pointer, chunk header/size flags, adjacent chunk header, bin maps, dv/top sizes and heap pointers. The returned evidence is `caller_lr=0x001A8190`, `mspace=0x00722220`, `mem=0x00000140`, `chunk=0x00000138`, zero chunk head/size, and `least=0x40000000` — an invalid low pointer, not an ordinary in-heap chunk.
 - Added `tools/patch_comet_memalign_diag.py` to instrument the exact regenerated aligned-allocation path at wrapper `0x001A80D0`, core `0x001A75E8`, and its backing `malloc` call. It emits low-result markers only when a nonzero result is below the allocator's `least` address, distinguishing a bad backing allocation from alignment-carving/return corruption.
-- Latest authoritative validation (GitHub Actions run `35969371258`): **131/131 tests passed**, `compileall` passed, repository safety passed on Linux and Windows, the real pinned-lifter fixture passed, clang-cl/Ninja linked `CometCrashPC.exe`, and the linked Windows EXE provenance verification passed.
+- Latest authoritative validation (GitHub Actions run `36097615167`, PR #9): **148/148 tests passed**, `compileall` and repository safety passed, Windows unit/native-link/provenance passed, and the Linux→Windows cross-build passed.
 
 ## Current working state
 
@@ -112,9 +113,9 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Current canonical `main` includes `31c8552afd8ff977a535d92a373e0baab2ba5a23` (**ci: make offline source bundles self-contained**). The Boot Fix 5 diagnostic code itself is checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
+Current canonical `main` includes `97c732d2a76f2a942a419e33509abcbc82710a87` (**triage: classify Comet memalign low-return origin**). The Boot Fix 5 diagnostic code itself remains checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
 
-GitHub Actions run `36096273445` passed **144/144 tests**, compileall/repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build. Both source-bundle paths were smoke-cloned successfully before upload, proving the offline bundles are self-contained.
+GitHub Actions run `36097615167` passed **148/148 tests**, compileall/repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build. The previous self-contained offline source-bundle repair remains validated by run `36096273445`.
 
 Published artifacts from that run:
 - `CometCrashPC-Windows-Builder` — usable delivery package; exact source bundle + `BUILD_AND_RUN.cmd` + README. Artifact SHA-256: `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
@@ -122,7 +123,7 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run the ready-to-run Boot Fix 5 package. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. Canonical model-side rebuild: EXE SHA-256 `e0986be50ad7c0d3d16c93e9c2a542bbe0c1b52631be03a2ce8b2d08971db1d4`; ZIP SHA-256 `ec6121dd22e3f035fb8a9e4443e1522c125494a675f35b1fd99e9d0374e21c55`.
+Run the ready-to-run Boot Fix 5 package. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. New boot summaries record the causal stage directly as `memalign_origin` and preserve the exact `memalign_signal`. Canonical model-side rebuild: EXE SHA-256 `e0986be50ad7c0d3d16c93e9c2a542bbe0c1b52631be03a2ce8b2d08971db1d4`; ZIP SHA-256 `ec6121dd22e3f035fb8a9e4443e1522c125494a675f35b1fd99e9d0374e21c55`.
 
 Repository build path remains:
 
