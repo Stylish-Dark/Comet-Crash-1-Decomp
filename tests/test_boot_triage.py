@@ -94,6 +94,16 @@ class BootTriageTests(unittest.TestCase):
         self.assertEqual(report["memalign_origin"], "alignment-core")
         self.assertIn("MEMALIGN-CORE-LOW", report["memalign_signal"])
 
+    def test_malloc_low_captures_exact_return_producer(self):
+        report=b.summarize_lines([
+            "[COMET-MALLOC-LOW] caller_lr=0x001A7708 source=loc_001A61A8#1 request=0x00000390 mspace=0x00722220 least=0x40000000 result=0x00000140",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["malloc_source"],"loc_001A61A8#1")
+        self.assertIn("COMET-MALLOC-LOW",report["malloc_signal"])
+        self.assertEqual(report["triage_signal"],report["malloc_signal"])
+        self.assertEqual(report["suspected_subsystem"],"vm/ppu")
+
     def test_unsupported_spu_is_specific(self):
         category, _ = b.classify_signal("unsupported SPU opcode at 0x100")
         self.assertEqual(category, "spurs/spu")
