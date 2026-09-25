@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; Boot Fix 6 exact mspace_malloc return-source diagnostic built and ready for runtime evidence.**
+**First native Windows boot reached; Boot Fix 7 parse-pointer lifetime diagnostic built and ready for runtime evidence.**
 
-Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. The aligned-allocation wrapper, backing malloc and core return are now instrumented. Boot Fix 5 is built from the exact reference ELF and awaits one Windows run to identify exactly where the invalid low result originates.
+Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. Boot Fix 6 runtime evidence showed none of the malloc/memalign low-return markers fire before the same `0x140` free, so the allocator is not manufacturing the low value. Static PPC/lift comparison confirms the game stores the allocation in the caller's `sp+0x84` slot and later frees that same slot. Boot Fix 7 now traces the pointer across saved registers, stack-pointer stability, and every concrete call boundary that can intervene before the free.
 
 ## Completed
 
@@ -48,7 +48,10 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Added `tools/patch_comet_memalign_diag.py` to instrument the exact regenerated aligned-allocation path at wrapper `0x001A80D0`, core `0x001A75E8`, and its backing `malloc` call. It emits low-result markers only when a nonzero result is below the allocator's `least` address, distinguishing a bad backing allocation from alignment-carving/return corruption.
 - Exact disassembly of the reference ELF plus the real generated lift shows `mspace_malloc` (`0x001A5A90`) returns its user pointer through `r31`, and ordinary successful paths form that pointer as `chunk + 8`. The observed `0x00000140` therefore has the structural form of a bogus allocator chunk at `0x00000138`, strongly pointing at poisoned allocator metadata rather than a memalign wrapper arithmetic error.
 - Added `tools/patch_comet_malloc_source_diag.py`. It tags all **26 live writes to r31** in `func_001A5A90` and emits `[COMET-MALLOC-LOW]` / `[COMET-MALLOC-STATE]` if the allocator returns below `mspace->least`, identifying the exact basic-block producer plus request, chunk metadata, maps, DV/top state and relevant registers. Guest allocator behaviour is unchanged.
-- Latest authoritative validation (GitHub Actions run `36099036501`, PR #10): **154/154 tests passed**, compileall/repository safety passed, Windows unit/native-link/provenance passed, and the Linux→Windows cross-build passed.
+- Boot Fix 6 runtime evidence disproved the low-return hypothesis: no `[COMET-MALLOC-LOW]` or `[COMET-MEMALIGN-*]` marker occurs before the same `mem=0x00000140` failing free. The corruption therefore occurs after successful allocation.
+- Exact PPC/lift tracing shows `func_00130130` passes `sp+0x84` to `func_0012F590`, then later reloads `sp+0x84` immediately before the failing free. `func_0012F590` keeps the valid allocation in nonvolatile registers before writing the output. This narrows the fault to saved-register clobber, caller-SP drift, or a later write to the `sp+0x84` slot.
+- Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot across 22 subsequent calls, and final pre-free state. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
+- Latest authoritative validation (GitHub Actions run `36120069200`, PR #11): **160/160 tests passed**, repository safety passed, Windows unit/native-link/provenance passed, and Linux→Windows cross-build passed.
 
 ## Current working state
 
@@ -90,7 +93,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 
 ## Blockers
 
-The title archive is available privately and model-side builds are reproducible. Boot Fix 4 proved the first failing free receives `0x00000140`, far below the heap's `least=0x40000000`. The current blocker is identifying which aligned-allocation stage first produces that low value; the new memalign diagnostic records wrapper/core/backing-malloc results without changing guest behavior.
+The title archive is available privately and model-side builds are reproducible. Boot Fix 4 proved the first failing free receives `0x00000140`, far below the heap's `least=0x40000000`. The current blocker is identifying the first call boundary that corrupts the valid allocation after it is returned. Boot Fix 7 distinguishes saved-register clobber, stack-pointer drift and direct overwrite of the caller's `sp+0x84` lifetime slot without changing guest behaviour.
 
 Do not invent the next runtime defect without a boot log.
 
@@ -115,9 +118,9 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Current canonical `main` includes `d5f51b36ae827cad6cd31846f96c4d35fa58aacd` (**diag: trace exact low mspace_malloc return source**). The Boot Fix 5 diagnostic code itself remains checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
+Current canonical `main` includes `99342173036be4db1ac57ff816bfaf56290cfe51` (**diag: trace parse allocation lifetime**). The Boot Fix 5 diagnostic code itself remains checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
 
-GitHub Actions run `36099036501` passed **154/154 tests**, compileall/repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build.
+GitHub Actions run `36120069200` passed **160/160 tests**, repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build.
 
 Published artifacts from that run:
 - `CometCrashPC-Windows-Builder` — usable delivery package; exact source bundle + `BUILD_AND_RUN.cmd` + README. Artifact SHA-256: `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
@@ -125,14 +128,14 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Run the ready-to-run **Boot Fix 6** package. The highest-value new markers are `[COMET-MALLOC-LOW]` and `[COMET-MALLOC-STATE]`; the build also retains all Boot Fix 5 memalign markers and the Boot Fix 4 first-bad-free markers. Boot summaries now preserve both `memalign_origin` and the exact `malloc_source` basic-block tag. Canonical Boot Fix 6 model-side build: EXE SHA-256 `202788a1ba26d4164bc4a598608c7809d8b5cf02202e02c9ade435cb85da08be`; ZIP SHA-256 `f6697e3a8c03574a853cd7318bb7beef26ed40a22c4b1f755edc9c9254ec26b1`.
+Run the ready-to-run **Boot Fix 7** package and preserve its `boot-console.txt`. The decisive markers are:
+- `[COMET-PARSE-REG-CLOBBER]` — valid allocation was lost in saved `r31`/`r23`;
+- `[COMET-PARSE-SP-CHANGE]` — caller `r1` drifted across a specific call;
+- `[COMET-PARSE-SLOT-CHANGE]` — caller `sp+0x84` changed across a specific call.
 
-Repository build path remains:
+Context markers `[COMET-PARSE-ALLOC]`, `[COMET-PARSE-STORE]`, `[COMET-PARSE-OUT]` and `[COMET-PARSE-FINAL]` show the value before/after the corrupting boundary.
 
-```bat
-scripts\build_and_run.cmd "<path to extracted Comet Crash>"
-```
+Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
+Ready-to-run ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
 
-or extract the `CometCrashPC-Windows-Builder` artifact and drag the extracted NPEB00142 v1.00 game folder onto `BUILD_AND_RUN.cmd`.
-
-Preserve both the generated `.txt` log and `.summary.json` sidecar. For a deliberately bounded attempt, `scripts\build_and_run.cmd "<game folder>" 60` applies a 60-second timeout to the native-run phase while still preserving diagnostics. Before acting on the result, run `python tools/verify_boot_bundle.py <boot.summary.json>`. The next AI work unit is to inspect that verified real evidence, fix only the first evidenced blocker, add a focused regression test, update this file and `WORK_QUEUE.md`, and commit.
+After that evidence, patch the exact offending function/path rather than the allocator or free site.
