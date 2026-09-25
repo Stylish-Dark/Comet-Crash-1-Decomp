@@ -46,4 +46,7 @@ class DeliveryTests(unittest.TestCase):
   self.assertIn('CometCrashPC-Windows-Builder',s)
   self.assertIn('CometCrashPC-ci-scaffold',s)
   self.assertIn('README-NOT-PLAYABLE.txt',s)
-  self.assertIn('git bundle create delivery/CometCrashPC-source.bundle HEAD',s)
+  self.assertIn('fetch-depth: 0',s)
+  self.assertIn('source-bundle-smoke',s)
+  self.assertIn('git bundle create cross-kit/CometCrashPC-cross-source.bundle --all',s)
+  self.assertIn('git bundle create delivery/CometCrashPC-source.bundle --all',s)
