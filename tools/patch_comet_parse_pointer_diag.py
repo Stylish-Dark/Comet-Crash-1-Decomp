@@ -68,7 +68,9 @@ def patch_text(text:str)->tuple[str,bool]:
         if(!comet_pp_reg_reported&&comet_pp_alloc&&(uint32_t)ctx->gpr[23]!=comet_pp_alloc){{
             fprintf(stderr,"[COMET-PARSE-REG-CLOBBER] site={site} reg=r23 expected=0x%08X got=0x%08X sp=0x%08X expected_sp=0x%08X\\n",comet_pp_alloc,(uint32_t)ctx->gpr[23],(uint32_t)ctx->gpr[1],comet_pp_sp); comet_pp_reg_reported=1;}}'''
             body=_one(body,call,repl,'r23 '+site)
-        body=_one(body,STORE,r'''        fprintf(stderr,"[COMET-PARSE-STORE] out=0x%08X entry_out=0x%08X alloc=0x%08X r23=0x%08X old=0x%08X sp=0x%08X expected_sp=0x%08X\n",(uint32_t)ctx->gpr[27],comet_pp_out,comet_pp_alloc,(uint32_t)ctx->gpr[23],vm_read32(ctx->gpr[27]),(uint32_t)ctx->gpr[1],comet_pp_sp);
+        body=_one(body,STORE,r'''        if(!comet_pp_reg_reported&&comet_pp_alloc&&(uint32_t)ctx->gpr[23]!=comet_pp_alloc){
+            fprintf(stderr,"[COMET-PARSE-REG-CLOBBER] site=0x0012FC7C reg=r23 phase=pre-store expected=0x%08X got=0x%08X sp=0x%08X expected_sp=0x%08X\\n",comet_pp_alloc,(uint32_t)ctx->gpr[23],(uint32_t)ctx->gpr[1],comet_pp_sp); comet_pp_reg_reported=1;}
+        fprintf(stderr,"[COMET-PARSE-STORE] out=0x%08X entry_out=0x%08X alloc=0x%08X r23=0x%08X old=0x%08X sp=0x%08X expected_sp=0x%08X\n",(uint32_t)ctx->gpr[27],comet_pp_out,comet_pp_alloc,(uint32_t)ctx->gpr[23],vm_read32(ctx->gpr[27]),(uint32_t)ctx->gpr[1],comet_pp_sp);
         vm_write32(ctx->gpr[27] + 0x0, ctx->gpr[23]);''','store')
         return body
     def caller(body):
@@ -83,7 +85,9 @@ def patch_text(text:str)->tuple[str,bool]:
         if(!comet_pc_sp_reported&&(uint32_t)ctx->gpr[1]!=comet_pc_sp){{fprintf(stderr,"[COMET-PARSE-SP-CHANGE] site={site} expected_sp=0x%08X got_sp=0x%08X slot=0x%08X slot_now=0x%08X\\n",comet_pc_sp,(uint32_t)ctx->gpr[1],comet_pc_slot,vm_read32(comet_pc_slot)); comet_pc_sp_reported=1;}}
         if(!comet_pc_change_reported&&vm_read32(comet_pc_slot)!=comet_pc_expected){{fprintf(stderr,"[COMET-PARSE-SLOT-CHANGE] site={site} callee=0x{func} slot=0x%08X expected=0x%08X got=0x%08X sp=0x%08X\\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1]); comet_pc_change_reported=1;}}'''
             body=_one(body,call,repl,'watch '+site)
-        body=_one(body,FINAL_FREE,r'''        fprintf(stderr,"[COMET-PARSE-FINAL] slot=0x%08X expected=0x%08X slot_now=0x%08X sp=0x%08X expected_sp=0x%08X sp84=0x%08X\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1],comet_pc_sp,vm_read32(ctx->gpr[1]+0x84));
+        body=_one(body,FINAL_FREE,r'''        if(!comet_pc_sp_reported&&(uint32_t)ctx->gpr[1]!=comet_pc_sp){fprintf(stderr,"[COMET-PARSE-SP-CHANGE] site=0x00130418 phase=pre-free expected_sp=0x%08X got_sp=0x%08X slot=0x%08X slot_now=0x%08X\\n",comet_pc_sp,(uint32_t)ctx->gpr[1],comet_pc_slot,vm_read32(comet_pc_slot)); comet_pc_sp_reported=1;}
+        if(!comet_pc_change_reported&&vm_read32(comet_pc_slot)!=comet_pc_expected){fprintf(stderr,"[COMET-PARSE-SLOT-CHANGE] site=0x00130418 callee=0x001A8178 phase=pre-free slot=0x%08X expected=0x%08X got=0x%08X sp=0x%08X\\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1]); comet_pc_change_reported=1;}
+        fprintf(stderr,"[COMET-PARSE-FINAL] slot=0x%08X expected=0x%08X slot_now=0x%08X sp=0x%08X expected_sp=0x%08X sp84=0x%08X\n",comet_pc_slot,comet_pc_expected,vm_read32(comet_pc_slot),(uint32_t)ctx->gpr[1],comet_pc_sp,vm_read32(ctx->gpr[1]+0x84));
         ctx->gpr[3] = vm_read32(ctx->gpr[1] + 0x84);
         ctx->lr = 0x00130418; func_001A8178(ctx); DRAIN_TRAMPOLINE(ctx);''','final')
         return body
