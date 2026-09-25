@@ -42,9 +42,9 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Trace invalid aligned-allocation return with Boot Fix 5**
+[ ] **Run Boot Fix 5 and classify the invalid aligned-allocation return**
 - Keep the exact reference ELF and original allocator abort; retain the Boot Fix 4 first-free diagnostic.
-- Apply `tools/patch_comet_memalign_diag.py` to regenerated PPU source.
+- `tools/patch_comet_memalign_diag.py` is implemented, regression-tested against the exact regenerated PPU anchors, and Boot Fix 5 is built.
 - Capture `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, and/or `[COMET-MEMALIGN-WRAPPER-LOW]`.
 - Inputs of interest: wrapper caller LR, alignment, requested bytes, backing-malloc request, mspace/least, returned pointer, and core working registers.
 - Success: identify whether the low `0x140` originates in backing malloc, alignment carving/core return, or wrapper return propagation; fix that exact producer rather than adding a free-side guard.

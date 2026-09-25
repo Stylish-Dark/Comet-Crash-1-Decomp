@@ -160,3 +160,10 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added `tools/patch_comet_memalign_diag.py` plus regression coverage. It instruments wrapper `0x001A80D0`, core `0x001A75E8`, and the core's backing `malloc` call, emitting diagnostics only for nonzero returns below the allocator's `least` address.
 
 - First real Boot Fix 5 compile rejected the new memalign diagnostic because a late C++ local declaration sat after guest labels/gotos. Corrected the patch by declaring the diagnostic scratch variable at function entry and assigning it at the backing-malloc call site; this preserves generated control-flow legality.
+
+- Boot Fix 5 private build completed successfully after removing a stray local anchor-test translation unit from the CMake glob and correcting the diagnostic's C++ goto-scope issue in GitHub first.
+- Real title PPU lift: 3,744 functions; VMX `vsrab`/`vsrb` fixes applied; both embedded SPUs re-lifted from the exact reference ELF.
+- Runtime compatibility retained: Windows `_endthreadex` guest-thread exit fix, built-in `XINPUT9_1_0`, and static `sys_prx_register_library` handler.
+- Boot Fix 5 EXE SHA-256: `d05bf3d6672c2105bd223cce0096a259f6822ca94a1911efdae9bfbc4c5e2bb8`.
+- Ready-to-run Boot Fix 5 ZIP SHA-256: `5d9cfcfa14a42d79e38badd76973958309664924c7f37a92d7db7df99ee736d8`.
+- Next evidence: run Boot Fix 5 and upload `boot-console.txt`; inspect the first of `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, or `[COMET-MEMALIGN-WRAPPER-LOW]`.

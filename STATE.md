@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; Boot Fix 4 identified an invalid low-pointer free; tracing its aligned-allocation producer.**
+**First native Windows boot reached; Boot Fix 5 aligned-allocation diagnostic built and awaiting runtime evidence.**
 
-Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. The current task is to instrument the aligned-allocation wrapper, backing malloc and core return to identify exactly where the invalid low result originates.
+Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. The aligned-allocation wrapper, backing malloc and core return are now instrumented. Boot Fix 5 is built from the exact reference ELF and awaits one Windows run to identify exactly where the invalid low result originates.
 
 ## Completed
 
@@ -111,7 +111,7 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Current canonical `main` before this cycle: `07928b3411e10d95680c24fccb299f8d9aca1107`. The latest runtime evidence is Boot Fix 4's invalid-low-pointer free; the memalign-origin diagnostic is the next committed work unit.
+Current canonical engineering state includes `d3a751caa663278eeaffd4820322d30155174704` (memalign-origin diagnostic) and `e09dc393c93daa96435d07adc5e366193104b447` (goto-safe diagnostic fix). Boot Fix 5 was built from this diagnostic intent plus the exact pinned toolchain and private title data.
 
 GitHub Actions run `35972413605` passed **134/134 tests**, Linux repository safety, the Windows unit/safety gate, all pinned runtime patches, real pinned-lifter scaffold staging, native clang-cl/Ninja link, linked-EXE provenance verification, and both artifact uploads.
 
@@ -121,7 +121,7 @@ Published artifacts from that run:
 
 ## Immediate next action
 
-Build/run Boot Fix 5 with both allocator diagnostics enabled. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. The goal is to establish the first stage that turns a valid allocation into `0x00000140`.
+Run the ready-to-run Boot Fix 5 package. Search targets are `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, followed by the existing `[COMET-ALLOC-CORRUPTION]` marker. Boot Fix 5 EXE SHA-256: `d05bf3d6672c2105bd223cce0096a259f6822ca94a1911efdae9bfbc4c5e2bb8`; ZIP SHA-256: `5d9cfcfa14a42d79e38badd76973958309664924c7f37a92d7db7df99ee736d8`.
 
 Repository build path remains:
 
