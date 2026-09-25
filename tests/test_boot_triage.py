@@ -149,6 +149,25 @@ class BootTriageTests(unittest.TestCase):
             self.assertEqual(report["host_exit_code"], 9)
 
 
+    def test_parse_guest_writer_is_specific_and_extracts_function(self):
+        report=b.summarize_lines([
+            "[COMET-PARSE-WRITE] slot=0xD0071864 addr=0xD0071864 value=0x00000140 width=4 expected=0x43C81280 before=0x43C81280 guest_fn=0x0019ABCD",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["parse_write_kind"],"guest-write")
+        self.assertEqual(report["parse_write_function"],"0X0019ABCD")
+        self.assertIn("COMET-PARSE-WRITE",report["parse_write_signal"])
+        self.assertEqual(report["suspected_subsystem"],"vm/ppu")
+
+    def test_parse_hle_writer_is_specific(self):
+        report=b.summarize_lines([
+            "[COMET-PARSE-WRITE-HLE] slot=0xD0071864 addr=0xD0071864 value=0x140 width=4 expected=0x43C81280 before=0x43C81280",
+            "# host_exit_code=9",
+        ])
+        self.assertEqual(report["parse_write_kind"],"hle-write")
+        self.assertEqual(report["parse_write_function"],"HLE")
+        self.assertEqual(report["suspected_subsystem"],"vm/ppu")
+
     def test_parse_sp_change_is_specific_and_extracts_site(self):
         report=b.summarize_lines([
             "[COMET-PARSE-SP-CHANGE] site=0x00130378 expected_sp=0xD00717E0 got_sp=0xD0071810 slot=0xD0071864 slot_now=0x43C81280",
