@@ -7,7 +7,7 @@ from pathlib import Path
 
 TODO_RE = re.compile(r'/\*\s*TODO:\s*(.*?)\s*\*/;')
 UNSUPPORTED_SPR_RE = re.compile(r'/\*\s*(.*?)\s*:\s*unsupported SPR -- no-op\s*\*/;')
-RAW_WORD_RE = re.compile(r'^\.word 0x([0-9A-Fa-f]{8})
+RAW_WORD_RE = re.compile(r'\.word 0x([0-9A-Fa-f]{8})')
 
 def audit_text(src: str) -> list[dict[str, object]]:
     """Return every explicit unimplemented/no-op lifter hole in generated PPU C++."""
