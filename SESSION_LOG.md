@@ -206,3 +206,19 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Boot Fix 6 EXE SHA-256: `202788a1ba26d4164bc4a598608c7809d8b5cf02202e02c9ade435cb85da08be`.
 - Ready-to-run ZIP SHA-256: `f6697e3a8c03574a853cd7318bb7beef26ed40a22c4b1f755edc9c9254ec26b1`.
 - Next runtime evidence is no longer merely “does backing malloc return low?”; it will identify the precise allocator branch that selected the poisoned chunk, allowing the corruption writer to be traced instead of guessed.
+
+
+## 2026-09-25 — Boot Fix 6 disproves low allocator return; Boot Fix 7 traces pointer lifetime
+
+- User returned the Boot Fix 6 runtime log. The title again reached first guest frame and deep resource loading, then hit the same first bad free: `mem=0x00000140`, chunk `0x00000138`, allocator `least=0x40000000`.
+- None of the Boot Fix 5/6 low-result markers fired before the bad free: no `[COMET-MEMALIGN-MALLOC-LOW]`, `[COMET-MEMALIGN-CORE-LOW]`, `[COMET-MEMALIGN-WRAPPER-LOW]`, or `[COMET-MALLOC-LOW]`. This falsifies the prior hypothesis that mspace_malloc/memalign directly returns `0x140`.
+- Exact PPC and generated-lift comparison confirms caller `func_00130130` passes `sp+0x84` as the output field to `func_0012F590`, and later reloads the same `sp+0x84` immediately before the failing `func_001A8178` free.
+- `func_0012F590` receives a normal aligned allocation, retains it in nonvolatile registers, and eventually stores it to the output field. The remaining failure classes are therefore saved-register clobber, caller stack-pointer drift, or a later overwrite of the caller's `sp+0x84` slot.
+- Added `tools/patch_comet_parse_pointer_diag.py`: it checks r31 immediately after `0x0012F6B8`, r23 after five subsequent parser calls, caller r1 plus the protected slot after 22 concrete call boundaries, and final state immediately before the free.
+- Added parse-corruption triage fields (`parse_corruption_kind`, `parse_corruption_site`, `parse_corruption_signal`) and boot-bundle tamper verification.
+- Stabilized the existing subprocess timeout regression test from 0.2s to 0.75s to avoid racing Python process startup under load.
+- PR #11 merged as `99342173036be4db1ac57ff816bfaf56290cfe51`.
+- GitHub Actions run `36120069200`: **160/160 tests passed**; repository safety, Windows native-link/provenance, and Linux→Windows cross-build all passed.
+- Built Boot Fix 7 locally from the exact reference ELF plus all prior allocator diagnostics and the new pointer-lifetime probe.
+- Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
+- Ready-to-run Boot Fix 7 ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
