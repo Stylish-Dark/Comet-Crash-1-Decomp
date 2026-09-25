@@ -32,12 +32,13 @@ CORE_REPL = """void func_001A75E8(ppu_context* ctx) {
         const uint32_t comet_mma_ms=(uint32_t)ctx->gpr[3];
         const uint32_t comet_mma_align=(uint32_t)ctx->gpr[4];
         const uint32_t comet_mma_bytes=(uint32_t)ctx->gpr[5];
+        uint32_t comet_mma_malloc_request=0;
         uint64_t _cs_24 = ctx->gpr[24];"""
 MALLOC_ANCHOR = """        ctx->gpr[3] = ctx->gpr[27] | ctx->gpr[27];
         ctx->lr = 0x001A7708; func_001A5A90(ctx); DRAIN_TRAMPOLINE(ctx);
         { int64_t a = (int32_t)ctx->gpr[3]; int64_t b = (int64_t)0;"""
 MALLOC_REPL = r'''        ctx->gpr[3] = ctx->gpr[27] | ctx->gpr[27];
-        const uint32_t comet_mma_malloc_request=(uint32_t)ctx->gpr[4];
+        comet_mma_malloc_request=(uint32_t)ctx->gpr[4];
         ctx->lr = 0x001A7708; func_001A5A90(ctx); DRAIN_TRAMPOLINE(ctx);
         {
             const uint32_t result=(uint32_t)ctx->gpr[3];

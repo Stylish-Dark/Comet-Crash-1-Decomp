@@ -158,3 +158,5 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - The failing free wrapper is `0x001A8178` -> `mspace_free`; its caller `0x00130130` frees the first field of an output structure populated by `0x0012F590`.
 - `0x0012F590` obtains that buffer from aligned allocator wrapper `0x001A80D0` (alignment `0x80`) and retains that allocation result for the output pointer. Therefore the next diagnostic must observe the allocation return path, not suppress or guard `free()`.
 - Added `tools/patch_comet_memalign_diag.py` plus regression coverage. It instruments wrapper `0x001A80D0`, core `0x001A75E8`, and the core's backing `malloc` call, emitting diagnostics only for nonzero returns below the allocator's `least` address.
+
+- First real Boot Fix 5 compile rejected the new memalign diagnostic because a late C++ local declaration sat after guest labels/gotos. Corrected the patch by declaring the diagnostic scratch variable at function entry and assigning it at the backing-malloc call site; this preserves generated control-flow legality.
