@@ -15,6 +15,8 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "unresolved indirect",
         "ppu dispatch",
         "ppu exception",
+        "[comet-memalign-",
+        "[comet-alloc-corruption]",
     )),
     ("vfs", (
         "[vfs]",
@@ -87,6 +89,16 @@ SIGNAL_PATTERNS: tuple[str, ...] = (
     "ppu_load_elf failed",
     "[D3D12] ERROR:",
     "D3D12 init FAILED",
+    "[COMET-MEMALIGN-MALLOC-LOW]",
+    "[COMET-MEMALIGN-CORE-LOW]",
+    "[COMET-MEMALIGN-WRAPPER-LOW]",
+    "[COMET-ALLOC-CORRUPTION]",
+)
+
+MEMALIGN_MARKERS: tuple[tuple[str, str], ...] = (
+    ("backing-malloc", "[COMET-MEMALIGN-MALLOC-LOW]"),
+    ("alignment-core", "[COMET-MEMALIGN-CORE-LOW]"),
+    ("wrapper-return", "[COMET-MEMALIGN-WRAPPER-LOW]"),
 )
 
 SUMMARY_RE = re.compile(r"^#\s*([a-z_]+)=(.*)$")
@@ -148,6 +160,7 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
     first_specific_signal: str | None = None
     host_exit_code: int | None = None
     footer: dict[str, str] = {}
+    memalign_hits: dict[str, str] = {}
 
     for raw in lines:
         line = raw.rstrip("\r\n")
@@ -158,6 +171,11 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
 
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
+        lower = line.lower()
+        for origin, marker in MEMALIGN_MARKERS:
+            if marker.lower() in lower and origin not in memalign_hits:
+                memalign_hits[origin] = line.strip()
+
         detected = _detect_first_signal(line)
         if detected is not None:
             if first_signal is None:
@@ -182,6 +200,13 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
 
     triage_signal = first_specific_signal or first_signal
     subsystem, rationale = classify_signal(triage_signal)
+    memalign_origin: str | None = None
+    memalign_signal: str | None = None
+    for origin, _ in MEMALIGN_MARKERS:
+        if origin in memalign_hits:
+            memalign_origin = origin
+            memalign_signal = memalign_hits[origin]
+            break
     first_frame_presented = any(
         line.strip() == f"{BOOT_STAGE_PREFIX}first guest frame presented"
         for line in lines
@@ -208,6 +233,8 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         "first_frame_presented": first_frame_presented,
         "suspected_subsystem": subsystem,
         "rationale": rationale,
+        "memalign_origin": memalign_origin,
+        "memalign_signal": memalign_signal,
         "boot_outcome": outcome,
     }
 
@@ -234,6 +261,8 @@ def main() -> int:
         print(f"host exit code:       {report['host_exit_code'] if report['host_exit_code'] is not None else '<unknown>'}")
         print(f"first frame presented:{' yes' if report['first_frame_presented'] else ' no'}")
         print(f"suspected subsystem:  {report['suspected_subsystem']}")
+        print(f"memalign origin:       {report['memalign_origin'] or '<none>'}")
+        print(f"memalign signal:       {report['memalign_signal'] or '<none>'}")
         print(f"boot outcome:         {report['boot_outcome']}")
         print(f"rationale:            {report['rationale']}")
     return 0
