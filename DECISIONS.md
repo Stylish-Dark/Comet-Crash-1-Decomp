@@ -50,9 +50,9 @@ The repository must always carry enough structured state for a fresh conversatio
 
 Analysis, lift and build commands must verify that the ps3recomp checkout is a Git checkout at the exact commit in `config/ps3recomp.lock`. A mismatched or unverifiable checkout is rejected before generated code or runtime patches are used.
 
-## D015 — Explicit PPU no-op fallbacks are build blockers
+## D015 — Actionable PPU no-op fallbacks are build blockers
 
-Generated PPU code must contain no generic lifter `TODO:` holes and no `unsupported SPR -- no-op` fallbacks after Comet compatibility patching. Silent unsupported guest instructions are not accepted as successful lifts.
+Generated PPU code must contain no actionable lifter `TODO:` instruction holes and no `unsupported SPR -- no-op` fallbacks after Comet compatibility patching. Silent unsupported guest instructions are not accepted as successful lifts. Deterministic data-like `.word` fallbacks are governed separately by D026 and are accepted only when their exact baseline matches.
 
 ## D016 — ps3recomp cache is disposable and reproducible
 
@@ -93,3 +93,8 @@ Boot Fix 3 demonstrated that suppressing the first allocator abort merely carrie
 ## D025 — Offline source artifacts must be self-contained and smoke-cloned
 
 A source bundle is not considered a valid continuity artifact merely because `git bundle create` succeeds. Artifact-producing CI uses a full-history checkout, creates bundles from all relevant refs, and performs a fresh clone/HEAD verification before upload. This prevents model-side builds from depending on omitted shallow-history parents.
+
+
+## D026 — Data-like PPU raw-word fallbacks require an exact baseline
+
+The pinned reference lift contains 3,936 `.word 0x........` TODO fallbacks even after all actionable Comet instruction holes are resolved. These are not silently ignored: the pipeline pins both the exact count and the SHA-256 of the ordered raw-word value sequence. Any changed count/digest is a hard failure, and any non-`.word` TODO or unsupported-SPR no-op remains independently fatal.
