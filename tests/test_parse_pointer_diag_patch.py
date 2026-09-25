@@ -28,6 +28,18 @@ class ParsePointerDiagPatchTests(unittest.TestCase):
         self.assertFalse(changed2)
         self.assertEqual(out2,out)
 
+    def test_caller_watch_sites_cover_all_live_pointer_branch_calls(self):
+        expected={
+            '0x001301E8','0x001301F4','0x00130204','0x00130214','0x001302F0','0x00130304',
+            '0x00130314','0x00130320','0x0013032C','0x00130334','0x00130340','0x0013034C',
+            '0x0013035C','0x00130378','0x00130398','0x001303B0','0x001303C4','0x001303DC',
+            '0x001303EC','0x001303F8','0x00130404','0x0013040C','0x00130440','0x00130488',
+            '0x00130498','0x001304A4','0x001304B0','0x001304B8','0x001304C4','0x001304D0',
+            '0x001304E0','0x0013050C','0x00130528','0x00130534','0x00130548',
+        }
+        self.assertEqual(set(p.CALLER_SITES),expected)
+        self.assertEqual(len(p.CALLER_SITES),35)
+
     def test_drift_fails_loudly(self):
         with self.assertRaises(ValueError):
             p.patch_text('no Comet parse anchors here')
