@@ -73,6 +73,25 @@ class BootLogTests(unittest.TestCase):
             self.assertIn('# triage_signal=[HLE] UNIMPLEMENTED nid=0xCAFEBABE',text)
             self.assertIn('# suspected_subsystem=hle',text)
 
+    def test_run_logged_records_memalign_origin(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=(
+                'print("[COMET-MEMALIGN-MALLOC-LOW] result=0x00000140 least=0x40000000"); '
+                'print("[COMET-MEMALIGN-CORE-LOW] result=0x00000140 least=0x40000000"); '
+                'print("[COMET-MEMALIGN-WRAPPER-LOW] result=0x00000140 least=0x40000000"); '
+                'raise SystemExit(9)'
+            )
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],log)
+            text=log.read_text(encoding='utf-8')
+            self.assertIn('# memalign_origin=backing-malloc',text)
+            self.assertIn('# memalign_signal=[COMET-MEMALIGN-MALLOC-LOW]',text)
+            data=json.loads(log.with_suffix('.summary.json').read_text(encoding='utf-8'))
+            self.assertEqual(data['memalign_origin'],'backing-malloc')
+            self.assertIn('MEMALIGN-MALLOC-LOW',data['memalign_signal'])
+            self.assertEqual(data['suspected_subsystem'],'vm/ppu')
+
     def test_run_logged_classifies_hle_failure(self):
         with tempfile.TemporaryDirectory() as td:
             log=Path(td)/'boot.txt'
