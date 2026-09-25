@@ -17,6 +17,9 @@ CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "ppu exception",
         "[comet-memalign-",
         "[comet-malloc-low]",
+        "[comet-parse-reg-clobber]",
+        "[comet-parse-sp-change]",
+        "[comet-parse-slot-change]",
         "[comet-alloc-corruption]",
     )),
     ("vfs", (
@@ -94,6 +97,9 @@ SIGNAL_PATTERNS: tuple[str, ...] = (
     "[COMET-MEMALIGN-CORE-LOW]",
     "[COMET-MEMALIGN-WRAPPER-LOW]",
     "[COMET-MALLOC-LOW]",
+    "[COMET-PARSE-REG-CLOBBER]",
+    "[COMET-PARSE-SP-CHANGE]",
+    "[COMET-PARSE-SLOT-CHANGE]",
     "[COMET-ALLOC-CORRUPTION]",
 )
 
@@ -104,12 +110,18 @@ MEMALIGN_MARKERS: tuple[tuple[str, str], ...] = (
 )
 
 MALLOC_LOW_RE = re.compile(r"\[COMET-MALLOC-LOW\].*?\bsource=([^\s]+)")
+PARSE_CORRUPTION_RE = re.compile(r"\[COMET-PARSE-(REG-CLOBBER|SP-CHANGE|SLOT-CHANGE)\].*?\bsite=(0x[0-9A-Fa-f]+)")
 SUMMARY_RE = re.compile(r"^#\s*([a-z_]+)=(.*)$")
 
 
 def extract_malloc_source(line: str) -> str | None:
     m=MALLOC_LOW_RE.search(line)
     return m.group(1) if m else None
+
+
+def extract_parse_corruption(line: str) -> tuple[str, str] | None:
+    m=PARSE_CORRUPTION_RE.search(line)
+    return (m.group(1).lower(), m.group(2).upper()) if m else None
 
 
 def classify_signal(signal: str | None) -> tuple[str, str]:
@@ -171,6 +183,9 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
     memalign_hits: dict[str, str] = {}
     malloc_source: str | None = None
     malloc_signal: str | None = None
+    parse_corruption_kind: str | None = None
+    parse_corruption_site: str | None = None
+    parse_corruption_signal: str | None = None
 
     for raw in lines:
         line = raw.rstrip("\r\n")
@@ -182,6 +197,10 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         if line.startswith(BOOT_STAGE_PREFIX):
             last_stage = line[len(BOOT_STAGE_PREFIX):].strip()
         lower = line.lower()
+        parse_hit=extract_parse_corruption(line)
+        if parse_hit is not None and parse_corruption_kind is None:
+            parse_corruption_kind,parse_corruption_site=parse_hit
+            parse_corruption_signal=line.strip()
         source=extract_malloc_source(line)
         if source is not None and malloc_source is None:
             malloc_source=source
@@ -251,6 +270,9 @@ def summarize_lines(lines: list[str]) -> dict[str, object]:
         "memalign_signal": memalign_signal,
         "malloc_source": malloc_source,
         "malloc_signal": malloc_signal,
+        "parse_corruption_kind": parse_corruption_kind,
+        "parse_corruption_site": parse_corruption_site,
+        "parse_corruption_signal": parse_corruption_signal,
         "boot_outcome": outcome,
     }
 
@@ -281,6 +303,8 @@ def main() -> int:
         print(f"memalign signal:       {report['memalign_signal'] or '<none>'}")
         print(f"malloc source:         {report['malloc_source'] or '<none>'}")
         print(f"malloc signal:         {report['malloc_signal'] or '<none>'}")
+        print(f"parse corruption:      {report['parse_corruption_kind'] or '<none>'}")
+        print(f"parse corruption site: {report['parse_corruption_site'] or '<none>'}")
         print(f"boot outcome:         {report['boot_outcome']}")
         print(f"rationale:            {report['rationale']}")
     return 0
