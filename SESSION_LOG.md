@@ -233,3 +233,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Hardened Boot Fix 7 EXE SHA-256: `33d166770570791c7fb4c2151a3a29b52234f71750e1445f2223bf77b23d1545`.
 - Hardened ready-to-run ZIP SHA-256: `d2d106e767490998e7ec37b025f2d8186c7381433d9bf3a1ce6686d8d0569d3b`.
 - Next evidence remains the first `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]` marker from the hardened build; that exact call site will determine the next code fix.
+
+
+## 2026-09-25 — Boot Fix 7 terminal lifetime gaps closed
+
+- Audited the hardened 35-call pointer-lifetime watcher for non-call straight-line gaps.
+- Added a terminal `r23` guard immediately before the parser output store and terminal caller-SP / `sp+0x84` guards immediately before the failing free.
+- The terminal checks reuse the existing `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, and `[COMET-PARSE-SLOT-CHANGE]` markers, so late corruption remains machine-classifiable by the existing triage path.
+- Updated the focused regression test to lock the extra marker sites and counts.
+- Code commit: `7420f2ddaeb99121b0ce23cd0b366ee02e8ffd87`; test commit: `359342bffd02c507ca2a8c06512a80be265c5a56`.
+- Next runtime dependency remains one hardened Boot Fix 7 run; no allocator/free suppression was introduced.
