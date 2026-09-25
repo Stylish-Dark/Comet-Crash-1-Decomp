@@ -92,6 +92,20 @@ class BootLogTests(unittest.TestCase):
             self.assertIn('MEMALIGN-MALLOC-LOW',data['memalign_signal'])
             self.assertEqual(data['suspected_subsystem'],'vm/ppu')
 
+    def test_run_logged_records_malloc_return_source(self):
+        with tempfile.TemporaryDirectory() as td:
+            log=Path(td)/'boot.txt'
+            code=('print("[COMET-MALLOC-LOW] caller_lr=0x001A7708 source=loc_001A61A8#1 request=0x390 mspace=0x00722220 least=0x40000000 result=0x140"); '
+                  'raise SystemExit(9)')
+            with self.assertRaises(subprocess.CalledProcessError):
+                comet_port.run_logged([sys.executable,'-c',code],log)
+            text=log.read_text(encoding='utf-8')
+            self.assertIn('# malloc_source=loc_001A61A8#1',text)
+            data=json.loads(log.with_suffix('.summary.json').read_text(encoding='utf-8'))
+            self.assertEqual(data['malloc_source'],'loc_001A61A8#1')
+            self.assertIn('COMET-MALLOC-LOW',data['malloc_signal'])
+            self.assertEqual(data['suspected_subsystem'],'vm/ppu')
+
     def test_run_logged_classifies_hle_failure(self):
         with tempfile.TemporaryDirectory() as td:
             log=Path(td)/'boot.txt'
