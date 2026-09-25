@@ -8,7 +8,7 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 **First native Windows boot reached; Boot Fix 7 parse-pointer lifetime diagnostic built and ready for runtime evidence.**
 
-Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. Boot Fix 6 runtime evidence showed none of the malloc/memalign low-return markers fire before the same `0x140` free, so the allocator is not manufacturing the low value. Static PPC/lift comparison confirms the game stores the allocation in the caller's `sp+0x84` slot and later frees that same slot. Boot Fix 7 now traces the pointer across saved registers, stack-pointer stability, and every concrete call boundary that can intervene before the free.
+Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. Boot Fix 6 runtime evidence showed none of the malloc/memalign low-return markers fire before the same `0x140` free, so the allocator is not manufacturing the low value. Static PPC/lift comparison confirms the game stores the allocation in the caller's `sp+0x84` slot and later frees that same slot. Boot Fix 7 now traces the pointer across saved registers, stack-pointer stability, and every concrete call boundary that can intervene before the free. A coverage audit found 13 branch/switch call sites missing from the first build; the hardened build now watches all 35 live-pointer call boundaries that can feed the `0x00130418` free path.
 
 ## Completed
 
@@ -50,7 +50,7 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Added `tools/patch_comet_malloc_source_diag.py`. It tags all **26 live writes to r31** in `func_001A5A90` and emits `[COMET-MALLOC-LOW]` / `[COMET-MALLOC-STATE]` if the allocator returns below `mspace->least`, identifying the exact basic-block producer plus request, chunk metadata, maps, DV/top state and relevant registers. Guest allocator behaviour is unchanged.
 - Boot Fix 6 runtime evidence disproved the low-return hypothesis: no `[COMET-MALLOC-LOW]` or `[COMET-MEMALIGN-*]` marker occurs before the same `mem=0x00000140` failing free. The corruption therefore occurs after successful allocation.
 - Exact PPC/lift tracing shows `func_00130130` passes `sp+0x84` to `func_0012F590`, then later reloads `sp+0x84` immediately before the failing free. `func_0012F590` keeps the valid allocation in nonvolatile registers before writing the output. This narrows the fault to saved-register clobber, caller-SP drift, or a later write to the `sp+0x84` slot.
-- Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot across 22 subsequent calls, and final pre-free state. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
+- Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot, and final pre-free state. The hardened watcher covers all **35** live-pointer call boundaries, including 13 branch/switch calls that can loop back into the same final free path. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
 - Latest authoritative validation (GitHub Actions run `36120069200`, PR #11): **160/160 tests passed**, repository safety passed, Windows unit/native-link/provenance passed, and Linux→Windows cross-build passed.
 
 ## Current working state
@@ -135,7 +135,7 @@ Run the ready-to-run **Boot Fix 7** package and preserve its `boot-console.txt`.
 
 Context markers `[COMET-PARSE-ALLOC]`, `[COMET-PARSE-STORE]`, `[COMET-PARSE-OUT]` and `[COMET-PARSE-FINAL]` show the value before/after the corrupting boundary.
 
-Boot Fix 7 EXE SHA-256: `a599fd666cf672357b35aa45d14e31931c1eaa1c1e1cd3ae8b2a5eb8ec2c1676`.
-Ready-to-run ZIP SHA-256: `a2d873793dc407b7a6372aad943768d62d696bfd491daa72fc905992692c0897`.
+Hardened Boot Fix 7 EXE SHA-256: `33d166770570791c7fb4c2151a3a29b52234f71750e1445f2223bf77b23d1545`.
+Hardened ready-to-run ZIP SHA-256: `d2d106e767490998e7ec37b025f2d8186c7381433d9bf3a1ce6686d8d0569d3b`.
 
 After that evidence, patch the exact offending function/path rather than the allocator or free site.
