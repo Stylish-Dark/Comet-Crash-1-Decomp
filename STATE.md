@@ -6,9 +6,9 @@ Produce a Windows-native static-recompilation port of **Comet Crash** (PS3, NPEB
 
 ## Current phase
 
-**First native Windows boot reached; Boot Fix 7 parse-pointer lifetime diagnostic built and ready for runtime evidence.**
+**First native Windows boot reached; fully hardened Boot Fix 7 pointer-lifetime diagnostic validated, packaged, and ready for runtime evidence.**
 
-Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. Boot Fix 6 runtime evidence showed none of the malloc/memalign low-return markers fire before the same `0x140` free, so the allocator is not manufacturing the low value. Static PPC/lift comparison confirms the game stores the allocation in the caller's `sp+0x84` slot and later frees that same slot. Boot Fix 7 now traces the pointer across saved registers, stack-pointer stability, and every concrete call boundary that can intervene before the free. A coverage audit found 13 branch/switch call sites missing from the first build; the hardened build now watches all 35 live-pointer call boundaries that can feed the `0x00130418` free path. It now also checks immediately before the parser output store and immediately before the free, closing straight-line corruption gaps after the final watched call.
+Boot Fix 4 captured the first allocator invariant failure without suppressing it. `mspace_free` receives `mem=0x00000140` / chunk `0x00000138` with a zero header while the same mspace reports `least=0x40000000`. Static tracing shows this value is written to the caller's output buffer from the aligned-allocation result. Boot Fix 6 runtime evidence showed none of the malloc/memalign low-return markers fire before the same `0x140` free, so the allocator is not manufacturing the low value. Static PPC/lift comparison confirms the game stores the allocation in the caller's `sp+0x84` slot and later frees that same slot. Boot Fix 7 now traces the pointer across saved registers, stack-pointer stability, and every concrete call boundary that can intervene before the free. A coverage audit found 13 branch/switch call sites missing from the first build; the hardened build now watches all 35 live-pointer call boundaries that can feed the `0x00130418` free path. It now also checks immediately before the parser output store and immediately before the free, closing straight-line corruption gaps after the final watched call. A fresh exact-title lift also exposed and fixed a separate pipeline bug: the pinned lifter emits 3,936 deterministic data-like `.word` TODO fallbacks, which are now hard-gated by exact count + ordered-value SHA-256 while any real unsupported instruction remains fatal.
 
 ## Completed
 
@@ -51,7 +51,9 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Boot Fix 6 runtime evidence disproved the low-return hypothesis: no `[COMET-MALLOC-LOW]` or `[COMET-MEMALIGN-*]` marker occurs before the same `mem=0x00000140` failing free. The corruption therefore occurs after successful allocation.
 - Exact PPC/lift tracing shows `func_00130130` passes `sp+0x84` to `func_0012F590`, then later reloads `sp+0x84` immediately before the failing free. `func_0012F590` keeps the valid allocation in nonvolatile registers before writing the output. This narrows the fault to saved-register clobber, caller-SP drift, or a later write to the `sp+0x84` slot.
 - Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot, and final pre-free state. The hardened watcher covers all **35** live-pointer call boundaries, including 13 branch/switch calls that can loop back into the same final free path. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
-- Latest authoritative validation (GitHub Actions run `36120069200`, PR #11): **160/160 tests passed**, repository safety passed, Windows unit/native-link/provenance passed, and Linux→Windows cross-build passed.
+- Closed the remaining straight-line diagnostic gaps with terminal pre-store/pre-free guards and validated their ordering before the actual pointer sinks.
+- Repaired the clean real-title PPU completeness gate: 3,936 deterministic `.word` fallbacks are tracked separately from actionable unsupported instructions and pinned by ordered-value SHA-256 `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`. Any count/digest drift or real mnemonic TODO remains a hard failure.
+- Latest authoritative validation (GitHub Actions run `36127073310`, PR #13): **164/164 tests passed**, repository safety passed, Windows unit/native-link/provenance passed, and Linux→Windows cross-build passed.
 
 ## Current working state
 
@@ -79,6 +81,9 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 - Small embedded SPU image is active but still unidentified.
 - `cellPadGetData` and the downstream pad decoder are mapped.
 - Full PPU lift emitted 3,744 functions after boundary recovery/tail wrappers.
+- Exact reference PPU lift contains 3,936 deterministic data-like `.word` TODO fallbacks; actionable unsupported PPU instructions after compatibility patching are zero. The raw-word ordered-value baseline SHA-256 is `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`.
+- `func_00130130` contains two frees of its `sp+0x84` parse buffer, but static control flow shows they are mutually exclusive: the long path that reaches the evidenced `0x00130418` failure branches around the earlier `0x001301A8` free. This is not an obvious double-free.
+- The long path has no direct caller-side write to `sp+0x84` after parsing. `func_0001C7D4` receives adjacent `sp+0x80`, but with the observed count of 1 its downstream writer touches only `sp+0x80`, not `sp+0x84`.
 - Small SPU: 28 reachable functions, zero reachable unsupported instructions.
 - MultiStream SPU: 1,099 reachable functions from entry `0x3050`; 446 unsupported markers are outside the reachable set.
 - Direct absolute mouse/world-pointer injection is not yet implemented; current mouse support intentionally uses analogue compatibility mode.
@@ -118,13 +123,15 @@ Do not invent the next runtime defect without a boot log.
 
 ## Most recent checkpoint
 
-Current canonical `main` includes `99342173036be4db1ac57ff816bfaf56290cfe51` (**diag: trace parse allocation lifetime**). The Boot Fix 5 diagnostic code itself remains checkpointed at `31024b8193c95a3d432b3cfdc291168991fc088d`; the ready-to-run diagnostic was rebuilt model-side from that exact source commit, the pinned ps3recomp revision and the exact reference ELF.
+Canonical `main` now includes PR #12 merge `886573c84500d653ddf77451ff96e8c427560c53` (**validate Boot Fix 7 terminal pointer guards**) and PR #13 merge `f9069a2e68ada5e5598977780d74f6a4c6070555` (**baseline real-title PPU raw-word fallbacks**).
 
-GitHub Actions run `36120069200` passed **160/160 tests**, repository safety, the Windows unit/native-link/provenance path, and the Linux→Windows cross-build.
+GitHub Actions run `36124843328` validated the terminal-guard diagnostic with **162/162 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build. Run `36127073310` validated the real-title PPU audit fix with **164/164 tests** and the same full matrix.
 
-Published artifacts from that run:
-- `CometCrashPC-Windows-Builder` — usable delivery package; exact source bundle + `BUILD_AND_RUN.cmd` + README. Artifact SHA-256: `09752ced9d0f089c980de3b6c5d9161fa4ab2c555b60b4f3df86d01d693f1a68`.
-- `CometCrashPC-ci-scaffold` — explicitly non-playable synthetic-fixture validation executable.
+A fresh exact-reference model-side lift after PR #13 completed end-to-end: 3,744 PPU functions, zero actionable PPU unsupported TODOs, the exact 3,936-entry raw-word baseline, both SPU lifts, and zero reachable unsupported SPU instructions. The current Boot Fix 7 pointer patcher also applies cleanly to that fresh real-title lift and the patched generated C++ compiles for Windows.
+
+The ready-to-run terminal-guard build was cross-linked from the exact real-title generated code with all prior allocator diagnostics retained:
+- EXE SHA-256: `4f40b8d966cf99cb112379cdf49512af5043b2adfa162485f6e6bbbd03e69b69`.
+- Ready-to-run ZIP SHA-256: `f7efd390fd80631b2925e5cc645dc1a72372b8281199b1b57ed6d222e69ddf86`.
 
 ## Immediate next action
 
@@ -135,7 +142,7 @@ Run the ready-to-run **Boot Fix 7** package and preserve its `boot-console.txt`.
 
 Context markers `[COMET-PARSE-ALLOC]`, `[COMET-PARSE-STORE]`, `[COMET-PARSE-OUT]` and `[COMET-PARSE-FINAL]` show the value before/after the corrupting boundary.
 
-Hardened Boot Fix 7 EXE SHA-256: `33d166770570791c7fb4c2151a3a29b52234f71750e1445f2223bf77b23d1545`.
-Hardened ready-to-run ZIP SHA-256: `d2d106e767490998e7ec37b025f2d8186c7381433d9bf3a1ce6686d8d0569d3b`.
+Terminal-guard Boot Fix 7 EXE SHA-256: `4f40b8d966cf99cb112379cdf49512af5043b2adfa162485f6e6bbbd03e69b69`.
+Terminal-guard ready-to-run ZIP SHA-256: `f7efd390fd80631b2925e5cc645dc1a72372b8281199b1b57ed6d222e69ddf86`.
 
 After that evidence, patch the exact offending function/path rather than the allocator or free site.
