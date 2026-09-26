@@ -203,6 +203,12 @@ jobs:
           cmake --build build-cross
           test -f build-cross/CometCrashPC.exe
           file build-cross/CometCrashPC.exe
+          "$LLVM_MINGW_ROOT/bin/llvm-objdump" -p build-cross/CometCrashPC.exe > build-cross/pe-imports.txt
+          cat build-cross/pe-imports.txt
+          if grep -Eiq 'DLL Name: (libc\+\+|libunwind)\.dll' build-cross/pe-imports.txt; then
+            echo "Cross-built EXE still depends on LLVM-MinGW runtime DLLs"
+            exit 5
+          fi
 
       - name: Set up model-side Python
         uses: actions/setup-python@v5

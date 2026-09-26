@@ -6,6 +6,8 @@ class T(unittest.TestCase):
   s=(ROOT/'port'/'CMakeLists.txt').read_text()
   self.assertIn('if(MSVC)',s)
   self.assertIn('-Wa,-mbig-obj',s)
+  self.assertIn('if(MINGW)',s)
+  self.assertIn('target_link_options(CometCrashPC PRIVATE -static)',s)
   tc=(ROOT/'cmake'/'llvm-mingw-x86_64.cmake').read_text()
   self.assertIn('CMAKE_SYSTEM_NAME Windows',tc)
   self.assertIn('x86_64-w64-mingw32-clang',tc)
