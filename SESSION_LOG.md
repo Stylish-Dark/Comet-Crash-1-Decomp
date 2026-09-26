@@ -290,3 +290,16 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Current user-ready EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
 - Current user-ready ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
 - Next evidence is one Boot Fix 8 run. First verify the earlier unresolved `0x00052DF4` dispatch is gone; then follow only the next observed blocker.
+
+## 2026-09-26 — Boot Fix 8 causal chain tightened; LLVM-MinGW runtime self-contained
+
+- Compared the exact pre-fix and repaired generated `func_0005207C` rather than treating the old allocator abort as an independent symptom.
+- The pre-fix function allocates a **0x210-byte guest stack frame**. At `0x0005220C`, the missed inline switch emitted `ps3_indirect_call(ctx); return;`; when the interior target `0x00052DF4` was unresolved, the recompiled function returned before its epilogue, leaving guest `r1` 0x210 bytes low and callee-saved state unrestored.
+- The unresolved path is called from `func_00054400` at LR `0x000545DC`; that function returns to `func_0002D868` at `0x0002DA58`. The later allocator-abort backtrace also contains `0x0002DA58`, and the caller subsequently uses stack-relative slots including `sp+0x84`. This is now the leading causal explanation for the later invalid `0x140` free, pending Boot Fix 8 runtime confirmation.
+- Re-audited the exact title lift and confirmed the new fallback is required at exactly one dispatcher, `0x0005220C`; the repaired global computed-switch baseline remains 99 dispatchers / 694 case occurrences / 689 unique targets.
+- Removed the user-facing LLVM-MinGW runtime DLL dependency. `port/CMakeLists.txt` now statically links the MinGW runtime, and Linux cross-build CI inspects the PE import table and fails if `libc++.dll` or `libunwind.dll` appears.
+- PR #17 merged as `77d0586efb2fce523c598ff03cd3b21bfeaf0099`. GitHub Actions run `36236728404` passed **169/169 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build including the new PE-import gate.
+- Re-linked the exact Boot Fix 8 title build with a static LLVM runtime. Static-runtime EXE SHA-256: `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`.
+- Built a new ready-to-run package with no `libc++.dll` / `libunwind.dll` payload. Static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
+- Next evidence remains one Boot Fix 8 run: verify the old `0x00052DF4` unresolved dispatch is gone and then follow only the next concrete runtime signal.
+
