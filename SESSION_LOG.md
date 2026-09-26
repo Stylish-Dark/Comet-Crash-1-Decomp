@@ -276,3 +276,17 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
 - Ready-to-run Boot Fix 8 ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
 - Next dependency: run Boot Fix 8. First verify that unresolved dispatch to `0x00052DF4` is gone. If the title advances, follow the next evidenced blocker; if the `0x140` free persists, use the retained Boot Fix 7 parse-pointer markers from the same run.
+
+## 2026-09-26 — Boot Fix 8 handoff hardened and jump-table structure pinned
+
+- Audited the fresh exact-title PPU lift globally after the `0x0005220C` repair rather than assuming only that one switch mattered.
+- The repaired generated source contains **99 computed jump-table dispatchers**, **694 case occurrences**, and **689 unique targets**. Ordered per-dispatcher case grouping hashes to `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`.
+- A raw scan produced one extra apparent `bctr`+offset candidate at `0x001B76B4`; disassembly showed it is an import-stub tail/data sequence rather than an in-function switch, so it is not a missing recovered table.
+- Added the complete computed-switch structure to the normal PPU lift audit and made drift a hard pipeline failure.
+- PR #16 merged as `5fe95f2289e4e2b2e8ed7ad94c5116b7142927da`. GitHub Actions run `36235777677` passed **169/169 tests**, repository safety, Windows scaffold/native-link and Linux→Windows cross-build.
+- Rebuilt/verified a fresh real Windows Boot Fix 8 executable from the exact repaired title lift with the prior allocator, memalign, malloc-source and parse-pointer diagnostics retained.
+- The executable imports `libc++.dll` and `libunwind.dll` as its only non-Windows runtime DLLs; both are bundled.
+- Created a complete user-ready package containing the EXE, exact reference `EBOOT.ELF`, full user-owned game tree, runtime DLLs, and a launcher that passes the ELF explicitly, sets the VFS/title environment, recursively unblocks extracted files, and preserves `boot-console.txt` on exit.
+- Current user-ready EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
+- Current user-ready ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
+- Next evidence is one Boot Fix 8 run. First verify the earlier unresolved `0x00052DF4` dispatch is gone; then follow only the next observed blocker.
