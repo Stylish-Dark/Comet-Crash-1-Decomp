@@ -6,7 +6,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current phase
 
-**Native source recovery is underway. The level-map loader is now structurally recovered and implemented natively; current work has moved into `arenaGraphics.cpp`.**
+**Native source recovery is underway. Level-map loading, arena render-target setup, arena model bootstrap, and the core model geometry layout are now represented natively. Current work is inside the OBJ/MTL model loader and 0x78-byte submesh/material records.**
 
 ## Exact-title baseline retained
 
@@ -57,17 +57,22 @@ Asset/bootstrap recovery now adds:
 - exact path, slot/root offset, option word and both floating arguments are preserved in a native 37-entry `ArenaModelAssetSpec` manifest;
 - fonts, font shaders, `shaders.bin`, particle textures and `gui_quad_shader` are pinned as the non-model portions of the same bootstrap.
 
-Model-object recovery has now completely decompiled the default-shader helper `0x00105088..0x00105307`:
+Model geometry recovery now adds:
 
-- `+0x38` is the diffuse/base texture-presence field;
-- `+0x3C` is specular texture presence;
-- `+0x40` is bump/normal texture presence;
-- `+0x48` is an already-assigned shader field and short-circuits default selection;
-- all 11 surviving default shader names and the exact option-mask precedence are reproduced in native `choose_default_model_shader()`.
+- `+0x04` = unique vertex count;
+- `+0x08` = submesh count;
+- `+0x0C` = final 16-bit index count;
+- `+0x10` / `+0x14` = full / compact CPU vertex-array pointers;
+- `+0x18` = pointer to 0x78-byte submesh records;
+- `+0x1C` = 16-bit index-array pointer;
+- `+0x20` / `+0x24` = GPU array-buffer handles for the two vertex layouts;
+- full vertices are 0x20 bytes: position.xyz, normal.xyz, texcoord.xy;
+- compact vertices are 0x14 bytes: position.xyz, texcoord.xy;
+- the temporary OBJ face-reference vector uses 0x0C-byte records and collapses into the unique-vertex/index buffers.
 
-The option masks are preserved numerically rather than prematurely renamed; their shader effects are proven, but their original enum names are not.
+A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Next: continue inside `0x00105308..0x0010B538` to name the geometry/count/pointer fields around `+0x04..+0x1C`, then trace the second float into `+0x2C` and determine whether the first float is live or an optimized/dead API parameter in this build.
+Next: recover the remaining 0x78-byte submesh draw-range fields, then continue MTL texture handling and the unresolved model fields `+0x28/+0x2C`.
 
 ## Legacy static-recomp track
 
@@ -84,7 +89,8 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `tools/decomp_source_refs.py`
 - `tools/decomp_level_map.py`
 - `tools/extract_builtin_level_maps.py`
-- `decomp/include/comet/model_shader_policy.hpp`
+- `decomp/include/comet/model_geometry.hpp`
+- `decomp/include/comet/material_shader_policy.hpp`
 - `docs/decomp/model-object.md`
 - `WORK_QUEUE.md`
 - `PROJECT_PLAN.md`
