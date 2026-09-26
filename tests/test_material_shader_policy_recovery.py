@@ -2,12 +2,12 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = ROOT / "decomp" / "include" / "comet" / "model_shader_policy.hpp"
-SOURCE = ROOT / "decomp" / "src" / "model_shader_policy.cpp"
+HEADER = ROOT / "decomp" / "include" / "comet" / "material_shader_policy.hpp"
+SOURCE = ROOT / "decomp" / "src" / "material_shader_policy.cpp"
 DOC = ROOT / "docs" / "decomp" / "model-object.md"
 
 
-class ModelShaderPolicyRecoveryTests(unittest.TestCase):
+class MaterialShaderPolicyRecoveryTests(unittest.TestCase):
     def test_all_surviving_shader_names_are_preserved(self):
         text = SOURCE.read_text(encoding="utf-8")
         names = (
@@ -33,20 +33,19 @@ class ModelShaderPolicyRecoveryTests(unittest.TestCase):
         self.assertLess(text.index("0x0Cu"), text.index("0x244u"))
         self.assertLess(text.index("0x244u"), text.index("0x44u"))
 
-    def test_proven_material_offsets_are_documented(self):
-        header = HEADER.read_text(encoding="utf-8")
+    def test_offsets_are_explicitly_material_relative(self):
+        text = HEADER.read_text(encoding="utf-8")
+        self.assertIn("material subobject", text)
         for offset in ("0x38", "0x3C", "0x40", "0x48"):
-            self.assertIn(offset, header)
+            self.assertIn(offset, text)
+        doc = DOC.read_text(encoding="utf-8")
+        for absolute in ("+0x48", "+0x4C", "+0x50", "+0x58"):
+            self.assertIn(absolute, doc)
 
-    def test_public_policy_is_native_not_ps3_runtime(self):
-        header = HEADER.read_text(encoding="utf-8")
+    def test_public_policy_is_native(self):
+        text = HEADER.read_text(encoding="utf-8")
         for token in ("ppu_context", "cellGcm", "psgl", "r3", "r4"):
-            self.assertNotIn(token, header)
-
-    def test_full_helper_boundary_is_recorded(self):
-        text = DOC.read_text(encoding="utf-8")
-        self.assertIn("0x00105088", text)
-        self.assertIn("0x00105307", text)
+            self.assertNotIn(token, text)
 
 
 if __name__ == "__main__":

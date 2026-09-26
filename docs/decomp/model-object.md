@@ -1,108 +1,151 @@
-# Model object / default shader recovery
+# Model geometry and submesh/material recovery
 
-This file records the first typed slice of the 0x90-byte model object used by
-the arena asset manifest.
+This document records the current semantic recovery of the 0x90-byte arena
+model object loaded by PPU `0x00105308..0x0010B537` and rendered by
+`0x00100750`.
 
-## Boundary
+A correction to the previous pass is important: helper
+`0x00105088..0x00105307` does **not** receive the root model object. It
+receives the material subobject at `submesh + 0x10`. The earlier
+`+0x38/+0x3C/+0x40/+0x48` shader fields are therefore material-subobject
+offsets, not root-model offsets.
 
-Arena bootstrap function `0x000ECCA8` calls the large model initializer
-`0x00105308..0x0010B537` 37 times.
+## Proven top-level model geometry fields
 
-The initializer stores the caller's integer option word at model offset
-`+0x00`, copies/constructs the path into the model object, parses the model,
-then later calls helper **`0x00105088..0x00105307`** with:
-
-```text
-r3 = model object
-r4 = original option word
-```
-
-Unlike the full loader, `0x00105088` is compact enough to recover completely.
-
-## Proven model fields
-
-The helper tests four 32-bit object fields:
+The OBJ loader and renderer independently agree on the following layout:
 
 | model offset | recovered meaning | evidence |
 | ---: | --- | --- |
-| `+0x38` | diffuse/base texture present | with only this field present it selects `lit_texture_shader` |
-| `+0x3C` | specular texture present | adding this field selects `lit_texture_spec_shader` |
-| `+0x40` | bump/normal texture present | adding this without spec selects `lit_bump_shader`; with spec it selects bump+spec variants |
-| `+0x48` | shader already assigned | nonzero causes an immediate return without default selection |
+| `+0x00` | original model option word | written from loader argument near entry; later reused for material shader policy |
+| `+0x04` | unique vertex count | derived from a temporary 0x20-byte vertex vector and used by renderer-side vertex setup |
+| `+0x08` | submesh/material-record count | derived from a temporary vector with exact 0x78-byte stride; renderer loops exactly this many records |
+| `+0x0C` | final index count | derived from 0x0C-byte OBJ face-reference triplets; final buffer allocation is count*2 |
+| `+0x10` | full vertex-array pointer | loader allocates `vertex_count * 0x20`; renderer chooses the 32-byte format when nonzero |
+| `+0x14` | compact vertex-array pointer | alternate loader path allocates `vertex_count * 0x14`; renderer uses it when `+0x10 == 0` |
+| `+0x18` | submesh-record pointer | points to `submesh_count` records of 0x78 bytes |
+| `+0x1C` | 16-bit index-array pointer | loader allocates `index_count * 2`; renderer issues `GL_UNSIGNED_SHORT (0x1403)` indexed draws |
+| `+0x20` | GPU array-buffer handle for full layout | renderer binds it to `GL_ARRAY_BUFFER (0x8892)` on the 32-byte path |
+| `+0x24` | GPU array-buffer handle for compact layout | renderer binds it to `GL_ARRAY_BUFFER` on the 20-byte path |
 
-These names are supported by the exact surviving shader strings and the
-branch matrix, rather than guessed from address proximity.
+The native rewrite should turn these into ordinary vectors/resources rather than
+preserving pointer/PSGL-handle fields at fixed offsets.
 
-## Exact default-shader decision tree
+## Recovered vertex layouts
 
-The native rewrite is in:
-
-- `decomp/include/comet/model_shader_policy.hpp`
-- `decomp/src/model_shader_policy.cpp`
-
-The original shader strings are:
-
-```text
-lit_object_shader
-lit_object_shader_no_team_ground
-lit_texture_shader
-lit_bump_shader
-lit_texture_spec_shader
-lit_texture_spec_gloss_shader
-lit_bump_spec_shader
-lit_bump_spec_shader_no_team
-lit_bump_spec_shader_no_team_ground
-lit_bump_spec_gloss_shader_no_team
-lit_bump_spec_gloss_glow_shader_no_team
-```
-
-The exact policy is:
+The full path is exactly 32 bytes per vertex:
 
 ```text
-if shader already assigned:
-    unchanged
-
-if no diffuse:
-    option bit 0x4 ? object_no_team_ground : object
-
-else if no specular:
-    bump present ? bump : texture
-
-else if no bump:
-    option bit 0x40 ? texture_spec_gloss : texture_spec
-
-else:
-    if (options & 0x0C) == 0x0C:
-        bump_spec_no_team_ground
-    else if (options & 0x244) == 0x244:
-        bump_spec_gloss_glow_no_team
-    else if (options & 0x44) == 0x44:
-        bump_spec_gloss_no_team
-    else if options & 0x4:
-        bump_spec_no_team
-    else if options & 0x40:
-        unchanged
-    else:
-        bump_spec
++0x00  float position[3]
++0x0C  float normal[3]
++0x18  float texcoord[2]
+stride 0x20
 ```
 
-The option-bit semantics themselves are deliberately not renamed yet. The
-shader names strongly suggest team/gloss/glow behaviour, but the project will
-wait for independent use sites before turning bit values into source-level
-enum names.
+The compact path is exactly 20 bytes per vertex:
 
-## Initial `0x00105308` object facts
+```text
++0x00  float position[3]
++0x0C  float texcoord[2]
+stride 0x14
+```
 
-The large initializer already yields several additional hard facts:
+The renderer at `0x00100750` selects between them by testing model
+`+0x10`. When present it binds model `+0x20` and uses the 0x20 layout.
+Otherwise it binds model `+0x24` and uses the 0x14 layout.
 
-- `+0x00` receives the exact bootstrap option word;
-- a string-like member begins at `+0x34` and receives the source path near
-  function entry;
-- `+0x2C` is a float field influenced by the second floating argument;
-- the initializer later populates model data/count/pointer fields around
-  `+0x04..+0x1C`;
-- `+0x38/+0x3C/+0x40/+0x48` form the material/default-shader portion above.
+This strongly ties the alternate path to geometry without a normal stream.
+That is now expressed directly by `full_vertex_layout()` and
+`compact_vertex_layout()`.
 
-The next pass should identify the pointer/count pairs at `+0x04..+0x1C` and
-follow the OBJ-text parser sufficiently to name geometry arrays and material
-records.
+## OBJ face-reference collapse
+
+During parsing, the loader maintains a temporary vector with an exact
+**0x0C-byte stride**. Its count becomes model `+0x0C`.
+
+The subsequent deduplication pass treats each 12-byte element as the source
+reference used to find/build one unique interleaved vertex and writes one
+16-bit final index into model `+0x1C`.
+
+That structure matches the OBJ `v/vt/vn` face-reference triplet shape. The
+native parser should eventually represent it as a typed source-index triplet,
+but the exact signed/one-based normalization rules remain to be recovered
+before freezing the public type.
+
+## Submesh records
+
+Model `+0x18` points to records with exact **0x78-byte stride**.
+
+The renderer at `0x00100750` advances by 0x78 for each iteration and stops
+after model `+0x08` records. The loader computes that count from the temporary
+0x78-byte vector and copies the records into the final allocation.
+
+A material/shader subobject begins at **submesh + 0x10**. This is independently
+proved twice:
+
+1. the OBJ/MTL loader calls shader helper `0x00105088` with
+   `material_vector_end - 0x68`; since the record stride is 0x78, that address
+   is the last record start + 0x10;
+2. the renderer calls material binding helper `0x0010000C` with
+   `submesh + 0x10`.
+
+## Corrected material shader fields
+
+Within the material subobject, helper `0x00105088` uses:
+
+| material-relative | submesh-relative | recovered meaning |
+| ---: | ---: | --- |
+| `+0x38` | `+0x48` | diffuse/base texture present |
+| `+0x3C` | `+0x4C` | specular texture present |
+| `+0x40` | `+0x50` | bump/normal texture present |
+| `+0x48` | `+0x58` | preassigned shader; nonzero suppresses default selection |
+
+The renderer also reads submesh `+0x4C/+0x50/+0x58`, matching these roles.
+
+The exact shader decision tree remains unchanged from the previous recovery,
+but it is now correctly exposed as **material** policy:
+
+- `decomp/include/comet/material_shader_policy.hpp`
+- `decomp/src/material_shader_policy.cpp`
+
+## Indexed draw-range fields in each 0x78-byte submesh
+
+Renderer `0x00100750` calls the indexed draw wrapper with
+`GL_TRIANGLES (4)` and `GL_UNSIGNED_SHORT (0x1403)`. The argument mapping is
+exactly compatible with `glDrawRangeElements(mode, start, end, count, type,
+indices)`:
+
+| submesh offset | native meaning | renderer use |
+| ---: | --- | --- |
+| `+0x00` | first index (u16 element offset) | multiplied by 2 and passed as the index-buffer byte offset |
+| `+0x04` | index count | passed as draw count |
+| `+0x08` | minimum referenced vertex | passed as draw-range start |
+| `+0x0C` | maximum referenced vertex | passed as draw-range end |
+| `+0x10` | material subobject | passed to the material binding helper |
+
+This cleanly recovers the first 0x10 bytes of the opaque submesh record as a
+normal native `SubmeshDrawRange`. The renderer also consumes fields at
+`+0x68/+0x6C/+0x70/+0x74` on an alternate path, but their exact semantics are
+not yet strong enough to name.
+
+## Fields not promoted yet
+
+The loader also touches model `+0x28`, `+0x2C` and a string-like member
+beginning at `+0x34`. Their exact native meanings are not yet strong enough to
+name.
+
+The second floating loader argument influences `+0x2C`, including a sign
+inversion path. The first floating argument is retained by the loader but its
+final semantic effect still needs to be traced.
+
+## Next boundary
+
+Continue through the loader after geometry collapse to recover:
+
+- how OBJ position/texcoord/normal source arrays are normalized;
+- exact semantics of the alternate submesh path at `+0x68..+0x74`;
+- the meaning of `+0x28/+0x2C`;
+- material texture construction from `map_Kd`, `map_Ks`, `bump` and
+  `cube` MTL directives.
+
+The goal is to replace the remaining 0x78-byte opaque submesh record with a
+native typed `Submesh + Material` representation.
