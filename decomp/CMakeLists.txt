@@ -7,6 +7,8 @@ add_library(comet_native_recovery STATIC
     src/arena_assets.cpp
     src/material_shader_policy.cpp
     src/model_geometry.cpp
+    src/material_textures.cpp
+    src/material_properties.cpp
 )
 
 target_include_directories(comet_native_recovery PUBLIC

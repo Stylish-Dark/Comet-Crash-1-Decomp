@@ -404,3 +404,27 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native `SubmeshDrawRange` and pinned the `+0x10` material boundary alongside it.
 - The alternate renderer path using submesh `+0x68/+0x6C/+0x70/+0x74` remains deliberately unnamed pending enough evidence to distinguish its exact stream/range semantics.
 
+## 2026-09-27 — MTL texture channels recovered
+
+- Continued through the MTL parser tail of model loader `0x00105308`.
+- Proved the four surviving texture directives and their exact material resource fields:
+  - `map_Kd` -> material `+0x38` (diffuse/base texture), store at `0x0010A8F8`;
+  - `map_Ks` -> material `+0x3C` (specular texture), store at `0x0010AED8`;
+  - `bump` -> material `+0x40` (bump/normal texture), store at `0x0010B174`;
+  - `cube` -> material `+0x44` (environment/cube texture), store at `0x0010B368`.
+- The first three share resource-loader `0x0010EE20`; `cube` uses the separate `0x0010F100` path.
+- This strengthens the material-boundary correction: the shader helper tests actual texture resource fields for null/non-null, not abstract booleans.
+- Added native MTL directive classification and material texture-slot metadata, compiled and smoke-tested with the native recovery target.
+- Next model work is the alternate submesh range at `+0x68..+0x74`, remaining MTL scalar/color directives, and root-model `+0x28/+0x2C`.
+
+## 2026-09-27 — MTL Ka/Kd/Ks/Ns properties recovered
+
+- Recovered the four scalar/color material directives from exact PPU stores.
+- `Ka` writes ambient RGB to material `+0x00/+0x04/+0x08`.
+- `Kd` writes diffuse RGB to `+0x10/+0x14/+0x18`.
+- `Ks` writes specular RGB to `+0x20/+0x24/+0x28`.
+- `Ns` parses one float, multiplies it by the exact constant `0.12800000607967377`, and stores the result at material `+0x30`.
+- Added native `MaterialProperties`, directive classification and exact `scale_mtl_specular_exponent()`.
+- Gaps `+0x0C/+0x1C/+0x2C/+0x34` are deliberately left unnamed rather than guessed as alpha/padding.
+- Combined with the texture pass, the material object is now semantically understood from `+0x00` through shader field `+0x48` except those four gaps.
+

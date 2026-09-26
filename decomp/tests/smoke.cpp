@@ -2,6 +2,8 @@
 #include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
 #include "comet/material_shader_policy.hpp"
+#include "comet/material_textures.hpp"
+#include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
 
 #include <array>
@@ -11,6 +13,34 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        const auto* kd = classify_mtl_property_directive("Kd");
+        assert(kd != nullptr);
+        assert(kd->semantic == MtlPropertySemantic::DiffuseColor);
+        assert(kd->legacy_material_offset == 0x10);
+        assert(kd->component_count == 3);
+
+        const auto* ns = classify_mtl_property_directive("Ns");
+        assert(ns != nullptr);
+        assert(ns->semantic == MtlPropertySemantic::SpecularExponent);
+        assert(ns->legacy_material_offset == 0x30);
+        assert(scale_mtl_specular_exponent(100.0f) > 12.79f);
+        assert(scale_mtl_specular_exponent(100.0f) < 12.81f);
+    }
+
+    {
+        const auto* diffuse = classify_mtl_texture_directive("map_Kd");
+        assert(diffuse != nullptr);
+        assert(diffuse->semantic == MaterialTextureSemantic::Diffuse);
+        assert(diffuse->legacy_material_offset == 0x38);
+
+        const auto* cube = classify_mtl_texture_directive("cube");
+        assert(cube != nullptr);
+        assert(cube->semantic == MaterialTextureSemantic::EnvironmentCube);
+        assert(cube->loader_kind == MaterialTextureLoaderKind::CubeTexture);
+        assert(cube->legacy_material_offset == 0x44);
+    }
+
     {
         const auto full = full_vertex_layout();
         assert(full.stride == 0x20);
