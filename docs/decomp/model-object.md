@@ -96,10 +96,14 @@ Within the material subobject, helper `0x00105088` uses:
 | ---: | ---: | --- |
 | `+0x38` | `+0x48` | diffuse/base texture present |
 | `+0x3C` | `+0x4C` | specular texture present |
-| `+0x40` | `+0x50` | bump/normal texture present |
+| `+0x40` | `+0x50` | bump/normal texture resource (`bump`) |
+| `+0x44` | `+0x54` | environment/cube texture resource (`cube`) |
 | `+0x48` | `+0x58` | preassigned shader; nonzero suppresses default selection |
 
-The renderer also reads submesh `+0x4C/+0x50/+0x58`, matching these roles.
+The MTL loader independently stores `map_Kd/map_Ks/bump/cube` resources into
+material `+0x38/+0x3C/+0x40/+0x44`. The renderer also reads submesh
+`+0x4C/+0x50/+0x58`, matching the recovered material boundary. See
+`docs/decomp/material-textures.md`.
 
 The exact shader decision tree remains unchanged from the previous recovery,
 but it is now correctly exposed as **material** policy:
