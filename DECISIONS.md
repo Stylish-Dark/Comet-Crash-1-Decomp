@@ -98,3 +98,7 @@ A source bundle is not considered a valid continuity artifact merely because `gi
 ## D026 — Data-like PPU raw-word fallbacks require an exact baseline
 
 The pinned reference lift contains 3,936 `.word 0x........` TODO fallbacks even after all actionable Comet instruction holes are resolved. These are not silently ignored: the pipeline pins both the exact count and the SHA-256 of the ordered raw-word value sequence. Any changed count/digest is a hard failure, and any non-`.word` TODO or unsupported-SPR no-op remains independently fatal.
+
+## D027 — Recovered PPU jump tables are a deterministic lift gate
+
+A successful PPU lift must reproduce the exact reference computed-switch structure, not merely contain zero unsupported mnemonic TODOs. The reference title currently requires 99 recovered jump-table dispatchers, 694 case occurrences, 689 unique targets, and ordered per-dispatcher SHA-256 `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`. Any count, grouping, target-order or digest drift is a hard failure. This prevents interior basic-block cases such as `0x00052DF4` from silently falling back to the global function-entry dispatcher.
