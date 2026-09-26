@@ -4,6 +4,7 @@ project(comet_native_recovery LANGUAGES CXX)
 add_library(comet_native_recovery STATIC
     src/level_map.cpp
     src/arena_render_targets.cpp
+    src/arena_assets.cpp
 )
 
 target_include_directories(comet_native_recovery PUBLIC
