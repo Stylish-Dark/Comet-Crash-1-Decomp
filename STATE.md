@@ -57,7 +57,17 @@ Asset/bootstrap recovery now adds:
 - exact path, slot/root offset, option word and both floating arguments are preserved in a native 37-entry `ArenaModelAssetSpec` manifest;
 - fonts, font shaders, `shaders.bin`, particle textures and `gui_quad_shader` are pinned as the non-model portions of the same bootstrap.
 
-Next: recover enough of `0x00105308..0x0010B538` to identify the 0x90-byte model object's fields, the meaning of its option bits, and the semantic role of the two preserved float arguments.
+Model-object recovery has now completely decompiled the default-shader helper `0x00105088..0x00105307`:
+
+- `+0x38` is the diffuse/base texture-presence field;
+- `+0x3C` is specular texture presence;
+- `+0x40` is bump/normal texture presence;
+- `+0x48` is an already-assigned shader field and short-circuits default selection;
+- all 11 surviving default shader names and the exact option-mask precedence are reproduced in native `choose_default_model_shader()`.
+
+The option masks are preserved numerically rather than prematurely renamed; their shader effects are proven, but their original enum names are not.
+
+Next: continue inside `0x00105308..0x0010B538` to name the geometry/count/pointer fields around `+0x04..+0x1C`, then trace the second float into `+0x2C` and determine whether the first float is live or an optimized/dead API parameter in this build.
 
 ## Legacy static-recomp track
 
@@ -74,6 +84,8 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `tools/decomp_source_refs.py`
 - `tools/decomp_level_map.py`
 - `tools/extract_builtin_level_maps.py`
+- `decomp/include/comet/model_shader_policy.hpp`
+- `docs/decomp/model-object.md`
 - `WORK_QUEUE.md`
 - `PROJECT_PLAN.md`
 - `DECISIONS.md`
