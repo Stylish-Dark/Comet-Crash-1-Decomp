@@ -55,7 +55,7 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot, and final pre-free state. The hardened watcher covers all **35** live-pointer call boundaries, including 13 branch/switch calls that can loop back into the same final free path. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
 - Closed the remaining straight-line diagnostic gaps with terminal pre-store/pre-free guards and validated their ordering before the actual pointer sinks.
 - Repaired the clean real-title PPU completeness gate: 3,936 deterministic `.word` fallbacks are tracked separately from actionable unsupported instructions and pinned by ordered-value SHA-256 `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`. Any count/digest drift or real mnemonic TODO remains a hard failure.
-- Latest authoritative validation (GitHub Actions run `36232221459`, PR #15): **168/168 tests passed**, repository safety passed, Windows unit/native-link/provenance passed, and Linux→Windows cross-build passed.
+- Latest authoritative validation (GitHub Actions run `36235777677`, PR #16): **169/169 tests passed**, repository safety passed, Windows scaffold/native-link passed, and Linux→Windows cross-build passed.
 
 ## Current working state
 
@@ -84,6 +84,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 - `cellPadGetData` and the downstream pad decoder are mapped.
 - Full PPU lift emitted 3,744 functions after boundary recovery/tail wrappers.
 - Exact reference PPU lift contains 3,936 deterministic data-like `.word` TODO fallbacks; actionable unsupported PPU instructions after compatibility patching are zero. The raw-word ordered-value baseline SHA-256 is `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`.
+- The repaired exact-title lift contains **99 recovered computed jump-table dispatchers**, **694 case occurrences**, and **689 unique case targets**. Their ordered per-dispatcher baseline SHA-256 is `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`; PR #16 makes any structural drift a hard lift failure.
 - The Boot Fix 6 log contains an earlier unresolved indirect guest call to `0x00052DF4`. Exact disassembly maps this to case 4 of the inline relative jump table after `0x0005220C: bctr`; table base `0x00052210` plus signed offset `0x00000BE4` equals `0x00052DF4`. The repaired lift now generates this as an in-function case label instead of a global indirect dispatch.
 - `func_00130130` contains two frees of its `sp+0x84` parse buffer, but static control flow shows they are mutually exclusive: the long path that reaches the evidenced `0x00130418` failure branches around the earlier `0x001301A8` free. This is not an obvious double-free.
 - The long path has no direct caller-side write to `sp+0x84` after parsing. `func_0001C7D4` receives adjacent `sp+0x80`, but with the observed count of 1 its downstream writer touches only `sp+0x80`, not `sp+0x84`.
@@ -131,9 +132,12 @@ PR #15 merged to `main` as `2eb2a228ca8d0c9db8da4ff5481ff40c60b5358c` (**recover
 
 The fix is applied reproducibly by `tools/patch_ps3recomp_inline_jumptable.py` during the normal lift pipeline. On the exact reference ELF, the previously missed dispatcher at guest `0x0005220C` now decodes seven inline relative targets from table base `0x00052210`, including `0x00052DF4`. The fresh generated C++ contains both the corresponding switch case and `loc_00052DF4`; the former unresolved global-dispatch path for that switch is gone. PPU audit remains zero actionable unsupported instructions with the exact 3,936-entry raw-word baseline.
 
-A real Windows Boot Fix 8 run candidate was cross-linked from that exact repaired lift with all prior allocator/memalign/malloc/parse-pointer diagnostics retained:
-- EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
-- Ready-to-run ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
+PR #16 merged to `main` as `5fe95f2289e4e2b2e8ed7ad94c5116b7142927da` (**hard-gate recovered PPU jump tables**). Actions run `36235777677` passed **169/169 tests**, repository safety, Windows scaffold/native-link and Linux→Windows cross-build. The exact-title lift baseline is now pinned at 99 dispatchers / 694 case occurrences / 689 unique targets with digest `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`.
+
+A fresh user-ready Windows Boot Fix 8 package was assembled model-side from the exact repaired title lift with all allocator/memalign/malloc/parse-pointer diagnostics retained. Its launcher supplies `EBOOT.ELF`, sets the title VFS environment, recursively unblocks extracted files, bundles the only non-Windows runtime DLL imports (`libc++.dll` and `libunwind.dll`), and preserves `boot-console.txt` if the process exits.
+- EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
+- Ready-to-run ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
+- The previously recorded `b945f107...` / `4e16f475...` hashes are an earlier BF8 candidate and are superseded for the current user handoff.
 
 ## Immediate next action
 
@@ -143,5 +147,5 @@ First verify that `[ppu] unresolved indirect call -> 0x00052DF4` is gone. Then:
 - if the title advances, debug only the next evidenced blocker;
 - if the later `mem=0x00000140` allocator failure still occurs, use the retained `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, and `[COMET-PARSE-SLOT-CHANGE]` markers to identify the exact remaining corruption boundary.
 
-Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
-Boot Fix 8 ready-to-run ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
+Current user-ready Boot Fix 8 EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
+Current user-ready Boot Fix 8 ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
