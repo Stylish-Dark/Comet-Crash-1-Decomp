@@ -322,3 +322,14 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Built and integrity-checked a new ready-to-run package containing the exact reference `EBOOT.ELF`, full user-owned game tree, launcher and diagnostics. No `libc++.dll` or `libunwind.dll` dependency remains. Strict-dispatch ZIP SHA-256: `ee38762bfe0c4490bfcdc561b8d3aebf32adaae6997b0521a04994b2c0f6d344`.
 - Next evidence: run this strict-dispatch Boot Fix 8 package. The old `0x00052DF4` unresolved dispatch should be gone; any new unresolved title-text target now fails at the true source instead of mutating later behavior. If execution reaches the old allocator path, use the retained parse-pointer diagnostics.
 
+## 2026-09-26 — Native decompilation pivot and first recovered game function
+
+- Reframed the project from a static-recompilation runtime as end product to semantic source recovery/native C++ rewrite.
+- Reproduced exact-title analysis locally from the preserved NPEB00142 v1.00 input: 3,409 PPU functions, 171 imports/18 libraries, two SPU images.
+- Re-ran the pinned PPU lift only as a reversing intermediate (3,744 lifted functions after boundary recovery/tail wrappers), preserving zero actionable PPU holes and the known jump-table baselines.
+- Added a TOC/string reference recovery tool. Exact-title pass found 1,257 printable references across 271 functions.
+- Proved `0x000E5A34` belongs to `arenaGraphics.cpp` via seven surviving line markers at source lines 1034, 1081, 1100, 1115, 1130, 1143 and 1188.
+- Identified `0x000ECCA8` as a major gameplay asset-bootstrap candidate from its model/font/shader references.
+- Semantically decompiled `0x000D5D5C`: formats `%slevel%u.map`, obtains the current level index from root state offset `0x2D451C`, passes `game_state + 0x2D6438`, index, path and byte mode to `0x000D91B0`, and converts its return to bool.
+- Added the transitional native translation under `decomp/recovered/` and made `0x000D91B0` the next bounded recovery target.
+
