@@ -107,6 +107,26 @@ but it is now correctly exposed as **material** policy:
 - `decomp/include/comet/material_shader_policy.hpp`
 - `decomp/src/material_shader_policy.cpp`
 
+## Indexed draw-range fields in each 0x78-byte submesh
+
+Renderer `0x00100750` calls the indexed draw wrapper with
+`GL_TRIANGLES (4)` and `GL_UNSIGNED_SHORT (0x1403)`. The argument mapping is
+exactly compatible with `glDrawRangeElements(mode, start, end, count, type,
+indices)`:
+
+| submesh offset | native meaning | renderer use |
+| ---: | --- | --- |
+| `+0x00` | first index (u16 element offset) | multiplied by 2 and passed as the index-buffer byte offset |
+| `+0x04` | index count | passed as draw count |
+| `+0x08` | minimum referenced vertex | passed as draw-range start |
+| `+0x0C` | maximum referenced vertex | passed as draw-range end |
+| `+0x10` | material subobject | passed to the material binding helper |
+
+This cleanly recovers the first 0x10 bytes of the opaque submesh record as a
+normal native `SubmeshDrawRange`. The renderer also consumes fields at
+`+0x68/+0x6C/+0x70/+0x74` on an alternate path, but their exact semantics are
+not yet strong enough to name.
+
 ## Fields not promoted yet
 
 The loader also touches model `+0x28`, `+0x2C` and a string-like member
@@ -122,7 +142,7 @@ final semantic effect still needs to be traced.
 Continue through the loader after geometry collapse to recover:
 
 - how OBJ position/texcoord/normal source arrays are normalized;
-- exact submesh draw-range fields at `+0x00..+0x0C` and `+0x68..+0x74`;
+- exact semantics of the alternate submesh path at `+0x68..+0x74`;
 - the meaning of `+0x28/+0x2C`;
 - material texture construction from `map_Kd`, `map_Ks`, `bump` and
   `cube` MTL directives.
