@@ -74,8 +74,10 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - First success condition: no `[ppu] unresolved indirect call -> 0x00052DF4`.
 - Do not assume the later allocator failure remains. If execution advances, classify only the next observed blocker.
 - If `mem=0x00000140` still occurs, Boot Fix 8 retains every Boot Fix 7 allocator/memalign/malloc/parse-pointer diagnostic, so use the first parse corruption marker from the same run.
-- Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
-- Boot Fix 8 ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
+- PR #16 / Actions `36235777677` now hard-gates the complete repaired computed-switch structure: **99 dispatchers / 694 case occurrences / 689 unique targets**, digest `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`; **169/169** tests plus the full build matrix passed.
+- Current user-ready Boot Fix 8 EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
+- Current user-ready Boot Fix 8 ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
+- Package includes `EBOOT.ELF`, the complete user-owned game tree, `libc++.dll`, `libunwind.dll`, and `START_COMET_CRASH.cmd`; no separate Windows build/runtime installation is required for this run.
 
 ## Next
 
@@ -141,3 +143,5 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] **Repair the real-title PPU completeness gate** — PR #13 / Actions `36127073310`: exact 3,936 raw-word count + ordered-value digest baseline, zero actionable reference PPU holes; **164/164** tests and full matrix green.
 
 [x] **Repair missed inline relative PPU jump table** — PR #15 / Actions `36232221459`: exact Comet switch at `0x5220C` now lifts to seven in-function cases including `0x52DF4`; **168/168** tests and full Windows/Linux cross-build matrix green.
+
+[x] **Hard-gate recovered PPU jump tables** — PR #16 / Actions `36235777677`: exact-title computed-switch baseline pinned at **99/694/689** with ordered grouping digest; **169/169** tests and full Windows/Linux cross-build matrix green.
