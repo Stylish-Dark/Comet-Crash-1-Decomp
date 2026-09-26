@@ -59,15 +59,23 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 ## Current
 
-[ ] **Run Boot Fix 7 and identify the first pointer-corruption boundary**
-- Trace the allocation from `func_0012F590` through saved `r31/r23`, the caller's `r1`, and the caller's `sp+0x84` lifetime slot.
-- Hardened coverage now checks all **35** live-pointer call boundaries, including 13 branch/switch calls missed by the first Boot Fix 7 build.
-- Terminal guards now also check `r23` immediately before the parser output store and caller SP/`sp+0x84` immediately before the free, so straight-line corruption after the final call boundary is still classified.
-- First decisive marker wins: `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
-- Use the reported `site=0x...` / callee to patch the exact offender.
-- Static control-flow audit confirms the earlier `0x001301A8` free and evidenced `0x00130418` free are mutually exclusive paths; the long failing path skips the early free. No direct caller-side `sp+0x84` overwrite was found.
-- Terminal-guard Boot Fix 7 EXE SHA-256: `4f40b8d966cf99cb112379cdf49512af5043b2adfa162485f6e6bbbd03e69b69`.
-- Terminal-guard Boot Fix 7 ZIP SHA-256: `f7efd390fd80631b2925e5cc645dc1a72372b8281199b1b57ed6d222e69ddf86`.
+[x] **Trace the earlier unresolved `0x00052DF4` dispatch and repair the missed inline PPU jump table**
+- Re-read the Boot Fix 6 log chronologically and found `[ppu] unresolved indirect call -> 0x00052DF4` on guest thread 4 before the later `0x140` allocator failure.
+- Exact disassembly shows `0x00052DF4` is an interior case target inside `func_0005207C`, not a function entry. The switch at `0x0005220C: bctr` is followed by seven signed relative offsets; table base `0x00052210 + 0x00000BE4 = 0x00052DF4`.
+- The pinned lifter missed the table because its base is stack-spilled before dispatch, causing a bare `ps3_indirect_call(ctx); return;` and an unresolved global dispatch to the interior case address.
+- Added `tools/patch_ps3recomp_inline_jumptable.py` and wired it into the normal lift pipeline. The fallback recognizes structurally valid inline signed-relative tables only when normal base recovery fails.
+- Fresh exact-title lift now emits all seven cases including `case 0x00052DF4u: goto loc_00052DF4;`; zero actionable PPU holes and the exact 3,936 raw-word baseline remain intact.
+- PR #15 merged as `2eb2a228ca8d0c9db8da4ff5481ff40c60b5358c`; Actions run `36232221459` passed **168/168 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build.
+
+## Current
+
+[ ] **Run Boot Fix 8 and verify the repaired switch removes the upstream unresolved dispatch**
+- Run the real Windows package built from the repaired exact-title lift.
+- First success condition: no `[ppu] unresolved indirect call -> 0x00052DF4`.
+- Do not assume the later allocator failure remains. If execution advances, classify only the next observed blocker.
+- If `mem=0x00000140` still occurs, Boot Fix 8 retains every Boot Fix 7 allocator/memalign/malloc/parse-pointer diagnostic, so use the first parse corruption marker from the same run.
+- Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
+- Boot Fix 8 ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
 
 ## Next
 
@@ -131,3 +139,5 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] **Make offline source bundles self-contained** — PR #8 / Actions `36096273445`: full-history checkout, `git bundle --all`, smoke-clone verification on Windows and Linux; **144/144** unit tests green.
 [x] **Validate terminal Boot Fix 7 guards** — PR #12 / Actions `36124843328`: guard ordering locked before pointer sinks; **162/162** tests plus Windows/native-link/provenance and Linux→Windows cross-build green.
 [x] **Repair the real-title PPU completeness gate** — PR #13 / Actions `36127073310`: exact 3,936 raw-word count + ordered-value digest baseline, zero actionable reference PPU holes; **164/164** tests and full matrix green.
+
+[x] **Repair missed inline relative PPU jump table** — PR #15 / Actions `36232221459`: exact Comet switch at `0x5220C` now lifts to seven in-function cases including `0x52DF4`; **168/168** tests and full Windows/Linux cross-build matrix green.
