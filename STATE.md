@@ -72,7 +72,7 @@ Model geometry recovery now adds:
 
 A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Next: recover the remaining 0x78-byte submesh draw-range fields, then continue MTL texture handling and the unresolved model fields `+0x28/+0x2C`.
+Renderer-side indexed drawing now also proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. Next: recover the alternate submesh path at `+0x68..+0x74`, then continue MTL texture handling and unresolved model fields `+0x28/+0x2C`.
 
 ## Legacy static-recomp track
 
