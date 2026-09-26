@@ -13,6 +13,7 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from patch_ps3recomp_thread_exit import patch_file as patch_thread_exit_runtime
+from patch_ps3recomp_inline_jumptable import patch_file as patch_inline_jumptable_lifter
 from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
 from check_env import find_ninja
@@ -455,6 +456,8 @@ def cmd_analyze(a):
     local=probe_elf(a.elf); (a.output/'local_probe.json').write_text(json.dumps(local,indent=2)+'\n')
 def cmd_lift(a):
     require_toolkit(a.ps3recomp); validate_supported_elf_file(a.elf)
+    jt_changed=patch_inline_jumptable_lifter(a.ps3recomp/'tools'/'ppu_lifter.py')
+    print(f'Comet inline jump-table lifter patch: {"applied" if jt_changed else "already present"}')
     if a.clean:
         shutil.rmtree(a.output,ignore_errors=True); shutil.rmtree(a.spu_output,ignore_errors=True)
         if a.spu_registry.exists(): a.spu_registry.unlink()
