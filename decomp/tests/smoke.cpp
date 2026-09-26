@@ -1,7 +1,8 @@
 #include "comet/arena_render_targets.hpp"
 #include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
-#include "comet/model_shader_policy.hpp"
+#include "comet/material_shader_policy.hpp"
+#include "comet/model_geometry.hpp"
 
 #include <array>
 #include <cassert>
@@ -11,15 +12,29 @@ using namespace comet::decomp;
 
 int main() {
     {
-        ModelShaderInputs shader{};
+        const auto full = full_vertex_layout();
+        assert(full.stride == 0x20);
+        assert(full.attribute_count == 3);
+        assert(full.attributes[1].semantic == VertexSemantic::Normal);
+        assert(full.attributes[2].byte_offset == 0x18);
+
+        const auto compact = compact_vertex_layout();
+        assert(compact.stride == 0x14);
+        assert(compact.attribute_count == 2);
+        assert(compact.attributes[1].semantic == VertexSemantic::TexCoord0);
+        assert(compact.attributes[1].byte_offset == 0x0C);
+    }
+
+    {
+        MaterialShaderInputs shader{};
         shader.has_diffuse = true;
         shader.has_specular = true;
         shader.has_bump = true;
         shader.original_options = 0x244;
 
-        const auto selected = choose_default_model_shader(shader);
-        assert(selected == DefaultModelShader::LitBumpSpecGlossGlowNoTeam);
-        assert(default_model_shader_name(selected) ==
+        const auto selected = choose_default_material_shader(shader);
+        assert(selected == DefaultMaterialShader::LitBumpSpecGlossGlowNoTeam);
+        assert(default_material_shader_name(selected) ==
                "lit_bump_spec_gloss_glow_shader_no_team");
     }
 
