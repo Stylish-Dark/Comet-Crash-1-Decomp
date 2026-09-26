@@ -72,7 +72,7 @@ Model geometry recovery now adds:
 
 A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. Next: recover the alternate submesh path at `+0x68..+0x74`, MTL scalar/color fields, and unresolved model fields `+0x28/+0x2C`.
+Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Next: recover the alternate submesh path at `+0x68..+0x74` and unresolved root-model fields `+0x28/+0x2C`.
 
 ## Legacy static-recomp track
 
@@ -92,6 +92,7 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `decomp/include/comet/model_geometry.hpp`
 - `decomp/include/comet/material_shader_policy.hpp`
 - `decomp/include/comet/material_textures.hpp`
+- `decomp/include/comet/material_properties.hpp`
 - `docs/decomp/model-object.md`
 - `WORK_QUEUE.md`
 - `PROJECT_PLAN.md`
