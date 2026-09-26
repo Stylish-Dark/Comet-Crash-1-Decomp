@@ -469,7 +469,7 @@ def cmd_lift(a):
         for k,v in st.items(): ppu_patch[k]+=v
     print(f'Comet Crash PPU compatibility patch: {ppu_patch}')
     ppu_report=audit_ppu_path(a.output)
-    print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}, raw-word={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}')
+    print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}, raw-word={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}, jump-tables={ppu_report["jump_table_dispatchers"]}/{ppu_report["jump_table_case_occurrences"]} sha256={ppu_report["jump_table_sha256"]}')
     if ppu_report['unsupported_total']:
         sample=', '.join(str(x['instruction']) for x in ppu_report['unsupported'][:5])
         raise RuntimeError(f'PPU lift still contains {ppu_report["unsupported_total"]} unsupported TODO instruction(s): {sample}')
@@ -480,6 +480,17 @@ def cmd_lift(a):
         raise RuntimeError('PPU raw-word TODO baseline mismatch: '
                            f'got count={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}, '
                            f'expected count={expected_raw_count} sha256={expected_raw_sha}')
+    expected_jt_dispatchers=int(known.get('jump_table_dispatchers',-1))
+    expected_jt_cases=int(known.get('jump_table_case_occurrences',-1))
+    expected_jt_unique=int(known.get('jump_table_unique_targets',-1))
+    expected_jt_sha=str(known.get('jump_table_sha256','')).lower()
+    got_jt=(ppu_report['jump_table_dispatchers'], ppu_report['jump_table_case_occurrences'],
+            ppu_report['jump_table_unique_targets'], ppu_report['jump_table_sha256'].lower())
+    expected_jt=(expected_jt_dispatchers, expected_jt_cases, expected_jt_unique, expected_jt_sha)
+    if got_jt != expected_jt:
+        raise RuntimeError('PPU jump-table baseline mismatch: '
+                           f'got dispatchers={got_jt[0]} cases={got_jt[1]} unique={got_jt[2]} sha256={got_jt[3]}, '
+                           f'expected dispatchers={expected_jt[0]} cases={expected_jt[1]} unique={expected_jt[2]} sha256={expected_jt[3]}')
     images=list(a.spu_images.glob('*.elf'))
     if not images: raise FileNotFoundError(f'no extracted SPU ELFs in {a.spu_images}; run analyze first')
     a.spu_output.mkdir(parents=True,exist_ok=True); a.spu_registry.parent.mkdir(parents=True,exist_ok=True)

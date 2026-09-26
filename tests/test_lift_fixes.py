@@ -79,6 +79,21 @@ class PpuCompletenessAuditTests(unittest.TestCase):
             self.assertEqual(r['raw_word_total'],2)
             self.assertEqual(r['raw_word_sha256'],audit.raw_word_digest(['00000140','deadbeef']))
 
+    def test_jump_table_switches_are_audited_with_block_boundaries(self):
+        import audit_ppu_lift as audit
+        src=(
+            'switch ((uint32_t)ctx->ctr) { case 0x00001000u: goto loc_00001000;'
+            'case 0x00001020u: goto loc_00001020; default: ps3_indirect_call(ctx); return; } return;\n'
+            'switch ((uint32_t)ctx->ctr) { case 0x00002000u: goto loc_00002000;'
+            'default: ps3_indirect_call(ctx); return; } return;\n'
+        )
+        blocks=audit.jump_table_blocks(src)
+        self.assertEqual(blocks,[['00001000','00001020'],['00002000']])
+        self.assertEqual(audit.jump_table_digest(blocks),
+                         audit.jump_table_digest([['00001000','00001020'],['00002000']]))
+        self.assertNotEqual(audit.jump_table_digest(blocks),
+                            audit.jump_table_digest([['00001000'],['00001020','00002000']]))
+
     def test_real_instruction_todo_still_fails_beside_raw_words(self):
         import audit_ppu_lift as audit
         import tempfile
