@@ -372,3 +372,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added compile-time slot/offset consistency validation and native smoke coverage.
 - Current boundary is `0x00105308..0x0010B538`, whose early code stores the option word into the model object and enters a large text/model parser. Recovering that object layout is the next step.
 
+## 2026-09-26 — Model default-shader helper fully recovered
+
+- Followed the model initializer's post-parse call into compact helper `0x00105088..0x00105307`.
+- Recovered four model-object material fields from the exact shader branch matrix: `+0x38` diffuse/base texture presence, `+0x3C` specular texture presence, `+0x40` bump/normal texture presence, and `+0x48` preassigned shader.
+- Recovered all surviving shader names and the exact option-mask precedence, including `0x0C`, `0x244`, `0x44`, `0x4`, and `0x40` branches.
+- Added native `choose_default_model_shader()` and enum/string mapping rather than retaining the original branch-heavy PS3 helper.
+- Deliberately kept option bits numeric: their shader effects are exact, but source-level enum names such as team/gloss/glow are not yet independently proven.
+- Initial `0x00105308` facts are now documented: options stored at `+0x00`, source-path string begins at `+0x34`, second floating argument influences `+0x2C`, and geometry/model fields are populated around `+0x04..+0x1C`.
+- Next pass stays inside the same model initializer to type those geometry/count/pointer fields and follow the OBJ parser.
+
