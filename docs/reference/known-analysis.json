@@ -71,6 +71,10 @@
   "ppu_lift": {
     "raw_word_todo_count": 3936,
     "raw_word_todo_sha256": "9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734",
-    "note": "Pinned ps3recomp emits these data-like .word TODO fallbacks in the reference lift; count and ordered-value digest are hard-gated while real instruction TODOs remain forbidden."
+    "note": "Pinned ps3recomp emits these data-like .word TODO fallbacks in the reference lift; count and ordered-value digest are hard-gated while real instruction TODOs remain forbidden. Recovered computed jump-table switches are also hard-gated by dispatcher/case counts and ordered per-dispatcher case digest.",
+    "jump_table_dispatchers": 99,
+    "jump_table_case_occurrences": 694,
+    "jump_table_unique_targets": 689,
+    "jump_table_sha256": "ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7"
   }
 }
