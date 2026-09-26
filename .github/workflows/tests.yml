@@ -50,6 +50,7 @@ jobs:
           python tools/patch_ps3recomp_resc.py external/ps3recomp
           python tools/patch_ps3recomp_gcm.py external/ps3recomp
           python tools/patch_ps3recomp_thread_exit.py external/ps3recomp
+          python tools/patch_ps3recomp_unresolved.py external/ps3recomp
 
       - name: Stage synthetic generated-code fixtures
         shell: pwsh
@@ -187,6 +188,7 @@ jobs:
           python tools/patch_ps3recomp_resc.py external/ps3recomp
           python tools/patch_ps3recomp_gcm.py external/ps3recomp
           python tools/patch_ps3recomp_thread_exit.py external/ps3recomp
+          python tools/patch_ps3recomp_unresolved.py external/ps3recomp
 
       - name: Stage synthetic generated-code fixtures
         run: python tools/make_ci_scaffold.py --ps3recomp external/ps3recomp
