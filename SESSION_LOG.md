@@ -417,3 +417,14 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native MTL directive classification and material texture-slot metadata, compiled and smoke-tested with the native recovery target.
 - Next model work is the alternate submesh range at `+0x68..+0x74`, remaining MTL scalar/color directives, and root-model `+0x28/+0x2C`.
 
+## 2026-09-27 — MTL Ka/Kd/Ks/Ns properties recovered
+
+- Recovered the four scalar/color material directives from exact PPU stores.
+- `Ka` writes ambient RGB to material `+0x00/+0x04/+0x08`.
+- `Kd` writes diffuse RGB to `+0x10/+0x14/+0x18`.
+- `Ks` writes specular RGB to `+0x20/+0x24/+0x28`.
+- `Ns` parses one float, multiplies it by the exact constant `0.12800000607967377`, and stores the result at material `+0x30`.
+- Added native `MaterialProperties`, directive classification and exact `scale_mtl_specular_exponent()`.
+- Gaps `+0x0C/+0x1C/+0x2C/+0x34` are deliberately left unnamed rather than guessed as alpha/padding.
+- Combined with the texture pass, the material object is now semantically understood from `+0x00` through shader field `+0x48` except those four gaps.
+
