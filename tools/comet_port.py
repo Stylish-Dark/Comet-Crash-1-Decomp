@@ -7,6 +7,7 @@ from decrypt_comet_self import decrypt_self
 from patch_ppu_lift import patch_file as patch_ppu_file
 from audit_spu_lift import audit_file as audit_spu_file
 from audit_ppu_lift import audit_path as audit_ppu_path
+from audit_ppu_jump_tables import audit as audit_ppu_jump_tables
 from patch_ps3recomp_host import patch_file as patch_host_backend
 from patch_ps3recomp_spurs import patch_file as patch_spurs_runtime
 from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
@@ -468,6 +469,11 @@ def cmd_lift(a):
         st=patch_ppu_file(cpp)
         for k,v in st.items(): ppu_patch[k]+=v
     print(f'Comet Crash PPU compatibility patch: {ppu_patch}')
+    jt_struct=audit_ppu_jump_tables(a.elf,a.output)
+    print(f'PPU structural jump-table audit: inline={jt_struct["structural_inline_tables"]}, recovered={jt_struct["recovered_inline_tables"]}, missing={jt_struct["missing_inline_tables"]}, generated-switches={jt_struct["generated_ctr_switches"]}')
+    if jt_struct['missing_inline_tables']:
+        sample=', '.join(f'0x{x["bctr"]:08X}' for x in jt_struct['missing'][:5])
+        raise RuntimeError(f'PPU lift missed {jt_struct["missing_inline_tables"]} structural inline jump table(s): {sample}')
     ppu_report=audit_ppu_path(a.output)
     print(f'PPU audit: files={ppu_report["source_files"]}, unsupported={ppu_report["unsupported_total"]}, raw-word={ppu_report["raw_word_total"]} sha256={ppu_report["raw_word_sha256"]}, jump-tables={ppu_report["jump_table_dispatchers"]}/{ppu_report["jump_table_case_occurrences"]} sha256={ppu_report["jump_table_sha256"]}')
     if ppu_report['unsupported_total']:
