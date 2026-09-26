@@ -20,6 +20,7 @@ struct LegacyModelGeometryOffsets {
     static constexpr std::uint32_t indices = 0x1C;
     static constexpr std::uint32_t full_vertex_buffer = 0x20;
     static constexpr std::uint32_t compact_vertex_buffer = 0x24;
+    static constexpr std::uint32_t signed_bounding_radius = 0x2C;
 };
 
 inline constexpr std::size_t kLegacyFullVertexStride = 0x20;

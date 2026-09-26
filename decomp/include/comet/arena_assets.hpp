@@ -15,10 +15,9 @@ struct ArenaModelAssetSpec {
     std::uint32_t original_slot_index;
     std::uint32_t original_loader_options;
 
-    // Exact floating arguments passed to PPU 0x00105308. Their original source
-    // names/semantics are not yet proven, so do not rename them to "scale" etc.
-    float original_param1;
-    float original_param2;
+    // Exact semantics recovered from PPU 0x00105308.
+    float geometry_scale;
+    float signed_radius_scale;
 };
 
 inline constexpr std::uint32_t kArenaModelTableBaseOffset = 0x2D2DC0;

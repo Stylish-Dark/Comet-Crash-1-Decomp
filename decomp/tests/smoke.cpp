@@ -5,6 +5,7 @@
 #include "comet/material_textures.hpp"
 #include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
+#include "comet/model_load_parameters.hpp"
 
 #include <array>
 #include <cassert>
@@ -13,6 +14,25 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        const ModelPosition raw{1.0f, 2.0f, -3.0f};
+        const auto scaled = apply_geometry_scale(raw, 2.0f);
+        assert(scaled.x == 2.0f);
+        assert(scaled.y == 4.0f);
+        assert(scaled.z == -6.0f);
+
+        const std::array<ModelPosition, 2> positions{{
+            {3.0f, 4.0f, 0.0f},
+            {0.0f, 0.0f, 2.0f},
+        }};
+        const float positive =
+            compute_signed_bounding_radius(positions, 0.5f);
+        const float negative =
+            compute_signed_bounding_radius(positions, -0.5f);
+        assert(positive > 2.49f && positive < 2.51f);
+        assert(negative < -2.49f && negative > -2.51f);
+    }
+
     {
         const auto* kd = classify_mtl_property_directive("Kd");
         assert(kd != nullptr);

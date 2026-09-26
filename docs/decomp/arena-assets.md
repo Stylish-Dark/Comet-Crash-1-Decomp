@@ -43,9 +43,12 @@ then enters a large model/path initialization/parser path. It is therefore safe
 to treat `0x00105308` as the model-asset initializer boundary for the native
 rewrite, while retaining its exact original source name as unknown.
 
-The two floating parameters are preserved verbatim in the recovered manifest.
-They are **not** called scale/size/etc. yet because their exact source-level
-meaning is not proven.
+The two floating parameters are now semantically recovered:
+- `f1` is a geometry scale applied to every OBJ vertex component;
+- `f2` is a signed bounding-radius scale. The loader stores
+  `sign(f2) * max(length(scaled_vertex) * abs(f2))` at model `+0x2C`.
+
+See `docs/decomp/model-load-parameters.md` for the exact PPU data flow.
 
 ## Model object table
 
@@ -85,11 +88,11 @@ It records:
 - original root-state offset;
 - original 0x90-table slot;
 - exact integer option word passed to `0x00105308`;
-- the exact two floating arguments.
+- geometry scale and signed bounding-radius scale.
 
 Representative entries:
 
-| slot | root offset | path | options | p1 | p2 |
+| slot | root offset | path | options | geometry scale | signed radius scale |
 | ---: | ---: | --- | ---: | ---: | ---: |
 | 0 | `0x2D2DC0` | `playerShip.obj` | `0x003` | 1.30 | 0.85 |
 | 2 | `0x2D2EE0` | `scout02.obj` | `0x063` | 1.12 | 0.88 |
@@ -117,9 +120,9 @@ reproducing 37 hand-written PS3-era call sequences.
 ## Next recovery boundary
 
 The next useful semantic cut is the implementation at `0x00105308` itself.
-Recovering its 0x90-byte object layout will tell us what the option bits and
-floating arguments actually mean and will convert the manifest from
-"faithfully preserved call data" into a typed native model resource API.
+The floating arguments are now recovered. Remaining work inside the model
+initializer is focused on the alternate submesh path, unresolved model fields,
+and remaining material/parser semantics.
 
 The font/shader setup in the first half of `0x000ECCA8` remains a parallel
 target after that boundary is understood.
