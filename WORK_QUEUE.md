@@ -77,8 +77,9 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 - If `mem=0x00000140` still occurs, Boot Fix 8 retains every Boot Fix 7 allocator/memalign/malloc/parse-pointer diagnostic, so use the first parse corruption marker from the same run.
 - PR #16 / Actions `36235777677` hard-gates the complete repaired computed-switch structure: **99 dispatchers / 694 case occurrences / 689 unique targets**, digest `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`.
 - PR #17 merged as `77d0586efb2fce523c598ff03cd3b21bfeaf0099`; Actions `36236728404` passed **169/169** tests and the full Windows/Linux build matrix. LLVM-MinGW builds are now statically linked against the LLVM C++ runtime and CI rejects `libc++.dll` / `libunwind.dll` PE imports.
-- Current user-ready Boot Fix 8 static-runtime EXE SHA-256: `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`.
-- Current user-ready Boot Fix 8 static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
+- PR #19 merged as `24964516a338aac85df401d0a76135a911bdcf14`; Actions `36237573981` passed **175/175** tests plus repository safety and the full Windows/Linux build matrix. Any unresolved aligned guest-text target now fails immediately with diagnostics instead of silently returning with corrupted guest stack/register state.
+- Current user-ready Boot Fix 8 strict-dispatch EXE SHA-256: `4b519db0656e0e1c5fb64739c4e75d7ca2987cce6845321e0597246148c2ee39`.
+- Current user-ready Boot Fix 8 strict-dispatch ZIP SHA-256: `ee38762bfe0c4490bfcdc561b8d3aebf32adaae6997b0521a04994b2c0f6d344`.
 - Package includes `EBOOT.ELF`, the complete user-owned game tree, and `START_COMET_CRASH.cmd`; no separate LLVM runtime DLLs or Windows build installation are required for this run.
 
 ## Next
@@ -150,3 +151,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 
 [x] **Static-link the LLVM-MinGW runtime** — PR #17 / Actions `36236728404`: cross-built EXE no longer imports `libc++.dll` or `libunwind.dll`; PE-import regression gate and full **169/169** test/build matrix green.
 [x] **Bind inline PPU tables back to source ELF structure** — PR #18 / Actions `36236916563`: independent structural audit recognizes 73 signed-relative inline tables in the exact Boot Fix 8 ELF/lift and confirms all 73 are recovered; zero missing; **171/171** tests and full build matrix green.
+[x] **Fail fast on unresolved guest-text dispatch** — PR #19 / Actions `36237573981`: unresolved aligned title-text targets can no longer silently return with a stale guest stack; **175/175** tests and full Windows/Linux build matrix green.
