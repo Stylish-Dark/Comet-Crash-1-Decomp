@@ -16,7 +16,7 @@ The exact NPEB00142 v1.00 executable retains seven source-line strings. All seve
 | `0x000E60D0` | `arenaGraphics.cpp:1143` |
 | `0x000E6288` | `arenaGraphics.cpp:1188` |
 
-This establishes `0x000E5A34..0x000E65D4` as a large function originating in `arenaGraphics.cpp`, covering at least source lines 1034-1188. The next decompilation pass should reconstruct this function around those seven assertion/debug anchors and identify its direct callees before assigning a semantic function name.
+This establishes `0x000E5A34..0x000E65D4` as a large function originating in `arenaGraphics.cpp`, covering at least source lines 1034-1188. That pass is now segmented as render-target/framebuffer setup; see `docs/decomp/arena-render-targets.md`. The line-1188 string is loaded at `0x000E6288` and carried to the common framebuffer-check call at `0x000E6524`.
 
 ## Level-map path builder
 
