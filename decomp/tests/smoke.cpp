@@ -21,6 +21,12 @@ int main() {
         assert(scaled.y == 4.0f);
         assert(scaled.z == -6.0f);
 
+        const auto shifted = apply_optional_vertex_y_offset(
+            scaled, kLegacyModelOptionApplyVertexYOffset, 1.25f);
+        assert(shifted.x == 2.0f);
+        assert(shifted.y == 5.25f);
+        assert(shifted.z == -6.0f);
+
         const std::array<ModelPosition, 2> positions{{
             {3.0f, 4.0f, 0.0f},
             {0.0f, 0.0f, 2.0f},
