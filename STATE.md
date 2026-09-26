@@ -55,7 +55,7 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot, and final pre-free state. The hardened watcher covers all **35** live-pointer call boundaries, including 13 branch/switch calls that can loop back into the same final free path. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
 - Closed the remaining straight-line diagnostic gaps with terminal pre-store/pre-free guards and validated their ordering before the actual pointer sinks.
 - Repaired the clean real-title PPU completeness gate: 3,936 deterministic `.word` fallbacks are tracked separately from actionable unsupported instructions and pinned by ordered-value SHA-256 `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`. Any count/digest drift or real mnemonic TODO remains a hard failure.
-- Latest authoritative validation (GitHub Actions run `36236916563`, PR #18): **171/171 tests passed**, repository safety passed, Windows scaffold/native-link passed, and Linux→Windows cross-build passed. The PR #17 PE-import gate also remains active, proving the MinGW build does not depend on `libc++.dll` or `libunwind.dll`.
+- Latest authoritative validation (GitHub Actions run `36237573981`, PR #19): **175/175 tests passed**, repository safety passed, Windows scaffold/native-link passed, and Linux→Windows cross-build passed. The PR #17 PE-import gate remains active, so the MinGW build does not depend on `libc++.dll` or `libunwind.dll`.
 
 ## Current working state
 
@@ -85,6 +85,7 @@ The native run writes `logs\boot-YYYYMMDD-HHMMSS.txt` plus `logs\boot-YYYYMMDD-H
 - Full PPU lift emitted 3,744 functions after boundary recovery/tail wrappers.
 - Exact reference PPU lift contains 3,936 deterministic data-like `.word` TODO fallbacks; actionable unsupported PPU instructions after compatibility patching are zero. The raw-word ordered-value baseline SHA-256 is `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`.
 - The repaired exact-title lift contains **99 recovered computed jump-table dispatchers**, **694 case occurrences**, and **689 unique case targets**. Their ordered per-dispatcher baseline SHA-256 is `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`; PR #16 makes any structural drift a hard lift failure.
+- Any unresolved aligned title-text target is now a hard runtime failure after normal dispatcher recovery. This prevents unresolved interior basic-block targets from returning out of a lifted function with an un-restored guest stack/callee-saved state; the old `0x00052DF4` failure is the concrete motivating case.
 - The Boot Fix 6 log contains an earlier unresolved indirect guest call to `0x00052DF4`. Exact disassembly maps this to case 4 of the inline relative jump table after `0x0005220C: bctr`; table base `0x00052210` plus signed offset `0x00000BE4` equals `0x00052DF4`. The repaired lift now generates this as an in-function case label instead of a global indirect dispatch.
 - Static pre-fix/post-fix lift comparison gives a strong causal mechanism for the later allocator corruption: unpatched `func_0005207C` allocates a `0x210`-byte guest stack frame, but the missed switch emitted `ps3_indirect_call(ctx); return;` at `0x0005220C`. When `0x00052DF4` was unresolved, that returned from the recompiled function before its epilogue, leaving guest `r1` `0x210` bytes low and callee-saved state unrestored. The unresolved path returns through `func_00054400` to `func_0002D868` at `0x0002DA58`, which also appears in the later allocator-abort backtrace; `func_0002D868` then uses stack-relative slots including `sp+0x84`. This is the leading explanation for the later `0x140` pointer, pending Boot Fix 8 runtime confirmation.
 - `func_00130130` contains two frees of its `sp+0x84` parse buffer, but static control flow shows they are mutually exclusive: the long path that reaches the evidenced `0x00130418` failure branches around the earlier `0x001301A8` free. This is not an obvious double-free.
@@ -137,12 +138,14 @@ PR #16 merged to `main` as `5fe95f2289e4e2b2e8ed7ad94c5116b7142927da` (**hard-ga
 
 PR #17 merged to `main` as `77d0586efb2fce523c598ff03cd3b21bfeaf0099` (**self-contain LLVM-MinGW runtime**). Actions run `36236728404` passed **169/169 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build. The cross-build now statically links the LLVM C++ runtime and CI rejects any PE that imports `libc++.dll` or `libunwind.dll`.
 
-A fresh user-ready Windows Boot Fix 8 static-runtime package was assembled model-side from the exact repaired title lift with all allocator/memalign/malloc/parse-pointer diagnostics retained. Its launcher supplies `EBOOT.ELF`, sets the title VFS environment, recursively unblocks extracted files, and preserves `boot-console.txt` if the process exits. The EXE's remaining DLL imports are Windows/UCRT/D3D/XInput system dependencies only.
-- Static-runtime EXE SHA-256: `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`.
-- Ready-to-run static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
-- The older dynamic-runtime Boot Fix 8 package is superseded for the current user handoff.
+A fresh user-ready Windows **Boot Fix 8 — strict dispatch** package was assembled model-side from the exact repaired title lift with all allocator/memalign/malloc/parse-pointer diagnostics retained plus the PR #19 fail-fast guard. Its launcher supplies `EBOOT.ELF`, sets the title VFS environment, recursively unblocks extracted files, and preserves `boot-console.txt` if the process exits. The EXE's remaining DLL imports are Windows/UCRT/D3D/XInput system dependencies only.
+- Strict-dispatch EXE SHA-256: `4b519db0656e0e1c5fb64739c4e75d7ca2987cce6845321e0597246148c2ee39`.
+- Ready-to-run strict-dispatch ZIP SHA-256: `ee38762bfe0c4490bfcdc561b8d3aebf32adaae6997b0521a04994b2c0f6d344`.
+- The earlier Boot Fix 8 static-runtime package is superseded for the current user handoff.
 
 PR #18 merged to `main` as `ded76e3d66113cc9fbdfe8a6919e7dc44c36e3ab` (**bind inline PPU tables to ELF structure**). Pull-request Actions run `36236916563` passed **171/171 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build. The new audit independently recognizes the narrow ELF instruction shape used by signed-relative `bctr` tables and verifies each recovered target set exists in generated C++ before the lift is accepted. On the exact Boot Fix 8 lift it recognizes **73 structural inline tables, recovers all 73, and reports zero missing**, including the repaired `0x0005220C` dispatcher. This complements the PR #16 generated-switch digest by tying recovered switches back to source-ELF control flow.
+
+PR #19 merged to `main` as `24964516a338aac85df401d0a76135a911bdcf14` (**fail fast on unresolved guest-text dispatch**). Actions run `36237573981` passed **175/175 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build. After normal indirect-call repair paths are exhausted, an unresolved aligned target inside title text now terminates immediately with guest-stack diagnostics instead of returning from the lifted function with poisoned guest state. This specifically prevents another missed interior switch target from silently reproducing the pre-fix `0x00052DF4` stack-corruption pattern.
 
 ## Immediate next action
 
@@ -152,5 +155,5 @@ First verify that `[ppu] unresolved indirect call -> 0x00052DF4` is gone. Then:
 - if the title advances, debug only the next evidenced blocker;
 - if the later `mem=0x00000140` allocator failure still occurs, use the retained `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, and `[COMET-PARSE-SLOT-CHANGE]` markers to identify the exact remaining corruption boundary.
 
-Current user-ready Boot Fix 8 static-runtime EXE SHA-256: `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`.
-Current user-ready Boot Fix 8 static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
+Current user-ready Boot Fix 8 strict-dispatch EXE SHA-256: `4b519db0656e0e1c5fb64739c4e75d7ca2987cce6845321e0597246148c2ee39`.
+Current user-ready Boot Fix 8 strict-dispatch ZIP SHA-256: `ee38762bfe0c4490bfcdc561b8d3aebf32adaae6997b0521a04994b2c0f6d344`.
