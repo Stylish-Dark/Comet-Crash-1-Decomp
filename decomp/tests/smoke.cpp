@@ -18,6 +18,13 @@ int main() {
         assert(full.attributes[1].semantic == VertexSemantic::Normal);
         assert(full.attributes[2].byte_offset == 0x18);
 
+        SubmeshDrawRange range{};
+        range.first_index = 7;
+        range.index_count = 12;
+        range.min_vertex = 3;
+        range.max_vertex = 19;
+        assert(range.index_byte_offset() == 14);
+
         const auto compact = compact_vertex_layout();
         assert(compact.stride == 0x14);
         assert(compact.attribute_count == 2);
