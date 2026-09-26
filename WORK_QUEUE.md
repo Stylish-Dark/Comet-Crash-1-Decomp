@@ -35,7 +35,8 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Recover the 0x0C-byte OBJ face-reference staging stride and 0x78-byte submesh stride.
 - [x] Correct the shader-helper boundary: `0x00105088` operates on the material subobject at `submesh+0x10`, not the root model.
 - [x] Recover material diffuse/specular/bump/preassigned-shader fields and the default-shader option-mask decision tree.
-- Recover the remaining submesh draw-range fields at `+0x00..+0x0C` and `+0x68..+0x74`.
+- [x] Recover indexed submesh draw range `+0x00..+0x0C`: first index, index count, minimum vertex, maximum vertex.
+- Recover the alternate submesh fields at `+0x68..+0x74`.
 - Trace model fields `+0x28/+0x2C` and both floating loader arguments to proven semantics.
 - Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`.
 - Success: replace the opaque 0x78-byte submesh/material record and remaining model provenance fields with typed native structures.
