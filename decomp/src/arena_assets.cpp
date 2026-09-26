@@ -6,7 +6,7 @@ namespace comet::decomp {
 namespace {
 
 constexpr std::array<ArenaModelAssetSpec, 37> kArenaModels{{
-    // path, root offset, slot, options, param1, param2
+    // path, root offset, slot, options, geometry scale, signed radius scale
     {"models/care/playerShip.obj",                         0x2D2DC0,  0, 0x003, 1.30f,  0.85f},
     {"models/care/playerShipDonut.obj",                    0x2D2E50,  1, 0x003, 1.30f,  0.00f},
     {"models/care/resourceGeode/resourceGeode.obj",        0x2D4200, 36, 0x245, 3.3333001f, 1.00f},
