@@ -1,4 +1,5 @@
 #include "comet/arena_render_targets.hpp"
+#include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
 
 #include <array>
@@ -8,6 +9,14 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        const auto assets = arena_model_asset_manifest();
+        assert(assets.size() == 37);
+        assert(assets.front().original_root_offset == 0x2D2DC0);
+        assert(assets.front().original_slot_index == 0);
+        assert(assets.back().original_root_offset == 0x2D4170);
+    }
+
     {
         const auto plan =
             recover_arena_render_target_plan(720, 480, 480, 256, 2);

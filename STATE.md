@@ -38,7 +38,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current target
 
-**Arena render-target setup at `0x000E5A34..0x000E65D4` is now segmented and represented as native renderer metadata. Current work advances to the arena asset/bootstrap cluster at `0x000ECCA8`.**
+**Arena render-target setup and the arena model bootstrap are now represented as native data. Current work advances into the model-object initializer at `0x00105308` to type the recovered 0x90-byte model slots.**
 
 Recovered from `arenaGraphics.cpp`:
 
@@ -49,7 +49,15 @@ Recovered from `arenaGraphics.cpp`:
 - the renderer mode's exact 2x/1x scaling policy is recovered while PSGL-specific parameter `0x6022` remains provenance-only;
 - a standalone CMake/CTest gate now compiles the recovered native C++ tree instead of allowing it to exist as unchecked pseudocode.
 
-Next: decompile `0x000ECCA8` to recover the arena asset registry/bootstrap and identify the model/font/shader manager boundaries that feed the renderer.
+Asset/bootstrap recovery now adds:
+
+- `0x000ECCA8..0x000EE87C` contains exactly 37 direct model-initializer calls to `0x00105308`;
+- every model destination lies on a strict 0x90-byte table beginning at root offset `0x2D2DC0`;
+- touched slots are 0..33, 35, 36 and 39; slots 34, 37 and 38 remain intentionally unaccounted for;
+- exact path, slot/root offset, option word and both floating arguments are preserved in a native 37-entry `ArenaModelAssetSpec` manifest;
+- fonts, font shaders, `shaders.bin`, particle textures and `gui_quad_shader` are pinned as the non-model portions of the same bootstrap.
+
+Next: recover enough of `0x00105308..0x0010B538` to identify the 0x90-byte model object's fields, the meaning of its option bits, and the semantic role of the two preserved float arguments.
 
 ## Legacy static-recomp track
 
