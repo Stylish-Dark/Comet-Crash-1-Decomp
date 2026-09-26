@@ -30,8 +30,9 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - Result: 37 model calls collapsed into a typed native manifest; exact 0x90 object-table stride, paths, slot offsets, option words and float arguments are preserved.
 
 [ ] **Recover model object initializer `0x00105308`**
-- Map the 0x90-byte destination object fields used before/after OBJ parsing.
-- Identify option-bit tests and connect them to manifest option words.
+- Map the remaining 0x90-byte destination object fields used before/after OBJ parsing, especially +0x04..+0x1C.
+- [x] Identify default-shader option-bit tests and connect them to manifest option words.
+- [x] Recover model material fields +0x38/+0x3C/+0x40 and shader field +0x48.
 - Trace the two float arguments until their field/geometry effects are proven.
 - Separate generic model-resource parsing from arena-specific bootstrap policy.
 - Success: replace provenance-only option/float fields with typed native model-load semantics.
