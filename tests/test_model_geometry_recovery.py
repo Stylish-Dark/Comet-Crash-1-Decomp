@@ -36,6 +36,18 @@ class ModelGeometryRecoveryTests(unittest.TestCase):
         self.assertIn("VertexSemantic::TexCoord0, 0x18, 2", text)
         self.assertIn("VertexSemantic::TexCoord0, 0x0C, 2", text)
 
+    def test_submesh_draw_range_fields_are_recovered(self):
+        text = HEADER.read_text(encoding="utf-8")
+        for token in (
+            "first_index = 0x00",
+            "index_count = 0x04",
+            "min_vertex = 0x08",
+            "max_vertex = 0x0C",
+            "material = 0x10",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("first_index *", text)
+
     def test_material_subobject_correction_is_documented(self):
         text = DOC.read_text(encoding="utf-8")
         self.assertIn("does **not** receive the root model object", text)
