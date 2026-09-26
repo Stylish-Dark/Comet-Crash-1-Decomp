@@ -72,12 +72,14 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [ ] **Run Boot Fix 8 and verify the repaired switch removes the upstream unresolved dispatch**
 - Run the real Windows package built from the repaired exact-title lift.
 - First success condition: no `[ppu] unresolved indirect call -> 0x00052DF4`.
+- Static pre-fix/post-fix comparison now gives a strong causal mechanism for the old downstream allocator failure: the missed dispatch returned from `func_0005207C` with its `0x210`-byte guest stack frame still active, leaving guest `r1` `0x210` bytes low and callee-saved state unrestored. The same path returns to `func_0002D868` at `0x0002DA58`, which appears in the later allocator-abort chain before stack-relative `sp+0x84` use.
 - Do not assume the later allocator failure remains. If execution advances, classify only the next observed blocker.
 - If `mem=0x00000140` still occurs, Boot Fix 8 retains every Boot Fix 7 allocator/memalign/malloc/parse-pointer diagnostic, so use the first parse corruption marker from the same run.
-- PR #16 / Actions `36235777677` now hard-gates the complete repaired computed-switch structure: **99 dispatchers / 694 case occurrences / 689 unique targets**, digest `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`; **169/169** tests plus the full build matrix passed.
-- Current user-ready Boot Fix 8 EXE SHA-256: `7949faaea3dc33be707f328b512f420932bbcef491ede856db30d824e53041de`.
-- Current user-ready Boot Fix 8 ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
-- Package includes `EBOOT.ELF`, the complete user-owned game tree, `libc++.dll`, `libunwind.dll`, and `START_COMET_CRASH.cmd`; no separate Windows build/runtime installation is required for this run.
+- PR #16 / Actions `36235777677` hard-gates the complete repaired computed-switch structure: **99 dispatchers / 694 case occurrences / 689 unique targets**, digest `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`.
+- PR #17 merged as `77d0586efb2fce523c598ff03cd3b21bfeaf0099`; Actions `36236728404` passed **169/169** tests and the full Windows/Linux build matrix. LLVM-MinGW builds are now statically linked against the LLVM C++ runtime and CI rejects `libc++.dll` / `libunwind.dll` PE imports.
+- Current user-ready Boot Fix 8 static-runtime EXE SHA-256: `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`.
+- Current user-ready Boot Fix 8 static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
+- Package includes `EBOOT.ELF`, the complete user-owned game tree, and `START_COMET_CRASH.cmd`; no separate LLVM runtime DLLs or Windows build installation are required for this run.
 
 ## Next
 
@@ -145,3 +147,5 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] **Repair missed inline relative PPU jump table** — PR #15 / Actions `36232221459`: exact Comet switch at `0x5220C` now lifts to seven in-function cases including `0x52DF4`; **168/168** tests and full Windows/Linux cross-build matrix green.
 
 [x] **Hard-gate recovered PPU jump tables** — PR #16 / Actions `36235777677`: exact-title computed-switch baseline pinned at **99/694/689** with ordered grouping digest; **169/169** tests and full Windows/Linux cross-build matrix green.
+
+[x] **Static-link the LLVM-MinGW runtime** — PR #17 / Actions `36236728404`: cross-built EXE no longer imports `libc++.dll` or `libunwind.dll`; PE-import regression gate and full **169/169** test/build matrix green.
