@@ -303,3 +303,11 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Built a new ready-to-run package with no `libc++.dll` / `libunwind.dll` payload. Static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
 - Next evidence remains one Boot Fix 8 run: verify the old `0x00052DF4` unresolved dispatch is gone and then follow only the next concrete runtime signal.
 
+## 2026-09-26 — Source-ELF jump-table audit and self-contained Boot Fix 8 verification
+
+- Added an independent structural PPU jump-table audit that reads the exact PPC64 ELF, recognizes the signed-relative `lwzx/extsw/add/mtctr/bctr` shape, decodes the inline target table, and verifies the same target set exists in generated C++.
+- Exact Boot Fix 8 lift result: **73 structural inline tables recognized, 73 recovered, zero missing**; the repaired `0x0005220C` / `0x00052DF4` table is included.
+- PR #18 merged as `ded76e3d66113cc9fbdfe8a6919e7dc44c36e3ab`; pull-request Actions run `36236916563` passed.
+- Re-verified the canonical self-contained Boot Fix 8 package after PR #17: EXE SHA-256 `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`; ZIP SHA-256 `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
+- PE import inspection confirms no `libc++.dll` or `libunwind.dll` dependency remains; only Windows/system graphics/input/CRT imports are present.
+- Runtime dependency remains one Boot Fix 8 execution. First confirm the old unresolved `0x00052DF4` dispatch is gone, then follow only the next concrete runtime signal.
