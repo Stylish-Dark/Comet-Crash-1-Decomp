@@ -142,6 +142,8 @@ A fresh user-ready Windows Boot Fix 8 static-runtime package was assembled model
 - Ready-to-run static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
 - The older dynamic-runtime Boot Fix 8 package is superseded for the current user handoff.
 
+PR #18 merged to `main` as `ded76e3d66113cc9fbdfe8a6919e7dc44c36e3ab` (**bind inline PPU tables to ELF structure**). Pull-request Actions run `36236916563` passed. The new audit independently recognizes the narrow ELF instruction shape used by signed-relative `bctr` tables and verifies each recovered target set exists in generated C++ before the lift is accepted. On the exact Boot Fix 8 lift it recognizes **73 structural inline tables, recovers all 73, and reports zero missing**, including the repaired `0x0005220C` dispatcher. This complements the PR #16 generated-switch digest by tying recovered switches back to source-ELF control flow.
+
 ## Immediate next action
 
 Run the ready-to-run **Boot Fix 8 — jump-table fix** package and preserve `boot-console.txt`.
