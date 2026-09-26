@@ -23,10 +23,18 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 
 ## Current
 
-[ ] **Recover the arena asset bootstrap at `0x000ECCA8`**
+[x] **Recover the arena asset bootstrap at `0x000ECCA8`**
 - Group asset loads by destination field/registry.
 - Identify model/font/shader manager interfaces.
 - Replace raw asset-registration sequences with semantic native structures.
+- Result: 37 model calls collapsed into a typed native manifest; exact 0x90 object-table stride, paths, slot offsets, option words and float arguments are preserved.
+
+[ ] **Recover model object initializer `0x00105308`**
+- Map the 0x90-byte destination object fields used before/after OBJ parsing.
+- Identify option-bit tests and connect them to manifest option words.
+- Trace the two float arguments until their field/geometry effects are proven.
+- Separate generic model-resource parsing from arena-specific bootstrap policy.
+- Success: replace provenance-only option/float fields with typed native model-load semantics.
 
 [ ] **Build the root game-state type map**
 - Continue collecting recurring offsets from game-domain functions.
