@@ -30,10 +30,10 @@ enum class DefaultMaterialShader {
 };
 
 struct MaterialShaderInputs {
-    bool has_diffuse = false;
-    bool has_specular = false;
-    bool has_bump = false;
-    bool shader_already_assigned = false;
+    bool has_diffuse = false;   // material+0x38 resource != null
+    bool has_specular = false;  // material+0x3C resource != null
+    bool has_bump = false;      // material+0x40 resource != null
+    bool shader_already_assigned = false;  // material+0x48 != null
     std::uint32_t original_options = 0;
 };
 
