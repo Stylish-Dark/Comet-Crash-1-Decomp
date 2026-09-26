@@ -73,6 +73,12 @@ target_link_libraries(CometCrashPC PRIVATE
     ws2_32 xinput9_1_0 ole32 bcrypt
     dbghelp user32 gdi32 winmm)
 set_target_properties(CometCrashPC PROPERTIES LINKER_LANGUAGE CXX)
+# LLVM-MinGW otherwise links libc++.dll/libunwind.dll dynamically. Keep the
+# cross-built executable self-contained with respect to the LLVM C++ runtime;
+# Windows system/D3D/XInput DLLs remain normal platform dependencies.
+if(MINGW)
+    target_link_options(CometCrashPC PRIVATE -static)
+endif()
 if(MSVC)
     target_compile_options(CometCrashPC PRIVATE
         /W3 /wd4100 /wd4244 /wd4267 /Zc:__cplusplus
