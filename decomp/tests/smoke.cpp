@@ -2,6 +2,7 @@
 #include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
 #include "comet/material_shader_policy.hpp"
+#include "comet/material_textures.hpp"
 #include "comet/model_geometry.hpp"
 
 #include <array>
@@ -11,6 +12,19 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        const auto* diffuse = classify_mtl_texture_directive("map_Kd");
+        assert(diffuse != nullptr);
+        assert(diffuse->semantic == MaterialTextureSemantic::Diffuse);
+        assert(diffuse->legacy_material_offset == 0x38);
+
+        const auto* cube = classify_mtl_texture_directive("cube");
+        assert(cube != nullptr);
+        assert(cube->semantic == MaterialTextureSemantic::EnvironmentCube);
+        assert(cube->loader_kind == MaterialTextureLoaderKind::CubeTexture);
+        assert(cube->legacy_material_offset == 0x44);
+    }
+
     {
         const auto full = full_vertex_layout();
         assert(full.stride == 0x20);
