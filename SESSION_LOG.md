@@ -260,3 +260,19 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - The current Boot Fix 7 pointer patcher applied cleanly to that fresh real-title lift; the resulting 28.9 MB generated C++ compiled successfully for Windows.
 - PR #13 merged as `f9069a2e68ada5e5598977780d74f6a4c6070555`. GitHub Actions run `36127073310` passed **164/164 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build.
 - Next runtime dependency remains the first decisive parse-pointer marker from the terminal-guard Boot Fix 7 build. No allocator/free suppression was introduced.
+
+
+## 2026-09-26 — Boot Fix 8 repairs missed inline PPU jump table
+
+- Re-read the returned Boot Fix 6 runtime log chronologically instead of treating the later allocator abort as the first causal signal. Guest thread 4 had already emitted `[ppu] unresolved indirect call -> 0x00052DF4 (tid=4 lr=0x000545DC)`.
+- Reconstructed and verified the exact reference ELF, then mapped `0x00052DF4`: it is not a recovered function entry. It lies inside `func_0005207C`.
+- Exact PPC disassembly identified the dispatcher at `0x0005220C: bctr`. The seven 32-bit signed offsets immediately after it are `0x34, 0x12C, 0x138, 0x2E4, 0xBE4, 0x6A4, 0xA64`; with table base `0x00052210`, the fifth entry resolves exactly to `0x00052DF4`.
+- The pinned PPU lifter's normal jump-table recovery loses this switch because the table base is spilled to the stack before the dispatch. It therefore emitted a bare global indirect dispatch. The runtime function registry contains function entries, not arbitrary interior basic blocks, explaining the unresolved `0x52DF4`.
+- Added Comet-owned `tools/patch_ps3recomp_inline_jumptable.py`, wired into `comet_port.py lift`. When normal base recovery fails, the fallback recognizes a structurally valid inline signed-relative table following `bctr`, validates in-text aligned targets, and records the switch.
+- Added idempotence, drift-rejection and insertion regressions. Local full suite passed **168/168**.
+- Reset ps3recomp to the exact pinned commit and performed a fresh exact-title lift through the normal pipeline. The repaired lift decodes seven targets at `0x5220C`, emits `case 0x00052DF4u: goto loc_00052DF4;`, emits `loc_00052DF4:`, removes the old bare dispatch for that switch, preserves zero actionable PPU holes and preserves the exact 3,936-entry raw-word baseline.
+- PR #15 merged as `2eb2a228ca8d0c9db8da4ff5481ff40c60b5358c`. GitHub Actions run `36232221459` passed **168/168 tests**, repository safety, Windows native-link/provenance and Linux→Windows cross-build.
+- Built a real Windows Boot Fix 8 executable from the repaired exact-title lift with the prior allocator, memalign, malloc-source and parse-pointer diagnostics all retained.
+- Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
+- Ready-to-run Boot Fix 8 ZIP SHA-256: `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`.
+- Next dependency: run Boot Fix 8. First verify that unresolved dispatch to `0x00052DF4` is gone. If the title advances, follow the next evidenced blocker; if the `0x140` free persists, use the retained Boot Fix 7 parse-pointer markers from the same run.
