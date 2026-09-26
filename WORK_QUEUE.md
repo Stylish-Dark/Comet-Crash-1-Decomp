@@ -30,12 +30,15 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - Result: 37 model calls collapsed into a typed native manifest; exact 0x90 object-table stride, paths, slot offsets, option words and float arguments are preserved.
 
 [ ] **Recover model object initializer `0x00105308`**
-- Map the remaining 0x90-byte destination object fields used before/after OBJ parsing, especially +0x04..+0x1C.
-- [x] Identify default-shader option-bit tests and connect them to manifest option words.
-- [x] Recover model material fields +0x38/+0x3C/+0x40 and shader field +0x48.
-- Trace the two float arguments until their field/geometry effects are proven.
-- Separate generic model-resource parsing from arena-specific bootstrap policy.
-- Success: replace provenance-only option/float fields with typed native model-load semantics.
+- [x] Map top-level geometry fields `+0x04..+0x24`: vertex/submesh/index counts, full/compact CPU arrays, submesh/index pointers, and both GPU vertex-buffer handles.
+- [x] Recover the exact 0x20-byte full vertex layout and 0x14-byte compact layout.
+- [x] Recover the 0x0C-byte OBJ face-reference staging stride and 0x78-byte submesh stride.
+- [x] Correct the shader-helper boundary: `0x00105088` operates on the material subobject at `submesh+0x10`, not the root model.
+- [x] Recover material diffuse/specular/bump/preassigned-shader fields and the default-shader option-mask decision tree.
+- Recover the remaining submesh draw-range fields at `+0x00..+0x0C` and `+0x68..+0x74`.
+- Trace model fields `+0x28/+0x2C` and both floating loader arguments to proven semantics.
+- Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`.
+- Success: replace the opaque 0x78-byte submesh/material record and remaining model provenance fields with typed native structures.
 
 [ ] **Build the root game-state type map**
 - Continue collecting recurring offsets from game-domain functions.
