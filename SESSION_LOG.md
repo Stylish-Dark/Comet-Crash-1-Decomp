@@ -311,3 +311,14 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Re-verified the canonical self-contained Boot Fix 8 package after PR #17: EXE SHA-256 `ac0de506db1f9ee63c3968307f357da65cbbe17be6288a10ea3522147797159e`; ZIP SHA-256 `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
 - PE import inspection confirms no `libc++.dll` or `libunwind.dll` dependency remains; only Windows/system graphics/input/CRT imports are present.
 - Runtime dependency remains one Boot Fix 8 execution. First confirm the old unresolved `0x00052DF4` dispatch is gone, then follow only the next concrete runtime signal.
+
+## 2026-09-26 — Unresolved guest-text dispatch made fail-fast
+
+- Generalized the Boot Fix 8 root-cause lesson into a runtime invariant: after normal indirect-call lookup/repair, an unresolved 4-byte-aligned target in title text must never return to lifted guest code.
+- Added `tools/patch_ps3recomp_unresolved.py`. It preserves normal lookup, OPD repair and invalid-vcall handling, then logs `[ppu] FATAL: unresolved guest-text target ...`, dumps the guest stack, flushes diagnostics and exits rather than continuing with corrupted guest state.
+- Wired the guard into the normal model/user build pipeline and both Windows/Linux CI runtime-patch paths. Added idempotence, pinned-upstream drift and target-file regressions.
+- PR #19 merged as `24964516a338aac85df401d0a76135a911bdcf14`. GitHub Actions run `36237573981` passed **175/175 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build.
+- Re-linked the exact repaired title lift with the PR #19 guard and static LLVM runtime. Strict-dispatch EXE SHA-256: `4b519db0656e0e1c5fb64739c4e75d7ca2987cce6845321e0597246148c2ee39`.
+- Built and integrity-checked a new ready-to-run package containing the exact reference `EBOOT.ELF`, full user-owned game tree, launcher and diagnostics. No `libc++.dll` or `libunwind.dll` dependency remains. Strict-dispatch ZIP SHA-256: `ee38762bfe0c4490bfcdc561b8d3aebf32adaae6997b0521a04994b2c0f6d344`.
+- Next evidence: run this strict-dispatch Boot Fix 8 package. The old `0x00052DF4` unresolved dispatch should be gone; any new unresolved title-text target now fails at the true source instead of mutating later behavior. If execution reaches the old allocator path, use the retained parse-pointer diagnostics.
+
