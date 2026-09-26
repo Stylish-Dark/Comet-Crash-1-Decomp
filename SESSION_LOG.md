@@ -333,3 +333,18 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Semantically decompiled `0x000D5D5C`: formats `%slevel%u.map`, obtains the current level index from root state offset `0x2D451C`, passes `game_state + 0x2D6438`, index, path and byte mode to `0x000D91B0`, and converts its return to bool.
 - Added the transitional native translation under `decomp/recovered/` and made `0x000D91B0` the next bounded recovery target.
 
+## 2026-09-26 — Level-map loader recovered into native C++
+
+- Decompilation moved from wrapper `0x000D5D5C` into its real parser/loader `0x000D91B0..0x000DA254`.
+- Recovered its semantic signature as a level-map state pointer, level ID, path and zero/nonzero secondary-section mode.
+- Found the original dual source path: level IDs 0..28 index a fixed 29-entry `(data_va,size)` table at `0x00232140`; higher IDs open the formatted map path in `"rb"` mode.
+- Recovered the exact disk equation: `0x88 + primary_count*0x38 + secondary_count*0x18`.
+- Recovered primary type-`0x0B` extent normalization, including default runtime extent 24 when no marker exists.
+- Recovered the exact secondary-record filter and the condition that the section is consumed only after an extent marker and when the final loader argument is zero.
+- Validated all 29 EBOOT-embedded maps against the recovered layout. IDs 20 and 23 intentionally carry secondary bytes on disk but no extent marker, so the original loader leaves the secondary runtime vector empty.
+- Added `decomp/include/comet/level_map.hpp` and `decomp/src/level_map.cpp` as a host-native semantic parser rather than a PS3 STL/register emulation.
+- Added `tools/extract_builtin_level_maps.py` so built-in blobs can be materialized from the user's own EBOOT into ordinary `level0.map..level28.map` files. This lets the final native port use one file-backed path for every level.
+- Added synthetic regression tests for exact section sizing, extent normalization/defaulting, secondary gating/filtering and malformed-input rejection.
+- Cross-reference work promotes root offset `+0x2D451C` to `current_level_id` and `+0x2D6438` to `level_map_state`; `+0x2D4520` remains a provisional transition/requested-level field.
+- Current decompilation target has advanced to the `arenaGraphics.cpp` function at `0x000E5A34`.
+
