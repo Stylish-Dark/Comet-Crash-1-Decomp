@@ -348,3 +348,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Cross-reference work promotes root offset `+0x2D451C` to `current_level_id` and `+0x2D6438` to `level_map_state`; `+0x2D4520` remains a provisional transition/requested-level field.
 - Current decompilation target has advanced to the `arenaGraphics.cpp` function at `0x000E5A34`.
 
+## 2026-09-26 — arenaGraphics render-target setup recovered
+
+- Segmented PPU `0x000E5A34..0x000E65D4` using the seven surviving `arenaGraphics.cpp` source-line anchors.
+- Identified the texture bind/parameter/image-allocation and framebuffer bind/attachment/status wrappers from exact GL constants and the classes of handles they consume.
+- Mapped the renderer handle cluster at root-state offsets `+0x2D44xx`.
+- Recovered the render-target graph: display-sized base texture, scaled RGBA color/depth pair, three auxiliary RGB16F targets, a 384x384 RGBA8 target, two stand-alone 80x64 targets, and the 80x64 three-FBO MRT loop with a shared COLOR1 texture.
+- Preserved one odd but exact behavior rather than simplifying it away: texture `+44A8` is first allocated as RGBA16F, then redefined as RGBA8 in the common MRT loop before the line-1188 framebuffer-complete check.
+- Recovered exact renderer-mode scaling: mode 0=2x2, mode 1=2x2, mode 2=2x1, other=1x1. The PSGL-specific `0x6022 -> 0x6030..0x6033` value is retained only as provenance.
+- Added `ArenaRenderTargetPlan` as a native renderer-facing representation with no PSGL/GCM calls in its public API.
+- Added a standalone `decomp/CMakeLists.txt` and CTest smoke executable so recovered native C++ is now compiled/tested in CI rather than existing only as documentation.
+- Current target advances to the asset/bootstrap cluster at `0x000ECCA8`.
+
