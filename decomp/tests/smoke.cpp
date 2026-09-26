@@ -1,6 +1,7 @@
 #include "comet/arena_render_targets.hpp"
 #include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
+#include "comet/model_shader_policy.hpp"
 
 #include <array>
 #include <cassert>
@@ -9,6 +10,19 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        ModelShaderInputs shader{};
+        shader.has_diffuse = true;
+        shader.has_specular = true;
+        shader.has_bump = true;
+        shader.original_options = 0x244;
+
+        const auto selected = choose_default_model_shader(shader);
+        assert(selected == DefaultModelShader::LitBumpSpecGlossGlowNoTeam);
+        assert(default_model_shader_name(selected) ==
+               "lit_bump_spec_gloss_glow_shader_no_team");
+    }
+
     {
         const auto assets = arena_model_asset_manifest();
         assert(assets.size() == 37);
