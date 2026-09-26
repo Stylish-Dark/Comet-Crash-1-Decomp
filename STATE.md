@@ -38,17 +38,18 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current target
 
-Segment and decompile `arenaGraphics.cpp` function `0x000E5A34..0x000E65D4`.
+**Arena render-target setup at `0x000E5A34..0x000E65D4` is now segmented and represented as native renderer metadata. Current work advances to the arena asset/bootstrap cluster at `0x000ECCA8`.**
 
-Current evidence already identifies it as render-target/framebuffer setup rather than general gameplay logic:
+Recovered from `arenaGraphics.cpp`:
 
-- repeated texture binding/parameter/image-allocation calls;
-- framebuffer binding/texture-attachment/completeness checks;
-- depth, RGBA8 and floating-point render targets;
-- a repeated 80x64 target setup loop;
-- renderer resource handles clustered at root-state offsets `0x2D44xx`.
+- seven source-line anchors divide framebuffer-complete checkpoints at lines 1034, 1081, 1100, 1115, 1130, 1143 and 1188;
+- texture bind/parameter/image allocation, framebuffer bind/attachment and completeness wrappers are identified by exact GL constants and handle use;
+- texture and framebuffer handle slots in root state `+0x2D44xx` are mapped;
+- display-scaled color/depth, three RGB16F targets, a 384x384 target, 80x64 targets and the three-FBO MRT loop are expressed in a native `ArenaRenderTargetPlan`;
+- the renderer mode's exact 2x/1x scaling policy is recovered while PSGL-specific parameter `0x6022` remains provenance-only;
+- a standalone CMake/CTest gate now compiles the recovered native C++ tree instead of allowing it to exist as unchecked pseudocode.
 
-The next step is to turn those address/GL facts into a renderer-facing native descriptor/API without preserving PSGL/GCM execution semantics.
+Next: decompile `0x000ECCA8` to recover the arena asset registry/bootstrap and identify the model/font/shader manager boundaries that feed the renderer.
 
 ## Legacy static-recomp track
 
