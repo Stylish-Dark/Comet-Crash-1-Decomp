@@ -13,9 +13,9 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - Added native parser/types and an extractor that converts the EBOOT-embedded built-in maps into ordinary user-owned `level*.map` files.
 - Promoted root offsets `+0x2D451C` and `+0x2D6438` to `current_level_id` and `level_map_state`.
 
-## Current
+## Completed
 
-[ ] **Segment and decompile `arenaGraphics.cpp` function `0x000E5A34`**
+[x] **Segment and decompile `arenaGraphics.cpp` function `0x000E5A34`**
 - Use source-line anchors 1034, 1081, 1100, 1115, 1130, 1143 and 1188 as block boundaries.
 - Confirm the PSGL/OpenGL wrapper identities for texture, framebuffer and attachment calls.
 - Map renderer resource handles at root offsets `0x2D44xx`.
@@ -23,7 +23,7 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - Define a native renderer-facing target specification that expresses these semantics without PSGL/GCM calls.
 - Success: a readable native render-target setup plan tied back to `arenaGraphics.cpp` addresses/source anchors.
 
-## Next
+## Current
 
 [ ] **Recover the arena asset bootstrap at `0x000ECCA8`**
 - Group asset loads by destination field/registry.
