@@ -14,3 +14,5 @@ Boot Fix 8 retains every Boot Fix 7 pointer/allocator diagnostic. On the next ru
 - if the `0x00000140` bad free remains, use the retained parse-pointer markers to identify the exact remaining corruption boundary.
 
 Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
+
+Current user-ready Boot Fix 8 ZIP SHA-256: `31b2512a5f3791497f4293ecfabd9d04ec3a6bc3dbf78d5ecb116d3b51085078`.
