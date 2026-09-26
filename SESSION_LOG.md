@@ -382,3 +382,17 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Initial `0x00105308` facts are now documented: options stored at `+0x00`, source-path string begins at `+0x34`, second floating argument influences `+0x2C`, and geometry/model fields are populated around `+0x04..+0x1C`.
 - Next pass stays inside the same model initializer to type those geometry/count/pointer fields and follow the OBJ parser.
 
+## 2026-09-27 — Model geometry layout recovered; material boundary corrected
+
+- Continued through exact-title OBJ loader `0x00105308..0x0010B537` and renderer `0x00100750`.
+- Recovered root-model geometry fields `+0x04..+0x24`: unique vertex count, submesh count, final index count, full/compact CPU vertex arrays, 0x78-byte submesh array, 16-bit index array, and the two GPU vertex-buffer handles.
+- Recovered the two native vertex formats exactly:
+  - full stride 0x20 = position.xyz @0x00, normal.xyz @0x0C, texcoord.xy @0x18;
+  - compact stride 0x14 = position.xyz @0x00, texcoord.xy @0x0C.
+- Recovered the OBJ face-reference staging vector's exact 0x0C-byte stride and confirmed it is collapsed/deduplicated into unique interleaved vertices plus 16-bit final indices.
+- Corrected an error in the previous shader-helper interpretation. `0x00105088` is called with `material_vector_end - 0x68`; because each submesh record is 0x78 bytes, that is the final submesh start +0x10. Renderer `0x00100750` independently passes `submesh+0x10` to its material binding helper. Therefore the shader fields previously described as root-model `+0x38/+0x3C/+0x40/+0x48` are actually material-relative fields inside each submesh.
+- Correct absolute submesh offsets are `+0x48` diffuse/base texture, `+0x4C` specular texture, `+0x50` bump/normal texture, and `+0x58` preassigned shader.
+- Renamed the recovered native API from model-shader policy to material-shader policy and removed the superseded files/tests so the repository no longer carries the incorrect object boundary.
+- The shader decision tree and all 11 surviving shader names remain valid; only the owning object boundary changed.
+- Added native model-geometry metadata and regression coverage. Next target is the rest of the 0x78-byte submesh draw-range layout, followed by MTL texture construction and model fields `+0x28/+0x2C`.
+
