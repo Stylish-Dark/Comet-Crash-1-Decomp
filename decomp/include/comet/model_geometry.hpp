@@ -29,6 +29,28 @@ inline constexpr std::size_t kLegacyObjFaceReferenceStride = 0x0C;
 inline constexpr std::size_t kLegacyIndexElementSize = 0x02;
 inline constexpr std::size_t kLegacyMaterialSubobjectOffset = 0x10;
 
+// Proven by renderer PPU 0x00100750 calling the draw-range wrapper with:
+//   first-index * 2, index-count, min-vertex, max-vertex.
+// The byte-offset conversion is exact because the final index type is u16.
+struct LegacySubmeshOffsets {
+    static constexpr std::uint32_t first_index = 0x00;
+    static constexpr std::uint32_t index_count = 0x04;
+    static constexpr std::uint32_t min_vertex = 0x08;
+    static constexpr std::uint32_t max_vertex = 0x0C;
+    static constexpr std::uint32_t material = 0x10;
+};
+
+struct SubmeshDrawRange {
+    std::uint32_t first_index = 0;
+    std::uint32_t index_count = 0;
+    std::uint32_t min_vertex = 0;
+    std::uint32_t max_vertex = 0;
+
+    constexpr std::uint32_t index_byte_offset() const {
+        return first_index * static_cast<std::uint32_t>(kLegacyIndexElementSize);
+    }
+};
+
 enum class VertexSemantic {
     Position,
     Normal,
