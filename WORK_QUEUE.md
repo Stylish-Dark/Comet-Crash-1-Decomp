@@ -149,4 +149,4 @@ Work units are intentionally bounded so one worker can investigate, integrate, d
 [x] **Hard-gate recovered PPU jump tables** — PR #16 / Actions `36235777677`: exact-title computed-switch baseline pinned at **99/694/689** with ordered grouping digest; **169/169** tests and full Windows/Linux cross-build matrix green.
 
 [x] **Static-link the LLVM-MinGW runtime** — PR #17 / Actions `36236728404`: cross-built EXE no longer imports `libc++.dll` or `libunwind.dll`; PE-import regression gate and full **169/169** test/build matrix green.
-[x] **Bind inline PPU tables back to source ELF structure** — PR #18 / Actions `36236916563`: independent structural audit recognizes 73 signed-relative inline tables in the exact Boot Fix 8 ELF/lift and confirms all 73 are recovered; zero missing.
+[x] **Bind inline PPU tables back to source ELF structure** — PR #18 / Actions `36236916563`: independent structural audit recognizes 73 signed-relative inline tables in the exact Boot Fix 8 ELF/lift and confirms all 73 are recovered; zero missing; **171/171** tests and full build matrix green.
