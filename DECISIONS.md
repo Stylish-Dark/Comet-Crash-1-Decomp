@@ -115,3 +115,11 @@ The generated computed-switch count/digest gate is necessary but not sufficient 
 
 After normal function lookup, OPD repair and the existing invalid-vcall handling, an unresolved 4-byte-aligned target inside the title's executable range must terminate the run rather than return to lifted guest code. Boot Fix 6 demonstrated why: the missed `0x00052DF4` in-function switch target made `func_0005207C` return before its epilogue, leaving guest `r1` 0x210 bytes low and callee-saved state unrestored. Continuing from that state converts a control-flow defect into misleading downstream memory corruption. Fail fast and preserve diagnostics instead.
 
+## 2026-09-26 — Pivot final architecture from static recompilation to semantic decompilation/native rewrite
+
+Decision: the shipping port will not be the mechanically lifted PPU program running on an increasingly complete PS3 compatibility runtime. The repository will recover game-domain logic into readable C/C++ and replace PS3-facing subsystem boundaries with native PC implementations.
+
+Rationale: the static-recomp track proved invaluable for function discovery, exact control flow and runtime evidence, but runtime progress increasingly depended on reproducing PS3 scheduler/GCM/SPURS/HLE semantics. That is useful as an oracle and poor as the desired final architecture. The recovered-source track keeps the knowledge already gained while moving complexity into explicit game systems that can be understood, tested and maintained.
+
+Consequence: `ps3recomp`, Boot Fix packages and runtime diagnostics remain valid reverse-engineering tools. New work should decompile and type game systems first; compatibility-runtime work is justified only when it yields evidence needed by the native rewrite.
+
