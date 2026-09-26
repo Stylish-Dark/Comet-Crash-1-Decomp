@@ -360,3 +360,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added a standalone `decomp/CMakeLists.txt` and CTest smoke executable so recovered native C++ is now compiled/tested in CI rather than existing only as documentation.
 - Current target advances to the asset/bootstrap cluster at `0x000ECCA8`.
 
+## 2026-09-26 — Arena model bootstrap collapsed into a native manifest
+
+- Continued through bootstrap function `0x000ECCA8..0x000EE87C` (next OPD entry `0x000EE880`).
+- Pinned the non-model bootstrap strings: four WMD fonts, two font shader names, `shaders.bin`, two particle DDS assets and `gui_quad_shader`.
+- Found exactly 37 direct calls to model initializer `0x00105308`.
+- Recovered the repeated ABI shape: destination object, integer option word, path string, plus two float arguments.
+- Proved all 37 destination objects belong to one strict 0x90-byte table beginning at root offset `0x2D2DC0`. Slots 0..33, 35, 36 and 39 are initialized here; slots 34/37/38 are not.
+- Converted the procedural model bootstrapping into a native `ArenaModelAssetSpec` manifest containing all exact paths, root offsets/slots, option words and both float arguments.
+- Preserved the float arguments as `original_param1/2` rather than guessing semantic names such as scale.
+- Added compile-time slot/offset consistency validation and native smoke coverage.
+- Current boundary is `0x00105308..0x0010B538`, whose early code stores the option word into the model object and enters a large text/model parser. Recovering that object layout is the next step.
+
