@@ -55,7 +55,7 @@ Boot Fix 4 captured the first allocator invariant failure without suppressing it
 - Added `tools/patch_comet_parse_pointer_diag.py`; Boot Fix 7 instruments the allocation capture, r31/r23 preservation, caller SP, the protected `sp+0x84` slot, and final pre-free state. The hardened watcher covers all **35** live-pointer call boundaries, including 13 branch/switch calls that can loop back into the same final free path. First-failure markers are `[COMET-PARSE-REG-CLOBBER]`, `[COMET-PARSE-SP-CHANGE]`, or `[COMET-PARSE-SLOT-CHANGE]`.
 - Closed the remaining straight-line diagnostic gaps with terminal pre-store/pre-free guards and validated their ordering before the actual pointer sinks.
 - Repaired the clean real-title PPU completeness gate: 3,936 deterministic `.word` fallbacks are tracked separately from actionable unsupported instructions and pinned by ordered-value SHA-256 `9aceb911a9a8d0fcf45f070935928dbbcbba9f77db083bd5be83a77e03532734`. Any count/digest drift or real mnemonic TODO remains a hard failure.
-- Latest authoritative validation (GitHub Actions run `36236728404`, PR #17): **169/169 tests passed**, repository safety passed, Windows scaffold/native-link passed, and Linux→Windows cross-build passed with a PE-import gate proving the MinGW build no longer depends on `libc++.dll` or `libunwind.dll`.
+- Latest authoritative validation (GitHub Actions run `36236916563`, PR #18): **171/171 tests passed**, repository safety passed, Windows scaffold/native-link passed, and Linux→Windows cross-build passed. The PR #17 PE-import gate also remains active, proving the MinGW build does not depend on `libc++.dll` or `libunwind.dll`.
 
 ## Current working state
 
@@ -142,7 +142,7 @@ A fresh user-ready Windows Boot Fix 8 static-runtime package was assembled model
 - Ready-to-run static-runtime ZIP SHA-256: `bbfc535577088da76e47c2e52b556ca96648f5a7f55f2b1263b684bccd42c2a9`.
 - The older dynamic-runtime Boot Fix 8 package is superseded for the current user handoff.
 
-PR #18 merged to `main` as `ded76e3d66113cc9fbdfe8a6919e7dc44c36e3ab` (**bind inline PPU tables to ELF structure**). Pull-request Actions run `36236916563` passed. The new audit independently recognizes the narrow ELF instruction shape used by signed-relative `bctr` tables and verifies each recovered target set exists in generated C++ before the lift is accepted. On the exact Boot Fix 8 lift it recognizes **73 structural inline tables, recovers all 73, and reports zero missing**, including the repaired `0x0005220C` dispatcher. This complements the PR #16 generated-switch digest by tying recovered switches back to source-ELF control flow.
+PR #18 merged to `main` as `ded76e3d66113cc9fbdfe8a6919e7dc44c36e3ab` (**bind inline PPU tables to ELF structure**). Pull-request Actions run `36236916563` passed **171/171 tests**, repository safety, Windows scaffold/native-link, and Linux→Windows cross-build. The new audit independently recognizes the narrow ELF instruction shape used by signed-relative `bctr` tables and verifies each recovered target set exists in generated C++ before the lift is accepted. On the exact Boot Fix 8 lift it recognizes **73 structural inline tables, recovers all 73, and reports zero missing**, including the repaired `0x0005220C` dispatcher. This complements the PR #16 generated-switch digest by tying recovered switches back to source-ELF control flow.
 
 ## Immediate next action
 
