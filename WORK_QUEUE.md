@@ -37,7 +37,8 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Recover material diffuse/specular/bump/preassigned-shader fields and the default-shader option-mask decision tree.
 - [x] Recover indexed submesh draw range `+0x00..+0x0C`: first index, index count, minimum vertex, maximum vertex.
 - Recover the alternate submesh fields at `+0x68..+0x74`.
-- Trace model fields `+0x28/+0x2C` and both floating loader arguments to proven semantics.
+- [x] Recover loader f1 as geometry scale and f2/model `+0x2C` as signed bounding-radius scale/result.
+- Trace the remaining unknown model field `+0x28` and its option-bit-controlled coordinate adjustment.
 - [x] Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`: material resource slots +0x38/+0x3C/+0x40/+0x44 and separate 2D/cube loader paths.
 - [x] Recover MTL scalar/color directives: Ka ambient RGB, Kd diffuse RGB, Ks specular RGB, and Ns scaled specular exponent with exact 0.128000006 multiplier.
 - Recover remaining material fields/gaps and the alternate submesh path.
