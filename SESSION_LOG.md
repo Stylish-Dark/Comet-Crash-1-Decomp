@@ -396,3 +396,11 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - The shader decision tree and all 11 surviving shader names remain valid; only the owning object boundary changed.
 - Added native model-geometry metadata and regression coverage. Next target is the rest of the 0x78-byte submesh draw-range layout, followed by MTL texture construction and model fields `+0x28/+0x2C`.
 
+## 2026-09-27 — Primary submesh draw range recovered
+
+- Renderer `0x00100750` maps the first four u32s of each 0x78-byte submesh record directly into its indexed draw call.
+- `+0x00` is first index, converted to a byte offset by multiplying by the proven 2-byte final index element size.
+- `+0x04` is index count, `+0x08` is minimum referenced vertex, and `+0x0C` is maximum referenced vertex.
+- Added native `SubmeshDrawRange` and pinned the `+0x10` material boundary alongside it.
+- The alternate renderer path using submesh `+0x68/+0x6C/+0x70/+0x74` remains deliberately unnamed pending enough evidence to distinguish its exact stream/range semantics.
+
