@@ -4,9 +4,13 @@ This file is retained for compatibility with older project handoffs.
 
 **The authoritative queue is now `WORK_QUEUE.md`.**
 
-Current dependency: run the **terminal-guard Boot Fix 7** build (ZIP SHA-256 `f7efd390fd80631b2925e5cc645dc1a72372b8281199b1b57ed6d222e69ddf86`) and capture the first pointer-lifetime failure marker. The watcher covers all 35 live-pointer call boundaries plus terminal pre-store/pre-free checks. Static control-flow review has ruled out the two visible frees as a simple double-free: the path reaching `0x00130418` skips the earlier `0x001301A8` free. Boot Fix 6 proved that `mspace_malloc`/memalign do not return the invalid `0x140` value. Boot Fix 7 now distinguishes:
-- `[COMET-PARSE-REG-CLOBBER]` — saved allocation register changed;
-- `[COMET-PARSE-SP-CHANGE]` — caller stack pointer drifted;
-- `[COMET-PARSE-SLOT-CHANGE]` — caller `sp+0x84` allocation slot was overwritten.
+Current dependency: run the **Boot Fix 8 jump-table repair** package (ZIP SHA-256 `4e16f475480a3e98037e9b3a21dd5d8bfa8b872bee67d9e68b23d399004163c2`).
 
-Use the first marker's exact `site=0x...` to patch the offending function/path, then rebuild and continue.
+The returned Boot Fix 6 log contains an earlier `[ppu] unresolved indirect call -> 0x00052DF4` before the later allocator abort. Static analysis proves `0x00052DF4` is the fifth target of the seven-entry inline signed-relative switch table after `0x0005220C: bctr`, not a standalone function. PR #15 repairs the pinned lifter so that switch is emitted as in-function case labels, including `case 0x00052DF4u: goto loc_00052DF4;`.
+
+Boot Fix 8 retains every Boot Fix 7 pointer/allocator diagnostic. On the next run:
+- first confirm the unresolved `0x00052DF4` dispatch is gone;
+- if execution advances, follow the next concrete runtime signal;
+- if the `0x00000140` bad free remains, use the retained parse-pointer markers to identify the exact remaining corruption boundary.
+
+Boot Fix 8 EXE SHA-256: `b945f1070db2b2bd808ffcc19e02c1fda97eb2658d36e349a1682d1801dd121c`.
