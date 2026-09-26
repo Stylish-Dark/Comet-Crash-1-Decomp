@@ -428,3 +428,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Gaps `+0x0C/+0x1C/+0x2C/+0x34` are deliberately left unnamed rather than guessed as alpha/padding.
 - Combined with the texture pass, the material object is now semantically understood from `+0x00` through shader field `+0x48` except those four gaps.
 
+## 2026-09-27 — Model loader floating arguments recovered
+
+- Performed control-flow/reaching-definition analysis on `0x00105308` rather than inferring the two bootstrap floats from their values.
+- Entry `f1` is copied at `0x001053A4`; that definition reaches the OBJ vertex block at `0x0010751C` unchanged. Each parsed x/y/z component is multiplied by it before storage. This proves `f1` is **geometry scale**.
+- Entry `f2` is copied at `0x001053B4`; `abs(f2)` is formed at `0x00105448`. Model `+0x2C` starts at zero, then accumulates the maximum of `abs(f2) * length(scaled_vertex)`. At finalization the result is negated when original `f2 < 0`.
+- Therefore model `+0x2C` is a **signed bounding radius**, and f2 is its signed scale.
+- Promoted the arena manifest fields from anonymous `original_param1/2` to `geometry_scale` and `signed_radius_scale`.
+- Added native geometry scaling / signed-radius computation helpers plus exact PPU evidence documentation and smoke tests.
+- Remaining unresolved root-model field in this area is `+0x28`; the loader conditionally adds it to one parsed position component under an option bit and needs one more semantic pass before naming.
+
