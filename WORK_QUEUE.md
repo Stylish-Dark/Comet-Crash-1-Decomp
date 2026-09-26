@@ -1,24 +1,29 @@
 # WORK QUEUE
 
-The canonical direction is now semantic decompilation/native rewrite. Keep work units bounded and evidence-driven.
+The canonical direction is semantic decompilation/native rewrite. Keep work units bounded and evidence-driven.
+
+## Completed
+
+[x] **Recover the level-map loader around `0x000D91B0`**
+- Recovered both embedded and file-backed source paths.
+- Recovered exact 0x88/0x38/0x18 disk structure and exact size equation.
+- Recovered type-0x0B extent normalization/default behaviour.
+- Recovered the conditional secondary section and exact selector/opcode filter.
+- Validated all 29 embedded level blobs.
+- Added native parser/types and an extractor that converts the EBOOT-embedded built-in maps into ordinary user-owned `level*.map` files.
+- Promoted root offsets `+0x2D451C` and `+0x2D6438` to `current_level_id` and `level_map_state`.
 
 ## Current
 
-[ ] **Recover the level-map loader around `0x000D91B0`**
-- Start from the already recovered wrapper `0x000D5D5C`.
-- Build the direct caller/callee set for `0x000D91B0`.
-- Recover file reads, header/record structure and ownership semantics far enough to name its parameters and return value.
-- Track accesses to root offsets `0x2D451C` and `0x2D6438` across neighboring functions.
-- Promote `level_map_000D5D5C.cpp` away from raw offsets when the structure layout is supported by multiple references.
-- Success: a typed native level/map interface with at least one map-load path expressed without PowerPC register semantics.
+[ ] **Segment and decompile `arenaGraphics.cpp` function `0x000E5A34`**
+- Use source-line anchors 1034, 1081, 1100, 1115, 1130, 1143 and 1188 as block boundaries.
+- Confirm the PSGL/OpenGL wrapper identities for texture, framebuffer and attachment calls.
+- Map renderer resource handles at root offsets `0x2D44xx`.
+- Recover each render-target descriptor: dimensions, internal format, data format/type, filtering/wrap and framebuffer attachments.
+- Define a native renderer-facing target specification that expresses these semantics without PSGL/GCM calls.
+- Success: a readable native render-target setup plan tied back to `arenaGraphics.cpp` addresses/source anchors.
 
 ## Next
-
-[ ] **Segment and decompile the `arenaGraphics.cpp` function at `0x000E5A34`**
-- Use the seven source-line anchors (1034..1188) to divide the large function into semantic blocks.
-- Identify direct callees and graphics-state effects for each block.
-- Separate game renderer state from PSGL/GCM calls.
-- Success: a readable renderer-facing function with enough semantics to define the future native render API.
 
 [ ] **Recover the arena asset bootstrap at `0x000ECCA8`**
 - Group asset loads by destination field/registry.
@@ -26,8 +31,8 @@ The canonical direction is now semantic decompilation/native rewrite. Keep work 
 - Replace raw asset-registration sequences with semantic native structures.
 
 [ ] **Build the root game-state type map**
-- Collect recurring offsets from game-domain functions.
-- Record width, read/write sites, lifetime and likely subobject boundaries.
+- Continue collecting recurring offsets from game-domain functions.
+- Record width, read/write sites, lifetime and subobject boundaries.
 - Name fields only after cross-reference support.
 
 ## Later
