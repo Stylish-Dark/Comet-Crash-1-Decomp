@@ -106,3 +106,8 @@ A successful PPU lift must reproduce the exact reference computed-switch structu
 ## D028 — LLVM-MinGW user builds statically link the LLVM C++ runtime
 
 Linux-hosted Windows builds must not require separately shipped `libc++.dll` or `libunwind.dll`. The MinGW path links the LLVM runtime statically while retaining normal Windows system/D3D/XInput DLL dependencies. CI inspects the produced PE import table and fails if either LLVM runtime DLL reappears. The native MSVC/clang-cl path is unchanged.
+
+## D029 — Inline PPU jump-table recovery is verified against the source ELF
+
+The generated computed-switch count/digest gate is necessary but not sufficient by itself. The lift pipeline independently scans the supported PPC64 ELF for the narrow signed-relative `lwzx/extsw/add/mtctr/bctr` inline-table structure, decodes its targets, and requires each structural target set to exist in generated C++. Any structural inline table missing from the lift is a hard failure. This catches the class of defect that produced the unresolved interior target `0x00052DF4` even if aggregate generated-switch statistics look plausible.
+
