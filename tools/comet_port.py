@@ -14,6 +14,7 @@ from patch_ps3recomp_vfs import patch_checkout as patch_vfs_runtime
 from patch_ps3recomp_resc import patch_checkout as patch_resc_runtime
 from patch_ps3recomp_gcm import patch_checkout as patch_gcm_runtime
 from patch_ps3recomp_thread_exit import patch_file as patch_thread_exit_runtime
+from patch_ps3recomp_unresolved import patch_file as patch_unresolved_runtime
 from patch_ps3recomp_inline_jumptable import patch_file as patch_inline_jumptable_lifter
 from audit_hle_coverage import audit as audit_hle
 from audit_analysis import audit_analysis as audit_known_analysis
@@ -528,6 +529,8 @@ def cmd_build(a):
     print(f'Comet GCM report patch: {"applied" if gcm_changed else "already present"}')
     thread_exit_changed=patch_thread_exit_runtime(a.ps3recomp)
     print(f'Comet Windows PPU thread-exit patch: {"applied" if thread_exit_changed else "already present"}')
+    unresolved_changed=patch_unresolved_runtime(a.ps3recomp)
+    print(f'Comet unresolved guest-text guard: {"applied" if unresolved_changed else "already present"}')
     if not a.imports.exists():
         raise FileNotFoundError(f'Comet import manifest missing at {a.imports}; run analyze first')
     hle=audit_hle(a.ps3recomp,a.imports,[ROOT/'port'/'comet_host.cpp',ROOT/'port'/'comet_compat.cpp'])
