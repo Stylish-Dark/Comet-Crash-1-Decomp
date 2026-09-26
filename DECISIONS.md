@@ -111,3 +111,7 @@ Linux-hosted Windows builds must not require separately shipped `libc++.dll` or 
 
 The generated computed-switch count/digest gate is necessary but not sufficient by itself. The lift pipeline independently scans the supported PPC64 ELF for the narrow signed-relative `lwzx/extsw/add/mtctr/bctr` inline-table structure, decodes its targets, and requires each structural target set to exist in generated C++. Any structural inline table missing from the lift is a hard failure. This catches the class of defect that produced the unresolved interior target `0x00052DF4` even if aggregate generated-switch statistics look plausible.
 
+## D030 — Unresolved aligned title-text dispatch is fatal
+
+After normal function lookup, OPD repair and the existing invalid-vcall handling, an unresolved 4-byte-aligned target inside the title's executable range must terminate the run rather than return to lifted guest code. Boot Fix 6 demonstrated why: the missed `0x00052DF4` in-function switch target made `func_0005207C` return before its epilogue, leaving guest `r1` 0x210 bytes low and callee-saved state unrestored. Continuing from that state converts a control-flow defect into misleading downstream memory corruption. Fail fast and preserve diagnostics instead.
+
