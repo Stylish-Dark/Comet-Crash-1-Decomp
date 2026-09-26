@@ -438,3 +438,12 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native geometry scaling / signed-radius computation helpers plus exact PPU evidence documentation and smoke tests.
 - Remaining unresolved root-model field in this area is `+0x28`; the loader conditionally adds it to one parsed position component under an option bit and needs one more semantic pass before naming.
 
+## 2026-09-27 — Root-model +0x28 recovered as conditional vertex Y offset
+
+- Identified the exact literal OBJ `v` parse branch by its single-character `0x76 ('v')` test.
+- The parser writes scaled x/y/z first, then masks legacy model option bit `0x20` at `0x00107624`.
+- When that bit is set, branch `0x0010AB3C` addresses the second position component (temporary vertex start +4), loads model `+0x28`, and adds it to Y.
+- Promoted model `+0x28` to `vertex_y_offset` and preserved the controlling flag as numeric legacy bit `0x20` rather than inventing an enum name.
+- Added native `apply_optional_vertex_y_offset()`, exact-address documentation and regression/smoke coverage.
+- With `+0x28` and signed bounding radius `+0x2C` resolved, the top-level model geometry/parameter block through `+0x2C` is now semantically named. Next target is the alternate 0x78-byte submesh batching path at `+0x68..+0x74`.
+

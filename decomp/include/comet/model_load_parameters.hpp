@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <span>
 
 namespace comet::decomp {
@@ -24,6 +25,13 @@ struct ModelLoadParameters {
 ModelPosition apply_geometry_scale(
     ModelPosition position,
     float geometry_scale);
+
+// Exact semantic replacement for the option-0x20 branch at
+// 0x00107624..0x00107630 -> 0x0010AB3C..0x0010AB54.
+ModelPosition apply_optional_vertex_y_offset(
+    ModelPosition position,
+    std::uint32_t original_options,
+    float vertex_y_offset);
 
 // Semantic replacement for the model+0x2C accumulation/finalization performed
 // by PPU 0x00107684..0x001076D4 / 0x00108460..0x00108464 / 0x00105D24..0x00105D54.

@@ -1,4 +1,5 @@
 #include "comet/model_load_parameters.hpp"
+#include "comet/model_geometry.hpp"
 
 #include <cmath>
 
@@ -10,6 +11,16 @@ ModelPosition apply_geometry_scale(
     position.x *= geometry_scale;
     position.y *= geometry_scale;
     position.z *= geometry_scale;
+    return position;
+}
+
+ModelPosition apply_optional_vertex_y_offset(
+    ModelPosition position,
+    std::uint32_t original_options,
+    float vertex_y_offset) {
+    if ((original_options & kLegacyModelOptionApplyVertexYOffset) != 0u) {
+        position.y += vertex_y_offset;
+    }
     return position;
 }
 
