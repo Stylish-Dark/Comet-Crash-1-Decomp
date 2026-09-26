@@ -16,7 +16,7 @@ Seven surviving source strings segment the routine:
 | `0x000E5F24` | `arenaGraphics.cpp:1115` | 384x384 RGBA8 target / FBO `+0x4488` |
 | `0x000E5FFC` | `arenaGraphics.cpp:1130` | RGB16F target / FBO `+0x446C` |
 | `0x000E60D0` | `arenaGraphics.cpp:1143` | RGB16F target / FBO `+0x4470` |
-| `0x000E6524` | `arenaGraphics.cpp:1188` | 80x64 multi-target FBO loop completion check |
+| `0x000E6288` (loaded; check call at `0x000E6524`) | `arenaGraphics.cpp:1188` | 80x64 multi-target FBO loop completion check |
 
 Every marker is passed to helper `0x000E59AC`, whose only substantive operation is a framebuffer-completeness check. That helper calls `0x0002DC4C` with `GL_FRAMEBUFFER (0x8D40)`; the successful status is `GL_FRAMEBUFFER_COMPLETE (0x8CD5)`.
 
