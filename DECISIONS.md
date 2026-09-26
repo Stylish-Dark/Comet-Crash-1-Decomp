@@ -102,3 +102,7 @@ The pinned reference lift contains 3,936 `.word 0x........` TODO fallbacks even 
 ## D027 — Recovered PPU jump tables are a deterministic lift gate
 
 A successful PPU lift must reproduce the exact reference computed-switch structure, not merely contain zero unsupported mnemonic TODOs. The reference title currently requires 99 recovered jump-table dispatchers, 694 case occurrences, 689 unique targets, and ordered per-dispatcher SHA-256 `ea920e593b23773631066e58b546c23f71007d145b9d22ffac4a75ea92b1e7b7`. Any count, grouping, target-order or digest drift is a hard failure. This prevents interior basic-block cases such as `0x00052DF4` from silently falling back to the global function-entry dispatcher.
+
+## D028 — LLVM-MinGW user builds statically link the LLVM C++ runtime
+
+Linux-hosted Windows builds must not require separately shipped `libc++.dll` or `libunwind.dll`. The MinGW path links the LLVM runtime statically while retaining normal Windows system/D3D/XInput DLL dependencies. CI inspects the produced PE import table and fails if either LLVM runtime DLL reappears. The native MSVC/clang-cl path is unchanged.
