@@ -447,3 +447,22 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native `apply_optional_vertex_y_offset()`, exact-address documentation and regression/smoke coverage.
 - With `+0x28` and signed bounding radius `+0x2C` resolved, the top-level model geometry/parameter block through `+0x2C` is now semantically named. Next target is the alternate 0x78-byte submesh batching path at `+0x68..+0x74`.
 
+## 2026-09-27 — Expanded submesh batching path recovered
+
+- Used the exact Drive-sourced NPEB00142 v1.00 title and re-verified its decrypted ELF SHA-256 against the pinned reference before continuing binary analysis.
+- Recovered the alternate tail of each 0x78-byte submesh:
+  - `+0x64` byte gates expanded-batch construction;
+  - `+0x68` is a transient batch instance count;
+  - `+0x6C` is the expanded packed vertex stream;
+  - `+0x70` is the expanded u32 index stream;
+  - `+0x74` is the per-object `objInfo` stream.
+- Proved the count is transient instance/copy multiplicity rather than a second static mesh count:
+  - high-level builder `0x000FF3E0` iterates the same 40-slot / 0x90-stride model table;
+  - writer `0x000FEFB0` sizes streams from batch_count * model/submesh counts;
+  - renderer `0x00100750` multiplies base vertex/index ranges by the batch count;
+  - cleanup `0x000FF594..0x000FF64C` clears every batch count after the render cycle.
+- Exact stream sizing is now pinned: `N*V*32` packed vertex bytes, `N*I*4` u32 index bytes, and `N*16` object-info bytes.
+- The original user-owned vertex-program binaries independently retain `position_tx`, `normal_ty`, and `objInfo`. Renderer binding proves the expanded vertex stream is two vec4s at offsets 0/16 with stride 32, and `objInfo` is one vec4 per batched object.
+- Writer builds one 256-byte work descriptor per chunk and calls helper `0x00138248`. This looks SPU/SPURS-facing, but the exact link to the previously unidentified small active SPU remains intentionally unclaimed until producer dispatch is traced.
+- Added native `ExpandedSubmeshBatch` metadata/count formulas, documentation, regression tests, and C++ smoke coverage.
+
