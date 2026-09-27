@@ -22,6 +22,16 @@ class ModelLoadParameterRecoveryTests(unittest.TestCase):
         self.assertIn("position.y *= geometry_scale", text)
         self.assertIn("position.z *= geometry_scale", text)
 
+    def test_geometry_y_offset_option_is_exact(self):
+        header = PARAM_HEADER.read_text(encoding="utf-8")
+        source = PARAM_SOURCE.read_text(encoding="utf-8")
+        doc = DOC.read_text(encoding="utf-8")
+        self.assertIn("geometry_y_offset", header)
+        self.assertIn("(parameters.original_options & 0x20u) != 0u", source)
+        self.assertIn("position.y += parameters.geometry_y_offset", source)
+        for addr in ("0x00107624", "0x00107630", "0x0010AB40", "0x0010AB54"):
+            self.assertIn(addr, doc)
+
     def test_signed_radius_algorithm_is_explicit(self):
         text = PARAM_SOURCE.read_text(encoding="utf-8")
         self.assertIn("std::fabs(signed_radius_scale)", text)
