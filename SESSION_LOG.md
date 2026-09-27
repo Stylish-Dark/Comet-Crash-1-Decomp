@@ -438,12 +438,38 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native geometry scaling / signed-radius computation helpers plus exact PPU evidence documentation and smoke tests.
 - Remaining unresolved root-model field in this area is `+0x28`; the loader conditionally adds it to one parsed position component under an option bit and needs one more semantic pass before naming.
 
-## 2026-09-27 — Root-model +0x28 recovered as conditional vertex Y offset
+## 2026-09-27 — Model Y-offset and transient SPU batch path recovered
 
-- Identified the exact literal OBJ `v` parse branch by its single-character `0x76 ('v')` test.
-- The parser writes scaled x/y/z first, then masks legacy model option bit `0x20` at `0x00107624`.
-- When that bit is set, branch `0x0010AB3C` addresses the second position component (temporary vertex start +4), loads model `+0x28`, and adds it to Y.
-- Promoted model `+0x28` to `vertex_y_offset` and preserved the controlling flag as numeric legacy bit `0x20` rather than inventing an enum name.
-- Added native `apply_optional_vertex_y_offset()`, exact-address documentation and regression/smoke coverage.
-- With `+0x28` and signed bounding radius `+0x2C` resolved, the top-level model geometry/parameter block through `+0x2C` is now semantically named. Next target is the alternate 0x78-byte submesh batching path at `+0x68..+0x74`.
+- Validated the newly available original NPEB00142 game copy against the canonical exact-title input. The decrypted EBOOT reproduces SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`, so the shipped asset tree can now be used directly as decompilation evidence without committing proprietary bytes.
+- Resolved root-model `+0x28`: loader `0x00107624` isolates option mask `0x20`; when set, branch `0x00107630 -> 0x0010AB3C` adds `model+0x28` to the already-scaled OBJ Y component. Native name: `geometry_y_offset`; descriptive option constant: `kModelOptionApplyGeometryYOffset`.
+- Recovered the previously opaque submesh tail through batch preparation `0x000FEFB0` and renderer `0x00100750`:
+  - `+0x64` byte-sized batch/SPU-path gate;
+  - `+0x68` per-frame batched instance count;
+  - `+0x6C` generated 32-byte-stride batched vertex stream;
+  - `+0x70` generated u32 batched index stream;
+  - `+0x74` generated 16-byte-per-instance `objInfo` stream.
+- Exact output sizes are `instances * model_vertices * 32`, `instances * submesh_indices * 4`, and `instances * 16`.
+- Renderer draw expansion is `end = instances*model_vertices - 1`, `count = instances*submesh_indices`, with `GL_UNSIGNED_INT` batched indices.
+- Original shipped `*_spu.vpo` assets independently contain `position_tx/POSITION`, `normal_ty/TEXCOORD0`, and `objInfo/TEXCOORD1`; renderer lookups at `0x00100810` and `0x001008E8` tie those names to the recovered streams.
+- Added native batch-layout/count metadata only. The final PC renderer should express this as native instance data where behavior allows, rather than reimplementing the PS3 SPU expansion path.
+- Current model-loader gap is now narrow: material offsets `+0x0C/+0x1C/+0x2C/+0x34` and exact OBJ source-index normalization/deduplication.
+
+## 2026-09-27 — Remaining material gaps recovered
+
+- Used the exact material creation path and material binder to close the last four anonymous fields.
+- New submesh records zero the material region at `0x00107150..0x001071B4`. Ka/Kd/Ks later write only three floats each.
+- Binder `0x0010000C` looks up `colorAmbient`, `colorDiffuse`, and `colorSpecular` and uploads material `+0x00`, `+0x10`, and `+0x20` through vec4 parameter paths. Therefore `+0x0C/+0x1C/+0x2C` are the fourth/W lanes of those three vec4s and remain zero on the recovered MTL path. They are deliberately not called alpha.
+- Binder `0x00100084` looks up exact shader parameter `useTeamColor`, loads material `+0x34`, converts the integer to float and uploads it.
+- The `newmtl` parser compares the material-name prefix against literal `team`; match stores 1 to `+0x34` at `0x001097B8`, non-match stores 0 at `0x0010A944`.
+- The original asset corpus independently contains `newmtl team` and `newmtl team.light`, matching that policy.
+- Native `MaterialProperties` now represents three vec4 colors, scaled specular exponent, and `use_team_color`; no anonymous fields remain in the recovered material block through shader pointer `+0x48`.
+
+## 2026-09-27 — Material block completed through useTeamColor
+
+- Closed the four remaining anonymous material fields using the exact record initialization, MTL parser and renderer binder.
+- New 0x78-byte submesh records zero the material region at `0x00107150..0x001071B4`. Ka/Kd/Ks write only three floats each.
+- Binder `0x0010000C` looks up `colorAmbient`, `colorDiffuse`, and `colorSpecular` and uploads material `+0x00`, `+0x10`, and `+0x20` through vec4 parameter calls. Therefore `+0x0C/+0x1C/+0x2C` are the fourth/W lanes of those vectors and remain zero on the recovered path; no alpha semantics are assumed.
+- The same binder looks up exact shader parameter `useTeamColor`, loads material `+0x34`, converts the integer to float and uploads it.
+- `newmtl` parsing compares the material-name prefix to literal `team`; a match stores 1 at `0x001097B8`, otherwise 0 at `0x0010A944`. Shipped assets contain both `newmtl team` and `newmtl team.light`.
+- Native `MaterialProperties` now consists of ambient/diffuse/specular vec4s, scaled specular exponent, `use_team_color`, texture resources and shader state. The recovered material region through `+0x48` has no anonymous gaps left.
 

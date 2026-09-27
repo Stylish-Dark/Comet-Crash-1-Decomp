@@ -20,18 +20,24 @@ struct ModelLoadParameters {
     // position's radial distance, keeps the maximum at model+0x2C, then restores
     // the sign of f2 at finalization.
     float signed_radius_scale = 0.0f;
+
+    // model+0x28. Applied to the scaled OBJ Y component when option bit 0x20
+    // is set in the original model option word.
+    float geometry_y_offset = 0.0f;
+
+    std::uint32_t original_options = 0;
 };
 
 ModelPosition apply_geometry_scale(
     ModelPosition position,
     float geometry_scale);
 
-// Exact semantic replacement for the option-0x20 branch at
-// 0x00107624..0x00107630 -> 0x0010AB3C..0x0010AB54.
-ModelPosition apply_optional_vertex_y_offset(
+// Exact import transform around 0x00107580..0x0010762C / 0x0010AB3C.
+// PPC instruction 0x00107624 tests model option mask 0x20; when that bit is
+// set, bf 6 branches to 0x0010AB3C and adds model+0x28 to scaled Y.
+ModelPosition transform_imported_position(
     ModelPosition position,
-    std::uint32_t original_options,
-    float vertex_y_offset);
+    const ModelLoadParameters& parameters);
 
 // Semantic replacement for the model+0x2C accumulation/finalization performed
 // by PPU 0x00107684..0x001076D4 / 0x00108460..0x00108464 / 0x00105D24..0x00105D54.

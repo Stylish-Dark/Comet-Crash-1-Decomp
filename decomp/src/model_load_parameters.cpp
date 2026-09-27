@@ -1,5 +1,4 @@
 #include "comet/model_load_parameters.hpp"
-#include "comet/model_geometry.hpp"
 
 #include <cmath>
 
@@ -14,13 +13,18 @@ ModelPosition apply_geometry_scale(
     return position;
 }
 
-ModelPosition apply_optional_vertex_y_offset(
+ModelPosition transform_imported_position(
     ModelPosition position,
-    std::uint32_t original_options,
-    float vertex_y_offset) {
-    if ((original_options & kLegacyModelOptionApplyVertexYOffset) != 0u) {
-        position.y += vertex_y_offset;
+    const ModelLoadParameters& parameters) {
+    position = apply_geometry_scale(position, parameters.geometry_scale);
+
+    // Exact original branch: rlwinm isolates option mask 0x20, cmpwi cr1,0,0
+    // sets CR1.EQ only when the bit is clear, and bf 6 enters 0x0010AB3C when
+    // CR1.EQ is false. Therefore +0x28 is applied when bit 0x20 is set.
+    if ((parameters.original_options & 0x20u) != 0u) {
+        position.y += parameters.geometry_y_offset;
     }
+
     return position;
 }
 
