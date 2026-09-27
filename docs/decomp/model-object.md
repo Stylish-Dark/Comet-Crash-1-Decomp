@@ -127,9 +127,10 @@ indices)`:
 | `+0x10` | material subobject | passed to the material binding helper |
 
 This cleanly recovers the first 0x10 bytes of the opaque submesh record as a
-normal native `SubmeshDrawRange`. The renderer also consumes fields at
-`+0x68/+0x6C/+0x70/+0x74` on an alternate path, but their exact semantics are
-not yet strong enough to name.
+normal native `SubmeshDrawRange`. The alternate tail at `+0x64..+0x74` is now separately recovered as transient
+expanded batching state: enable byte, batch instance count, packed 32-byte
+vertex stream, u32 index stream and per-object `objInfo` vec4 stream. See
+`docs/decomp/submesh-expanded-batch.md`.
 
 ## Fields not promoted yet
 
@@ -146,7 +147,8 @@ final semantic effect still needs to be traced.
 Continue through the loader after geometry collapse to recover:
 
 - how OBJ position/texcoord/normal source arrays are normalized;
-- exact semantics of the alternate submesh path at `+0x68..+0x74`;
+- the exact producer-side transform that fills `position_tx`, `normal_ty`,
+  and `objInfo` in the expanded-batch streams;
 - the meaning of `+0x28/+0x2C`;
 - material texture construction from `map_Kd`, `map_Ks`, `bump` and
   `cube` MTL directives.
