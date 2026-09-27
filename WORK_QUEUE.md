@@ -36,12 +36,13 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Correct the shader-helper boundary: `0x00105088` operates on the material subobject at `submesh+0x10`, not the root model.
 - [x] Recover material diffuse/specular/bump/preassigned-shader fields and the default-shader option-mask decision tree.
 - [x] Recover indexed submesh draw range `+0x00..+0x0C`: first index, index count, minimum vertex, maximum vertex.
-- Recover the alternate submesh fields at `+0x68..+0x74`.
+- [x] Recover alternate transient batch tail `+0x64..+0x74`: enable flag, instance count, packed 32-byte vertex stream, u32 index stream and per-object `objInfo` stream.
 - [x] Recover loader f1 as geometry scale and f2/model `+0x2C` as signed bounding-radius scale/result.
 - [x] Recover model `+0x28` as the optional OBJ vertex Y offset, enabled by legacy option bit `0x20` after geometry scaling.
 - [x] Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`: material resource slots +0x38/+0x3C/+0x40/+0x44 and separate 2D/cube loader paths.
 - [x] Recover MTL scalar/color directives: Ka ambient RGB, Kd diffuse RGB, Ks specular RGB, and Ns scaled specular exponent with exact 0.128000006 multiplier.
-- Recover remaining material fields/gaps and the alternate submesh path.
+- Recover the producer-side transform that fills `position_tx`, `normal_ty`, and `objInfo`; determine whether the small active SPU is the producer.
+- Recover remaining material gaps only when an independent use/write site supports a name.
 - Success: replace the opaque 0x78-byte submesh/material record and remaining model provenance fields with typed native structures.
 
 [ ] **Build the root game-state type map**
