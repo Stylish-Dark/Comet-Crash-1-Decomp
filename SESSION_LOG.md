@@ -438,12 +438,19 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native geometry scaling / signed-radius computation helpers plus exact PPU evidence documentation and smoke tests.
 - Remaining unresolved root-model field in this area is `+0x28`; the loader conditionally adds it to one parsed position component under an option bit and needs one more semantic pass before naming.
 
-## 2026-09-27 — Root-model +0x28 recovered as conditional vertex Y offset
+## 2026-09-27 — Model Y-offset and transient SPU batch path recovered
 
-- Identified the exact literal OBJ `v` parse branch by its single-character `0x76 ('v')` test.
-- The parser writes scaled x/y/z first, then masks legacy model option bit `0x20` at `0x00107624`.
-- When that bit is set, branch `0x0010AB3C` addresses the second position component (temporary vertex start +4), loads model `+0x28`, and adds it to Y.
-- Promoted model `+0x28` to `vertex_y_offset` and preserved the controlling flag as numeric legacy bit `0x20` rather than inventing an enum name.
-- Added native `apply_optional_vertex_y_offset()`, exact-address documentation and regression/smoke coverage.
-- With `+0x28` and signed bounding radius `+0x2C` resolved, the top-level model geometry/parameter block through `+0x2C` is now semantically named. Next target is the alternate 0x78-byte submesh batching path at `+0x68..+0x74`.
+- Validated the newly available original NPEB00142 game copy against the canonical exact-title input. The decrypted EBOOT reproduces SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`, so the shipped asset tree can now be used directly as decompilation evidence without committing proprietary bytes.
+- Resolved root-model `+0x28`: loader `0x00107624` isolates option mask `0x20`; when set, branch `0x00107630 -> 0x0010AB3C` adds `model+0x28` to the already-scaled OBJ Y component. Native name: `geometry_y_offset`; descriptive option constant: `kModelOptionApplyGeometryYOffset`.
+- Recovered the previously opaque submesh tail through batch preparation `0x000FEFB0` and renderer `0x00100750`:
+  - `+0x64` byte-sized batch/SPU-path gate;
+  - `+0x68` per-frame batched instance count;
+  - `+0x6C` generated 32-byte-stride batched vertex stream;
+  - `+0x70` generated u32 batched index stream;
+  - `+0x74` generated 16-byte-per-instance `objInfo` stream.
+- Exact output sizes are `instances * model_vertices * 32`, `instances * submesh_indices * 4`, and `instances * 16`.
+- Renderer draw expansion is `end = instances*model_vertices - 1`, `count = instances*submesh_indices`, with `GL_UNSIGNED_INT` batched indices.
+- Original shipped `*_spu.vpo` assets independently contain `position_tx/POSITION`, `normal_ty/TEXCOORD0`, and `objInfo/TEXCOORD1`; renderer lookups at `0x00100810` and `0x001008E8` tie those names to the recovered streams.
+- Added native batch-layout/count metadata only. The final PC renderer should express this as native instance data where behavior allows, rather than reimplementing the PS3 SPU expansion path.
+- Current model-loader gap is now narrow: material offsets `+0x0C/+0x1C/+0x2C/+0x34` and exact OBJ source-index normalization/deduplication.
 
