@@ -167,12 +167,24 @@ A string-like member beginning at model `+0x34` still contains the source path
 and remains represented as an ordinary native path/string rather than a fixed
 PS3 STL layout.
 
+## Material block completion
+
+The former material gaps are now resolved as well:
+
+- `+0x0C/+0x1C/+0x2C` are the zero-initialized W lanes of the ambient,
+  diffuse, and specular vec4 shader inputs;
+- `+0x34` is the integer/boolean `useTeamColor` field derived from a
+  `newmtl` name beginning with `team`.
+
+See `docs/decomp/material-properties.md` for the exact initialization,
+renderer parameter names, and MTL-name stores.
+
 ## Next boundary
 
 The 0x78-byte submesh now has its static indexed range, material block, and
-transient batch tail structurally identified. Remaining work should focus on:
+transient batch tail structurally identified. Remaining model-parser work should
+focus on:
 
-- the still-unnamed material gaps at `+0x0C/+0x1C/+0x2C/+0x34`;
 - exact OBJ source-index normalization/deduplication semantics;
 - replacing the PS3 expanded SPU batch path with behavior-equivalent native
   instance data rather than reproducing SPU execution.
