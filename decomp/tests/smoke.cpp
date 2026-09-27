@@ -6,6 +6,7 @@
 #include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
 #include "comet/model_load_parameters.hpp"
+#include "comet/model_batching.hpp"
 
 #include <array>
 #include <cassert>
@@ -15,17 +16,39 @@ using namespace comet::decomp;
 
 int main() {
     {
+        constexpr auto batch =
+            batched_stream_byte_counts(3, 100, 60);
+        static_assert(batch.vertex_bytes == 9600);
+        static_assert(batch.index_bytes == 720);
+        static_assert(batch.object_info_bytes == 48);
+
+        constexpr auto draw =
+            batched_draw_counts(3, 100, 60);
+        static_assert(draw.max_vertex == 299);
+        static_assert(draw.index_count == 180);
+
+        constexpr auto layout = batched_vertex_layout();
+        static_assert(layout.stride == 0x20);
+        static_assert(layout.primary_vec4_offset == 0x00);
+        static_assert(layout.normal_ty_vec4_offset == 0x10);
+    }
+
+    {
         const ModelPosition raw{1.0f, 2.0f, -3.0f};
         const auto scaled = apply_geometry_scale(raw, 2.0f);
         assert(scaled.x == 2.0f);
         assert(scaled.y == 4.0f);
         assert(scaled.z == -6.0f);
 
-        const auto shifted = apply_optional_vertex_y_offset(
-            scaled, kLegacyModelOptionApplyVertexYOffset, 1.25f);
-        assert(shifted.x == 2.0f);
-        assert(shifted.y == 5.25f);
-        assert(shifted.z == -6.0f);
+        ModelLoadParameters transformed_params{};
+        transformed_params.geometry_scale = 2.0f;
+        transformed_params.geometry_y_offset = 5.0f;
+        transformed_params.original_options = kModelOptionApplyGeometryYOffset;
+        const auto transformed =
+            transform_imported_position(raw, transformed_params);
+        assert(transformed.x == 2.0f);
+        assert(transformed.y == 9.0f);
+        assert(transformed.z == -6.0f);
 
         const std::array<ModelPosition, 2> positions{{
             {3.0f, 4.0f, 0.0f},
