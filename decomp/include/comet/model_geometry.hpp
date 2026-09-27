@@ -20,7 +20,7 @@ struct LegacyModelGeometryOffsets {
     static constexpr std::uint32_t indices = 0x1C;
     static constexpr std::uint32_t full_vertex_buffer = 0x20;
     static constexpr std::uint32_t compact_vertex_buffer = 0x24;
-    static constexpr std::uint32_t vertex_y_offset = 0x28;
+    static constexpr std::uint32_t geometry_y_offset = 0x28;
     static constexpr std::uint32_t signed_bounding_radius = 0x2C;
 };
 
@@ -31,9 +31,9 @@ inline constexpr std::size_t kLegacyObjFaceReferenceStride = 0x0C;
 inline constexpr std::size_t kLegacyIndexElementSize = 0x02;
 inline constexpr std::size_t kLegacyMaterialSubobjectOffset = 0x10;
 
-// PPU 0x00107624 masks option bit 0x20. When set, the OBJ 'v' parser adds
-// model+0x28 to the second parsed position component (Y) before radius work.
-inline constexpr std::uint32_t kLegacyModelOptionApplyVertexYOffset = 0x20;
+// PPU 0x00107624 tests this exact option bit before adding model+0x28 to
+// the already-scaled OBJ vertex Y component at 0x0010AB40.
+inline constexpr std::uint32_t kModelOptionApplyGeometryYOffset = 0x20;
 
 // Proven by renderer PPU 0x00100750 calling the draw-range wrapper with:
 //   first-index * 2, index-count, min-vertex, max-vertex.
