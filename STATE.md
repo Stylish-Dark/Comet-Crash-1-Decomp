@@ -72,7 +72,19 @@ Model geometry recovery now adds:
 
 A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are now recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Arena manifest fields are now named `geometry_scale` and `signed_radius_scale`. Model `+0x28` is now recovered as a vertex Y offset: in the literal OBJ `v` parser, legacy option bit `0x20` adds this field to the second (Y) position component after geometry scaling and before bounding-radius accumulation. The root-model geometry/load-parameter block from `+0x04` through `+0x2C` is therefore semantically named. Next: recover the alternate submesh batching path at `+0x68..+0x74`.
+Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are now recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Arena manifest fields are now named `geometry_scale` and `signed_radius_scale`. Model `+0x28` is now recovered as a vertex Y offset: in the literal OBJ `v` parser, legacy option bit `0x20` adds this field to the second (Y) position component after geometry scaling and before bounding-radius accumulation. The root-model geometry/load-parameter block from `+0x04` through `+0x2C` is therefore semantically named. The alternate submesh path is now also structurally recovered.  Submesh
+`+0x64` gates transient expanded batching; `+0x68` is a per-frame batch
+instance count; `+0x6C` points at an expanded 32-byte vertex stream;
+`+0x70` points at a u32 index stream; and `+0x74` points at one 16-byte
+`objInfo` vec4 per batched object.  The original vertex programs independently
+retain the parameter names `position_tx`, `normal_ty`, and `objInfo`.
+Writer `0x000FEFB0` allocates exactly `N*V*32`, `N*I*4`, and `N*16`
+bytes for those streams, renderer `0x00100750` issues one multiplied u32-index
+draw, and `0x000FF594` clears the batch counts after the render cycle.
+
+Current target: recover the producer-side transform behind the 256-byte work
+descriptors built through `0x00138248`, and prove or disprove that the small
+active embedded SPU is the batch producer.
 
 ## Legacy static-recomp track
 
@@ -91,6 +103,8 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `tools/extract_builtin_level_maps.py`
 - `decomp/include/comet/model_geometry.hpp`
 - `decomp/include/comet/model_load_parameters.hpp`
+- `decomp/include/comet/submesh_batch.hpp`
+- `docs/decomp/submesh-expanded-batch.md`
 - `docs/decomp/model-y-offset.md`
 - `decomp/include/comet/material_shader_policy.hpp`
 - `decomp/include/comet/material_textures.hpp`
