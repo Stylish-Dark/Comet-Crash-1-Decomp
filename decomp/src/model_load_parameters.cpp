@@ -13,6 +13,21 @@ ModelPosition apply_geometry_scale(
     return position;
 }
 
+ModelPosition transform_imported_position(
+    ModelPosition position,
+    const ModelLoadParameters& parameters) {
+    position = apply_geometry_scale(position, parameters.geometry_scale);
+
+    // Exact original branch: rlwinm tests option mask 0x20, bf 6 enters
+    // 0x0010AB3C when the selected condition is false. In that path +0x28 is
+    // added to the scaled Y component.
+    if ((parameters.original_options & 0x20u) == 0u) {
+        position.y += parameters.geometry_y_offset;
+    }
+
+    return position;
+}
+
 float compute_signed_bounding_radius(
     std::span<const ModelPosition> scaled_positions,
     float signed_radius_scale) {
