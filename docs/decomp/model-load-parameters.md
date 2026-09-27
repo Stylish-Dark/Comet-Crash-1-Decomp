@@ -72,12 +72,54 @@ input; their sign is intentionally preserved by the original loader. The
 gameplay meaning of a negative radius is a later cross-reference question, but
 the loader mathematics itself is now exact.
 
+## model +0x28 — geometry Y offset
+
+The remaining adjacent root-model float is now resolved from the same OBJ
+vertex-import block.
+
+After x/y/z have been multiplied by `geometry_scale`, the loader reads the
+model option word and isolates mask **`0x20`**:
+
+```text
+0x0010761C  load model+0x00 options
+0x00107624  isolate option mask 0x20
+0x00107628  compare masked value with zero in CR1
+0x00107630  bf 6 -> 0x0010AB3C when CR1.EQ is false
+```
+
+CR bit 6 is CR1.EQ, so the branch is taken when the masked value is nonzero:
+**option bit 0x20 is set**.
+
+The target then reads `model+0x28` and adds it to the already-scaled Y
+component:
+
+```text
+0x0010AB40  load model+0x28
+0x0010AB44  address current vertex Y component
+0x0010AB4C  load scaled Y
+0x0010AB50  scaled Y + model+0x28
+0x0010AB54  store adjusted Y
+```
+
+Therefore:
+
+- model `+0x28` = **geometry Y offset**;
+- model option mask `0x20` = **apply geometry Y offset during OBJ import**.
+
+The original enum/flag identifier remains unknown, so the native code exposes
+the descriptive constant `kModelOptionApplyGeometryYOffset` rather than
+inventing an original source name.
+
 ## Native representation
+
 
 - `ArenaModelAssetSpec::geometry_scale`
 - `ArenaModelAssetSpec::signed_radius_scale`
 - `ModelLoadParameters`
 - `apply_geometry_scale()`
 - `compute_signed_bounding_radius()`
+- `ModelLoadParameters::geometry_y_offset`
+- `kModelOptionApplyGeometryYOffset`
+- `transform_imported_position()`
 
 The native port can therefore stop carrying these as anonymous ABI arguments.
