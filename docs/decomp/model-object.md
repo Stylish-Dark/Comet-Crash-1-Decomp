@@ -126,30 +126,56 @@ indices)`:
 | `+0x0C` | maximum referenced vertex | passed as draw-range end |
 | `+0x10` | material subobject | passed to the material binding helper |
 
-This cleanly recovers the first 0x10 bytes of the opaque submesh record as a
-normal native `SubmeshDrawRange`. The renderer also consumes fields at
-`+0x68/+0x6C/+0x70/+0x74` on an alternate path, but their exact semantics are
-not yet strong enough to name.
+This cleanly recovers the first 0x10 bytes of the submesh record as a normal
+native `SubmeshDrawRange`.
 
-## Fields not promoted yet
+## Batched/SPU path at +0x64..+0x74
 
-The loader also touches model `+0x28`, `+0x2C` and a string-like member
-beginning at `+0x34`. Their exact native meanings are not yet strong enough to
-name.
+The tail of the same 0x78-byte record is now recovered from batch-preparation
+function `0x000FEFB0`, renderer `0x00100750`, and the shipped
+`*_spu.vpo` shaders:
 
-The second floating loader argument influences `+0x2C`, including a sign
-inversion path. The first floating argument is retained by the loader but its
-final semantic effect still needs to be traced.
+| submesh offset | recovered meaning |
+| ---: | --- |
+| `+0x64` | byte-sized batch/SPU-path enable gate |
+| `+0x68` | per-frame batched instance count |
+| `+0x6C` | generated 32-byte-stride batched vertex stream |
+| `+0x70` | generated u32 batched index stream |
+| `+0x74` | generated 16-byte-per-instance `objInfo` stream |
+
+The renderer's expanded draw uses
+`instance_count * model_vertex_count` vertices and
+`instance_count * submesh_index_count` indices. The batch coordinator resets
+`+0x68` after the frame's prepared work is consumed.
+
+See `docs/decomp/model-batching.md` for the exact preparation/draw anchors and
+the original `normal_ty` / `objInfo` shader metadata.
+
+## Additional promoted model fields
+
+The remaining adjacent loader floats are no longer opaque:
+
+| model offset | recovered meaning |
+| ---: | --- |
+| `+0x28` | geometry Y offset, applied after geometry scale when option mask `0x20` is set |
+| `+0x2C` | signed bounding radius |
+
+The loader's two float arguments are now `geometry_scale` and
+`signed_radius_scale`; see `docs/decomp/model-load-parameters.md`.
+
+A string-like member beginning at model `+0x34` still contains the source path
+and remains represented as an ordinary native path/string rather than a fixed
+PS3 STL layout.
 
 ## Next boundary
 
-Continue through the loader after geometry collapse to recover:
+The 0x78-byte submesh now has its static indexed range, material block, and
+transient batch tail structurally identified. Remaining work should focus on:
 
-- how OBJ position/texcoord/normal source arrays are normalized;
-- exact semantics of the alternate submesh path at `+0x68..+0x74`;
-- the meaning of `+0x28/+0x2C`;
-- material texture construction from `map_Kd`, `map_Ks`, `bump` and
-  `cube` MTL directives.
+- the still-unnamed material gaps at `+0x0C/+0x1C/+0x2C/+0x34`;
+- exact OBJ source-index normalization/deduplication semantics;
+- replacing the PS3 expanded SPU batch path with behavior-equivalent native
+  instance data rather than reproducing SPU execution.
 
-The goal is to replace the remaining 0x78-byte opaque submesh record with a
-native typed `Submesh + Material` representation.
+The goal remains a normal typed native `Submesh + Material` representation,
+with PS3 offsets retained only as reversing provenance.
