@@ -134,13 +134,7 @@ vertex stream, u32 index stream and per-object `objInfo` vec4 stream. See
 
 ## Fields not promoted yet
 
-The loader also touches model `+0x28`, `+0x2C` and a string-like member
-beginning at `+0x34`. Their exact native meanings are not yet strong enough to
-name.
-
-The second floating loader argument influences `+0x2C`, including a sign
-inversion path. The first floating argument is retained by the loader but its
-final semantic effect still needs to be traced.
+The top-level model geometry/load-parameter block through `+0x2C` is now typed: `+0x28` is the optional vertex Y offset and `+0x2C` is the signed bounding radius. Within each material subobject, the former `+0x0C/+0x1C/+0x2C` gaps are the zero W lanes of the ambient/diffuse/specular vec4 inputs, while material `+0x34` is `useTeamColor` from the recovered `newmtl team*` policy.
 
 ## Next boundary
 
