@@ -18,10 +18,10 @@ ModelPosition transform_imported_position(
     const ModelLoadParameters& parameters) {
     position = apply_geometry_scale(position, parameters.geometry_scale);
 
-    // Exact original branch: rlwinm tests option mask 0x20, bf 6 enters
-    // 0x0010AB3C when the selected condition is false. In that path +0x28 is
-    // added to the scaled Y component.
-    if ((parameters.original_options & 0x20u) == 0u) {
+    // Exact original branch: rlwinm isolates option mask 0x20, cmpwi cr1,0,0
+    // sets CR1.EQ only when the bit is clear, and bf 6 enters 0x0010AB3C when
+    // CR1.EQ is false. Therefore +0x28 is applied when bit 0x20 is set.
+    if ((parameters.original_options & 0x20u) != 0u) {
         position.y += parameters.geometry_y_offset;
     }
 
