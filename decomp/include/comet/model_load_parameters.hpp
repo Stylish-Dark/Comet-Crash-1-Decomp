@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <span>
 
 namespace comet::decomp {
@@ -19,11 +20,24 @@ struct ModelLoadParameters {
     // position's radial distance, keeps the maximum at model+0x2C, then restores
     // the sign of f2 at finalization.
     float signed_radius_scale = 0.0f;
+
+    // model+0x28. Applied to the scaled OBJ Y component only when option
+    // bit 0x20 is clear in the original branch convention described below.
+    float geometry_y_offset = 0.0f;
+
+    std::uint32_t original_options = 0;
 };
 
 ModelPosition apply_geometry_scale(
     ModelPosition position,
     float geometry_scale);
+
+// Exact import transform around 0x00107580..0x0010762C / 0x0010AB3C.
+// PPC instruction 0x00107624 tests model option mask 0x20; when that bit is
+// clear, the loader adds model+0x28 to the already-scaled Y coordinate.
+ModelPosition transform_imported_position(
+    ModelPosition position,
+    const ModelLoadParameters& parameters);
 
 // Semantic replacement for the model+0x2C accumulation/finalization performed
 // by PPU 0x00107684..0x001076D4 / 0x00108460..0x00108464 / 0x00105D24..0x00105D54.
