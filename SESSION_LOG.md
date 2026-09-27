@@ -454,3 +454,13 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Added native batch-layout/count metadata only. The final PC renderer should express this as native instance data where behavior allows, rather than reimplementing the PS3 SPU expansion path.
 - Current model-loader gap is now narrow: material offsets `+0x0C/+0x1C/+0x2C/+0x34` and exact OBJ source-index normalization/deduplication.
 
+## 2026-09-27 — Remaining material gaps recovered
+
+- Used the exact material creation path and material binder to close the last four anonymous fields.
+- New submesh records zero the material region at `0x00107150..0x001071B4`. Ka/Kd/Ks later write only three floats each.
+- Binder `0x0010000C` looks up `colorAmbient`, `colorDiffuse`, and `colorSpecular` and uploads material `+0x00`, `+0x10`, and `+0x20` through vec4 parameter paths. Therefore `+0x0C/+0x1C/+0x2C` are the fourth/W lanes of those three vec4s and remain zero on the recovered MTL path. They are deliberately not called alpha.
+- Binder `0x00100084` looks up exact shader parameter `useTeamColor`, loads material `+0x34`, converts the integer to float and uploads it.
+- The `newmtl` parser compares the material-name prefix against literal `team`; match stores 1 to `+0x34` at `0x001097B8`, non-match stores 0 at `0x0010A944`.
+- The original asset corpus independently contains `newmtl team` and `newmtl team.light`, matching that policy.
+- Native `MaterialProperties` now represents three vec4 colors, scaled specular exponent, and `use_team_color`; no anonymous fields remain in the recovered material block through shader pointer `+0x48`.
+
