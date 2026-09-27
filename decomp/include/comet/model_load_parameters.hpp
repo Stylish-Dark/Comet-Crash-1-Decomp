@@ -21,8 +21,8 @@ struct ModelLoadParameters {
     // the sign of f2 at finalization.
     float signed_radius_scale = 0.0f;
 
-    // model+0x28. Applied to the scaled OBJ Y component only when option
-    // bit 0x20 is clear in the original branch convention described below.
+    // model+0x28. Applied to the scaled OBJ Y component when option bit 0x20
+    // is set in the original model option word.
     float geometry_y_offset = 0.0f;
 
     std::uint32_t original_options = 0;
@@ -34,7 +34,7 @@ ModelPosition apply_geometry_scale(
 
 // Exact import transform around 0x00107580..0x0010762C / 0x0010AB3C.
 // PPC instruction 0x00107624 tests model option mask 0x20; when that bit is
-// clear, the loader adds model+0x28 to the already-scaled Y coordinate.
+// set, bf 6 branches to 0x0010AB3C and adds model+0x28 to scaled Y.
 ModelPosition transform_imported_position(
     ModelPosition position,
     const ModelLoadParameters& parameters);
