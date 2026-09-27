@@ -41,7 +41,8 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Recover model `+0x28` as geometry Y offset applied after geometry scale when option mask `0x20` is set.
 - [x] Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`: material resource slots +0x38/+0x3C/+0x40/+0x44 and separate 2D/cube loader paths.
 - [x] Recover MTL scalar/color directives: Ka ambient RGB, Kd diffuse RGB, Ks specular RGB, and Ns scaled specular exponent with exact 0.128000006 multiplier.
-- Recover remaining material gaps `+0x0C/+0x1C/+0x2C/+0x34` and exact OBJ source-index normalization/deduplication semantics.
+- [x] Recover remaining material gaps: `+0x0C/+0x1C/+0x2C` are zero W lanes for Ka/Kd/Ks vec4 shader inputs; `+0x34` is `useTeamColor` from the `newmtl team*` prefix policy.
+- Recover exact OBJ source-index normalization/deduplication semantics.
 - Success: replace the opaque 0x78-byte submesh/material record and remaining model provenance fields with typed native structures.
 
 [ ] **Build the root game-state type map**
