@@ -20,6 +20,8 @@ class ModelGeometryRecoveryTests(unittest.TestCase):
             "indices = 0x1C",
             "full_vertex_buffer = 0x20",
             "compact_vertex_buffer = 0x24",
+            "geometry_y_offset = 0x28",
+            "signed_bounding_radius = 0x2C",
         )
         for token in expected:
             self.assertIn(token, text)
@@ -53,6 +55,10 @@ class ModelGeometryRecoveryTests(unittest.TestCase):
         self.assertIn("does **not** receive the root model object", text)
         self.assertIn("submesh + 0x10", text)
         self.assertIn("material_vector_end - 0x68", text)
+
+    def test_geometry_y_offset_option_is_pinned(self):
+        text = HEADER.read_text(encoding="utf-8")
+        self.assertIn("kModelOptionApplyGeometryYOffset = 0x20", text)
 
     def test_native_header_has_no_ps3_runtime_surface(self):
         text = HEADER.read_text(encoding="utf-8")
