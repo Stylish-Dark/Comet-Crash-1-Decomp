@@ -64,6 +64,15 @@ int main() {
         assert(kd->legacy_material_offset == 0x10);
         assert(kd->component_count == 3);
 
+        MaterialProperties properties{};
+        assert(properties.ambient.w == 0.0f);
+        assert(properties.diffuse.w == 0.0f);
+        assert(properties.specular.w == 0.0f);
+        assert(!properties.use_team_color);
+        assert(material_name_uses_team_color("team"));
+        assert(material_name_uses_team_color("team.light"));
+        assert(!material_name_uses_team_color("tesla"));
+
         const auto* ns = classify_mtl_property_directive("Ns");
         assert(ns != nullptr);
         assert(ns->semantic == MtlPropertySemantic::SpecularExponent);
