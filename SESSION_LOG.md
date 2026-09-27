@@ -464,3 +464,12 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - The original asset corpus independently contains `newmtl team` and `newmtl team.light`, matching that policy.
 - Native `MaterialProperties` now represents three vec4 colors, scaled specular exponent, and `use_team_color`; no anonymous fields remain in the recovered material block through shader pointer `+0x48`.
 
+## 2026-09-27 — Material block completed through useTeamColor
+
+- Closed the four remaining anonymous material fields using the exact record initialization, MTL parser and renderer binder.
+- New 0x78-byte submesh records zero the material region at `0x00107150..0x001071B4`. Ka/Kd/Ks write only three floats each.
+- Binder `0x0010000C` looks up `colorAmbient`, `colorDiffuse`, and `colorSpecular` and uploads material `+0x00`, `+0x10`, and `+0x20` through vec4 parameter calls. Therefore `+0x0C/+0x1C/+0x2C` are the fourth/W lanes of those vectors and remain zero on the recovered path; no alpha semantics are assumed.
+- The same binder looks up exact shader parameter `useTeamColor`, loads material `+0x34`, converts the integer to float and uploads it.
+- `newmtl` parsing compares the material-name prefix to literal `team`; a match stores 1 at `0x001097B8`, otherwise 0 at `0x0010A944`. Shipped assets contain both `newmtl team` and `newmtl team.light`.
+- Native `MaterialProperties` now consists of ambient/diffuse/specular vec4s, scaled specular exponent, `use_team_color`, texture resources and shader state. The recovered material region through `+0x48` has no anonymous gaps left.
+
