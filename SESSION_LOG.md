@@ -466,3 +466,16 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Writer builds one 256-byte work descriptor per chunk and calls helper `0x00138248`. This looks SPU/SPURS-facing, but the exact link to the previously unidentified small active SPU remains intentionally unclaimed until producer dispatch is traced.
 - Added native `ExpandedSubmeshBatch` metadata/count formulas, documentation, regression tests, and C++ smoke coverage.
 
+
+
+## 2026-09-27 — Expanded batching promoted and material layout completed
+
+- Fast-forwarded `main` to the previously completed `decomp-submesh-expanded-batch` work instead of re-deriving it: submesh `+0x64..+0x74` is now typed as the transient expanded-batch enable/count/vertex/u32-index/`objInfo` state.
+- Preserved the stronger expanded-batch representation on main and deliberately did not merge the older divergent `model_batching.hpp` implementation.
+- Cross-checked the older `decomp-model-batch-yoffset` research branch and promoted only independently supported material findings:
+  - material `+0x0C/+0x1C/+0x2C` are the zero-initialized W lanes of ambient/diffuse/specular vec4 shader inputs;
+  - material `+0x34` is the integer/boolean `useTeamColor` input;
+  - the MTL `newmtl` path enables it for the recovered four-character `team` prefix policy, including shipped names such as `team.light`.
+- Updated the native material type to three vec4 colors plus `use_team_color`, added the exact legacy offsets and `material_name_uses_team_color()`, and extended regression/smoke coverage.
+- Updated `WORK_QUEUE.md`, `STATE.md`, `docs/decomp/material-properties.md`, and `docs/decomp/model-object.md` so no stale “unknown material gaps” remain.
+- Current boundary: recover the producer transform that fills `position_tx`, `normal_ty`, and `objInfo` / establish the small-SPU relationship, plus exact OBJ source-index normalization and deduplication semantics.
