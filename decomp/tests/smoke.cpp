@@ -6,6 +6,7 @@
 #include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
 #include "comet/model_load_parameters.hpp"
+#include "comet/submesh_batch.hpp"
 
 #include <array>
 #include <cassert>
@@ -14,6 +15,23 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        ExpandedSubmeshBatch batch{};
+        batch.counts.instance_count = 3;
+        batch.counts.model_vertex_count = 100;
+        batch.counts.submesh_index_count = 150;
+
+        assert(batch.counts.expanded_vertex_count() == 300);
+        assert(batch.counts.expanded_index_count() == 450);
+        assert(batch.counts.packed_vertex_bytes() == 300 * 32);
+        assert(batch.counts.index_bytes() == 450 * 4);
+        assert(batch.counts.object_info_bytes() == 3 * 16);
+        assert(batch.draw_index_count() == 450);
+        assert(batch.draw_max_vertex() == 299);
+        assert(batch.vertex_layout.position_tx_offset == 0);
+        assert(batch.vertex_layout.normal_ty_offset == 16);
+    }
+
     {
         const ModelPosition raw{1.0f, 2.0f, -3.0f};
         const auto scaled = apply_geometry_scale(raw, 2.0f);
