@@ -72,7 +72,7 @@ Model geometry recovery now adds:
 
 A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are now recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Arena manifest fields are now named `geometry_scale` and `signed_radius_scale`. Next: recover the alternate submesh path at `+0x68..+0x74` and the remaining root-model field `+0x28`.
+Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Model `+0x28` is now also proven as a geometry Y offset; option mask `0x20` applies it to the scaled Y component during OBJ import. The old alternate submesh tail is no longer opaque either: `+0x64` gates a transient PS3/SPU batch path, `+0x68` is the per-frame batched instance count, `+0x6C` is a generated 32-byte vertex stream, `+0x70` a generated u32 index stream, and `+0x74` a 16-byte-per-instance `objInfo` stream. The shipped `_spu.vpo` assets independently expose the corresponding `normal_ty` and `objInfo` inputs. Native code records these semantics without reproducing SPU execution. Next: finish the four remaining material gaps and exact OBJ source-index normalization/deduplication.
 
 ## Legacy static-recomp track
 
@@ -91,10 +91,12 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `tools/extract_builtin_level_maps.py`
 - `decomp/include/comet/model_geometry.hpp`
 - `decomp/include/comet/model_load_parameters.hpp`
+- `decomp/include/comet/model_batching.hpp`
 - `decomp/include/comet/material_shader_policy.hpp`
 - `decomp/include/comet/material_textures.hpp`
 - `decomp/include/comet/material_properties.hpp`
 - `docs/decomp/model-object.md`
+- `docs/decomp/model-batching.md`
 - `WORK_QUEUE.md`
 - `PROJECT_PLAN.md`
 - `DECISIONS.md`
