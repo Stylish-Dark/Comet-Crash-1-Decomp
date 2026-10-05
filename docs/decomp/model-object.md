@@ -57,19 +57,29 @@ This strongly ties the alternate path to geometry without a normal stream.
 That is now expressed directly by `full_vertex_layout()` and
 `compact_vertex_layout()`.
 
-## OBJ face-reference collapse
+## OBJ source references and vertex splitting
 
-During parsing, the loader maintains a temporary vector with an exact
-**0x0C-byte stride**. Its count becomes model `+0x0C`.
+The temporary face-reference vector has exact 0x0C-byte records in internal
+`position / normal / texcoord` order. The parser accepts only three shipped
+face shapes: `v//vn` triangles, full `v/vt/vn` triangles, and full
+`v/vt/vn` quads. Every present decimal source index is converted by exactly
+`parsed_index - 1`; the original loader does not implement Wavefront negative
+relative-index normalization.
 
-The subsequent deduplication pass treats each 12-byte element as the source
-reference used to find/build one unique interleaved vertex and writes one
-16-bit final index into model `+0x1C`.
+Quads are triangulated as `0,1,2` and `2,3,0`. Missing texcoords use
+`-1`.
 
-That structure matches the OBJ `v/vt/vn` face-reference triplet shape. The
-native parser should eventually represent it as a typed source-index triplet,
-but the exact signed/one-based normalization rules remain to be recovered
-before freezing the public type.
+The later collapse is not a global tuple-deduplication pass. One base vertex is
+created per OBJ position. The first face corner claims that base vertex's
+normal/UV slots. A later corner reuses the base only when the relevant
+attributes match within the exact ~`0.0001f` tolerance; otherwise the loader
+appends a fresh split vertex. Previously appended split vertices are not
+searched, so repeated mismatching corners can create repeated duplicates.
+
+The final pass writes the rewritten reference index as a u16 into model
+`+0x1C`. Native typed behavior is in
+`model_obj_semantics.hpp/.cpp`; exact parser anchors and a full shipped-corpus
+audit are in `docs/decomp/obj-source-indexing.md`.
 
 ## Submesh records
 
@@ -98,12 +108,18 @@ Within the material subobject, helper `0x00105088` uses:
 | `+0x3C` | `+0x4C` | specular texture present |
 | `+0x40` | `+0x50` | bump/normal texture resource (`bump`) |
 | `+0x44` | `+0x54` | environment/cube texture resource (`cube`) |
-| `+0x48` | `+0x58` | preassigned shader; nonzero suppresses default selection |
+| `+0x48` | `+0x58` | standard `.vpo` vertex program; nonzero suppresses default selection |
+| `+0x4C` | `+0x5C` | batched `_spu.vpo` vertex program |
+| `+0x50` | `+0x60` | `.fpo` fragment program |
+| `+0x54` | `+0x64` | legacy batched-path availability byte |
 
 The MTL loader independently stores `map_Kd/map_Ks/bump/cube` resources into
-material `+0x38/+0x3C/+0x40/+0x44`. The renderer also reads submesh
-`+0x4C/+0x50/+0x58`, matching the recovered material boundary. See
-`docs/decomp/material-textures.md`.
+material `+0x38/+0x3C/+0x40/+0x44`. Program helper `0x00101960` then expands
+the selected shader base into standard `.vpo`, batched `_spu.vpo`, and
+fragment `.fpo` resources at material `+0x48/+0x4C/+0x50`. The renderer
+selects `+0x48` for the ordinary path or `+0x4C` for the batched path and
+always pairs it with `+0x50`. See `docs/decomp/material-textures.md` and
+`docs/decomp/material-programs.md`.
 
 The exact shader decision tree remains unchanged from the previous recovery,
 but it is now correctly exposed as **material** policy:
@@ -131,7 +147,9 @@ native `SubmeshDrawRange`.
 
 ## Batched/SPU path at +0x64..+0x74
 
-The tail of the same 0x78-byte record is now recovered from batch-preparation
+Submesh `+0x64` is set by program helper `0x00101960` from whether the
+batched `_spu.vpo` program at `+0x5C` loaded successfully. The remainder of
+the tail is recovered from batch-preparation
 function `0x000FEFB0`, renderer `0x00100750`, and the shipped
 `*_spu.vpo` shaders:
 
@@ -179,15 +197,19 @@ The former material gaps are now resolved as well:
 See `docs/decomp/material-properties.md` for the exact initialization,
 renderer parameter names, and MTL-name stores.
 
-## Next boundary
+## Native boundary and completion state
 
-The 0x78-byte submesh now has its static indexed range, material block, and
-transient batch tail structurally identified. Remaining model-parser work should
-focus on:
+The meaningful 0x78-byte submesh fields are now structurally accounted for:
+static draw range, full material properties/textures, standard and batched
+vertex programs, fragment program, batched-path availability, and transient
+batch streams. Exact OBJ source-index conversion and vertex-splitting behavior
+are also recovered.
 
-- exact OBJ source-index normalization/deduplication semantics;
-- replacing the PS3 expanded SPU batch path with behavior-equivalent native
-  instance data rather than reproducing SPU execution.
+`decomp/include/comet/model_submesh.hpp` now provides the normal native
+`ModelSubmesh + ModelMaterial` boundary. It intentionally carries semantic
+properties, paths and shader-base/program specifications rather than fixed PS3
+offsets, Cg/PSGL resource pointers or SPU output buffers.
 
-The goal remains a normal typed native `Submesh + Material` representation,
-with PS3 offsets retained only as reversing provenance.
+The legacy SPU-expanded batch implementation remains an oracle only. A PC
+renderer should map the recovered instance semantics to native GPU instancing
+where possible.
