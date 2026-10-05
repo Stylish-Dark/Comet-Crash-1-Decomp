@@ -17,6 +17,7 @@ class RootStateRecoveryTests(unittest.TestCase):
             "provisional_transition_level_id = 0x2D4520",
             "player_count = 0x2D4538",
             "game_mode = 0x2D4560",
+            "settings_state = 0x2D4598",
             "level_map_state = 0x2D6438",
             "kLegacyArenaModelStride = 0x90",
             "kLegacyArenaModelSlotCount = 40",
