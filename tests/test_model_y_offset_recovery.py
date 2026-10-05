@@ -10,15 +10,15 @@ DOC = ROOT / "docs" / "decomp" / "model-y-offset.md"
 class ModelYOffsetRecoveryTests(unittest.TestCase):
     def test_field_and_option_bit_are_pinned(self):
         text = GEOMETRY.read_text(encoding="utf-8")
-        self.assertIn("vertex_y_offset = 0x28", text)
-        self.assertIn("kLegacyModelOptionApplyVertexYOffset = 0x20", text)
+        self.assertIn("geometry_y_offset = 0x28", text)
+        self.assertIn("kModelOptionApplyGeometryYOffset = 0x20", text)
 
     def test_native_helper_adjusts_only_y(self):
         text = PARAMS.read_text(encoding="utf-8")
-        self.assertIn("original_options & kLegacyModelOptionApplyVertexYOffset", text)
-        self.assertIn("position.y += vertex_y_offset", text)
-        self.assertNotIn("position.x += vertex_y_offset", text)
-        self.assertNotIn("position.z += vertex_y_offset", text)
+        self.assertIn("(parameters.original_options & 0x20u) != 0u", text)
+        self.assertIn("position.y += parameters.geometry_y_offset", text)
+        self.assertNotIn("position.x += parameters.geometry_y_offset", text)
+        self.assertNotIn("position.z += parameters.geometry_y_offset", text)
 
     def test_exact_ppu_evidence_is_documented(self):
         text = DOC.read_text(encoding="utf-8")
