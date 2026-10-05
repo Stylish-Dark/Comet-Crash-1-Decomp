@@ -13,13 +13,18 @@ preserving draw behavior.
 
 | submesh offset | recovered meaning |
 | ---: | --- |
-| `+0x64` | byte-sized batch/SPU-path enable gate |
+| `+0x64` | byte-sized batch/SPU-path enable gate, set when the `+0x5C` `_spu.vpo` program loads |
 | `+0x68` | per-frame batched instance count |
 | `+0x6C` | generated batched vertex-stream pointer |
 | `+0x70` | generated batched u32 index-stream pointer |
 | `+0x74` | generated per-instance `objInfo` vec4 stream pointer |
 
-These fields are transient per frame. The coordinator later resets
+`+0x64` is persistent material/program capability state rather than a
+per-frame counter. Program helper `0x00101960` reads material `+0x4C`
+(submesh `+0x5C`) and stores its non-null result as this byte at
+`0x00101F20`.
+
+Fields `+0x68..+0x74` are transient per frame. The coordinator later resets
 `+0x68` to zero after the batched work has been consumed.
 
 ## Batch preparation: PPU `0x000FEFB0`
