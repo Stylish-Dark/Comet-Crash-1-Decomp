@@ -38,7 +38,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current target
 
-**Arena render-target setup and the arena model bootstrap are now represented as native data. Current work advances into the model-object initializer at `0x00105308` to type the recovered 0x90-byte model slots.**
+**The model-object initializer at `0x00105308` is now semantically recovered through OBJ source indexing, vertex splitting, material programs, and the typed native submesh/material boundary. Current work advances outward into the root game-state type map.**
 
 Recovered from `arenaGraphics.cpp`:
 
@@ -72,7 +72,7 @@ Model geometry recovery now adds:
 
 A correction from the previous pass is now pinned in source and documentation: helper `0x00105088..0x00105307` receives the **material subobject at submesh+0x10**, not the root model. Its fields are material-relative `+0x38/+0x3C/+0x40/+0x48`, corresponding to submesh-relative `+0x48/+0x4C/+0x50/+0x58`. The shader decision tree itself was correct and is now exposed as `choose_default_material_shader()`.
 
-Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Model `+0x28` is now also proven as a geometry Y offset; option mask `0x20` applies it to the scaled Y component during OBJ import. The old alternate submesh tail is no longer opaque either: `+0x64` gates a transient PS3/SPU batch path, `+0x68` is the per-frame batched instance count, `+0x6C` is a generated 32-byte vertex stream, `+0x70` a generated u32 index stream, and `+0x74` a 16-byte-per-instance `objInfo` stream. The shipped `_spu.vpo` assets independently expose the corresponding `normal_ty` and `objInfo` inputs. Native code records these semantics without reproducing SPU execution. The four remaining material gaps are now resolved too: `+0x0C/+0x1C/+0x2C` are the zero-initialized W lanes of ambient/diffuse/specular vec4 shader inputs, and `+0x34` is the `useTeamColor` integer/boolean consumed by the surviving shader parameter of that name. The `newmtl` parser sets it for the recovered `team` prefix policy; shipped assets include `team` and `team.light`. Next: recover exact OBJ source-index normalization/deduplication and then move outward from the now-typed model/submesh/material representation.
+Renderer-side indexed drawing proves submesh `+0x00/+0x04/+0x08/+0x0C` as first index, index count, minimum vertex and maximum vertex respectively; first index is multiplied by two for the u16 index-buffer byte offset. MTL parsing now also proves material `+0x38/+0x3C/+0x40/+0x44` as `map_Kd` diffuse, `map_Ks` specular, `bump`, and `cube` texture resources. The first three use one 2D loader path; `cube` uses a distinct cube-texture loader. MTL scalar/color parsing is now also typed: `Ka` writes ambient RGB to material `+0x00..+0x08`, `Kd` diffuse RGB to `+0x10..+0x18`, `Ks` specular RGB to `+0x20..+0x28`, and `Ns` writes `Ns * 0.12800000607967377` to `+0x30`. Unknown gaps `+0x0C/+0x1C/+0x2C/+0x34` remain intentionally unnamed. Both floating model-loader arguments are recovered: `f1` is the literal geometry scale applied to OBJ vertex x/y/z components, while `f2` is a signed bounding-radius scale. Model `+0x2C` accumulates `max(abs(f2) * length(scaled_vertex))` and is negated at finalization when `f2 < 0`. Model `+0x28` is now also proven as a geometry Y offset; option mask `0x20` applies it to the scaled Y component during OBJ import. The old alternate submesh tail is no longer opaque either: `+0x64` gates a transient PS3/SPU batch path, `+0x68` is the per-frame batched instance count, `+0x6C` is a generated 32-byte vertex stream, `+0x70` a generated u32 index stream, and `+0x74` a 16-byte-per-instance `objInfo` stream. The shipped `_spu.vpo` assets independently expose the corresponding `normal_ty` and `objInfo` inputs. Native code records these semantics without reproducing SPU execution. The four former scalar/color gaps are resolved: `+0x0C/+0x1C/+0x2C` are zero W lanes and `+0x34` is `useTeamColor`. Program helper `0x00101960` additionally proves material `+0x48/+0x4C/+0x50` as standard `.vpo`, batched `_spu.vpo`, and `.fpo` resources; `+0x54` is the batched-path availability byte. OBJ parsing accepts only shipped 7/10/13-token face forms, converts every present source index with `parsed-1`, triangulates quads as `0,1,2 / 2,3,0`, and performs base-vertex claiming plus per-corner splitting rather than global tuple deduplication. The exact shipped corpus contains 16,751 faces and no unsupported form. `ModelSubmesh`/`ModelMaterial` now provide the typed native boundary. Next: build the root game-state type map.
 
 ## Legacy static-recomp track
 
@@ -92,11 +92,16 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `decomp/include/comet/model_geometry.hpp`
 - `decomp/include/comet/model_load_parameters.hpp`
 - `decomp/include/comet/model_batching.hpp`
+- `decomp/include/comet/model_obj_semantics.hpp`
+- `decomp/include/comet/model_submesh.hpp`
+- `decomp/include/comet/material_programs.hpp`
 - `decomp/include/comet/material_shader_policy.hpp`
 - `decomp/include/comet/material_textures.hpp`
 - `decomp/include/comet/material_properties.hpp`
 - `docs/decomp/model-object.md`
 - `docs/decomp/model-batching.md`
+- `docs/decomp/obj-source-indexing.md`
+- `docs/decomp/material-programs.md`
 - `WORK_QUEUE.md`
 - `PROJECT_PLAN.md`
 - `DECISIONS.md`
