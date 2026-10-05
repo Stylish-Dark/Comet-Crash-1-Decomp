@@ -473,3 +473,17 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - `newmtl` parsing compares the material-name prefix to literal `team`; a match stores 1 at `0x001097B8`, otherwise 0 at `0x0010A944`. Shipped assets contain both `newmtl team` and `newmtl team.light`.
 - Native `MaterialProperties` now consists of ambient/diffuse/specular vec4s, scaled specular exponent, `use_team_color`, texture resources and shader state. The recovered material region through `+0x48` has no anonymous gaps left.
 
+
+
+## 2026-10-05 — Model initializer completed through OBJ splitting and GPU program tail
+
+- Revalidated the user-owned NPEB00142 v1.00 package end-to-end. The extracted/decrypted SELF reproduces canonical ELF SHA-256 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`.
+- Recovered the exact OBJ face grammar from `0x00109A30`: 7-token `v//vn` triangles, 10-token `v/vt/vn` triangles, and 13-token full quads only. Every present decimal index is decremented once; there is no Wavefront negative relative-index normalization.
+- Proved the 0x0C staging order is `position, normal, texcoord`; missing texcoords are `-1`. Quads emit `0,1,2` then `2,3,0`.
+- Audited all shipped OBJ data: 16,751 face statements (5,324 position/normal triangles, 11,412 full triangles, 15 quads), 50,298 staged corners after quad expansion, and zero unsupported face shapes.
+- Corrected the old “deduplication” description. The loader creates one base vertex per OBJ position, lets the first face corner claim zero normal/UV lanes, and appends a fresh split vertex for each later mismatch beyond ~`0.0001f`. Previously appended split vertices are not searched.
+- Added typed native OBJ semantics and regression coverage in `model_obj_semantics.hpp/.cpp`.
+- Closed the previously unnamed material/render tail through helper `0x00101960`: material `+0x48` is the standard `.vpo` vertex program, `+0x4C` the `_spu.vpo` batched vertex program, `+0x50` the `.fpo` fragment program, and `+0x54` the batched-path availability byte.
+- Renderer binder `0x0010000C` selects `+0x48` for ordinary drawing or `+0x4C` for the batched path and always pairs it with `+0x50`.
+- Added `material_programs.hpp/.cpp`, dedicated evidence documentation, and the semantic native `ModelSubmesh + ModelMaterial` boundary.
+- Marked model initializer `0x00105308` complete in `WORK_QUEUE.md`. Current target is the root game-state type map.
