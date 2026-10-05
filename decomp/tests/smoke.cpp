@@ -6,6 +6,7 @@
 #include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
 #include "comet/model_load_parameters.hpp"
+#include "comet/model_obj_semantics.hpp"
 #include "comet/model_batching.hpp"
 
 #include <array>
@@ -118,6 +119,60 @@ int main() {
         assert(compact.attribute_count == 2);
         assert(compact.attributes[1].semantic == VertexSemantic::TexCoord0);
         assert(compact.attributes[1].byte_offset == 0x0C);
+    }
+
+    {
+        const std::array<std::int32_t, 6> position_normal_tokens{
+            1, 7, 2, 8, 3, 9,
+        };
+        const auto position_normal_face =
+            decode_legacy_obj_face_tokens(position_normal_tokens);
+        assert(position_normal_face.supported());
+        assert(position_normal_face.reference_count == 3);
+        assert(position_normal_face.references[0].position_index == 0);
+        assert(position_normal_face.references[0].normal_index == 6);
+        assert(position_normal_face.references[0].texcoord_index == -1);
+
+        const std::array<std::int32_t, 12> quad_tokens{
+            1, 11, 21,
+            2, 12, 22,
+            3, 13, 23,
+            4, 14, 24,
+        };
+        const auto quad = decode_legacy_obj_face_tokens(quad_tokens);
+        assert(quad.supported());
+        assert(quad.reference_count == 6);
+        assert(quad.references[0].position_index == 0);
+        assert(quad.references[0].normal_index == 20);
+        assert(quad.references[0].texcoord_index == 10);
+        assert(quad.references[3].position_index == 2);
+        assert(quad.references[4].position_index == 3);
+        assert(quad.references[5].position_index == 0);
+
+        static_assert(normalize_legacy_obj_index(1) == 0);
+        static_assert(normalize_legacy_obj_index(-1) == -2);
+
+        const std::array<ObjVec3, 1> positions{{{1.0f, 2.0f, 3.0f}}};
+        const std::array<ObjVec3, 2> normals{{
+            {0.0f, 1.0f, 0.0f},
+            {1.0f, 0.0f, 0.0f},
+        }};
+        const std::array<ObjVec2, 1> texcoords{{{0.25f, 0.75f}}};
+        const std::array<ObjSourceReference, 4> references{{
+            {0, 0, 0},
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, 0},
+        }};
+        const auto collapsed = collapse_legacy_obj_references(
+            positions, normals, texcoords, references);
+        assert(collapsed.valid);
+        assert(collapsed.vertices.size() == 3);
+        assert(collapsed.indices.size() == 4);
+        assert(collapsed.indices[0] == 0);
+        assert(collapsed.indices[1] == 0);
+        assert(collapsed.indices[2] == 1);
+        assert(collapsed.indices[3] == 2);
     }
 
     {
