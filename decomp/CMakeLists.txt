@@ -12,6 +12,7 @@ add_library(comet_native_recovery STATIC
     src/material_textures.cpp
     src/material_properties.cpp
     src/model_load_parameters.cpp
+    src/settings.cpp
 )
 
 target_include_directories(comet_native_recovery PUBLIC
