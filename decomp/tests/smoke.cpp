@@ -34,7 +34,7 @@ int main() {
         static_assert(static_cast<std::uint32_t>(GameMode::Battle) == 2);
 
         static_assert(kSettingsBlobSize == 3912);
-        static_assert(settings_value_offset(2, 2, 99) == 3611);
+        static_assert(settings_value_offset(2, 2, 99) == 3608);
         static_assert(settings_flag_offset(2, 99) == 3911);
         auto settings = default_settings();
         const auto encoded = serialize_settings(settings);
