@@ -12,7 +12,6 @@ struct LegacyMaterialTextureOffsets {
     static constexpr std::uint32_t specular = 0x3C;
     static constexpr std::uint32_t bump = 0x40;
     static constexpr std::uint32_t environment_cube = 0x44;
-    static constexpr std::uint32_t shader = 0x48;
 };
 
 enum class MaterialTextureSemantic {
