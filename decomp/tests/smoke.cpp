@@ -28,6 +28,9 @@ int main() {
 
         RootGameState root{};
         assert(root.current_level_id == 1);
+        assert(root.game_mode == GameMode::Campaign);
+        static_assert(static_cast<std::uint32_t>(GameMode::Training) == 1);
+        static_assert(static_cast<std::uint32_t>(GameMode::Battle) == 2);
     }
 
     {
