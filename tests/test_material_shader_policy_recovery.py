@@ -39,7 +39,7 @@ class MaterialShaderPolicyRecoveryTests(unittest.TestCase):
         for offset in ("0x38", "0x3C", "0x40", "0x48"):
             self.assertIn(offset, text)
         doc = DOC.read_text(encoding="utf-8")
-        for absolute in ("+0x48", "+0x4C", "+0x50", "+0x58"):
+        for absolute in ("+0x48", "+0x4C", "+0x50", "+0x58", "+0x5C", "+0x60", "+0x64"):
             self.assertIn(absolute, doc)
 
     def test_public_policy_is_native(self):
