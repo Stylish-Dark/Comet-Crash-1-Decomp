@@ -15,6 +15,7 @@ struct LegacyRootStateOffsets {
     static constexpr std::uint32_t provisional_transition_level_id = 0x2D4520;
     static constexpr std::uint32_t player_count = 0x2D4538;
     static constexpr std::uint32_t game_mode = 0x2D4560;
+    static constexpr std::uint32_t settings_state = 0x2D4598;
     static constexpr std::uint32_t level_map_state = 0x2D6438;
 };
 
