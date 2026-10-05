@@ -487,3 +487,15 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Renderer binder `0x0010000C` selects `+0x48` for ordinary drawing or `+0x4C` for the batched path and always pairs it with `+0x50`.
 - Added `material_programs.hpp/.cpp`, dedicated evidence documentation, and the semantic native `ModelSubmesh + ModelMaterial` boundary.
 - Marked model initializer `0x00105308` complete in `WORK_QUEUE.md`. Current target is the root game-state type map.
+
+
+## 2026-10-05 — Root game-state mapping infrastructure and first dense cluster
+
+- Advanced from the completed model initializer into the large arena/root game-state object.
+- Added `tools/decomp_root_state_refs.py`, a metadata-only PowerPC decoder for the recurring `addis root,0x2D` + load/store/address pattern. It recovers OPD ownership directly from the exact ELF and needs no generated PPU source.
+- Exact-title run reproduces `current_level_id +0x2D451C` with 40 direct accesses across 13 functions.
+- Pinned the first native `RootGameState` boundary and structural provenance for the 40-slot/0x90-byte arena model table, renderer framebuffer/texture handle regions, current/transition level fields and level-map subobject.
+- The same conservative scan exposes a dense adjacent gameplay cluster: `+0x2D4538` (22 direct hits/10 functions), `+0x2D4560` (45/17), `+0x2D4580` (18/10), `+0x2D4584` (16/7), `+0x2D4594` (11/6), and float field `+0x2D459C` (15/8).
+- `+0x2D4560` is repeatedly compared against 0/1/2/3 and has exact writes at `0x000D0A60`, `0x000E03D8`, `0x000E1408`, and `0x000E1B94`. It is clearly enum/state-like but remains deliberately unnamed until those transition paths prove its domain meaning.
+- `+0x2D4538` is repeatedly used as a loop/count bound and written at `0x000CA288` and `0x000CE52C`; likewise left unnamed pending caller-level semantics.
+- Added synthetic miner regressions and native header smoke coverage. Next boundary is semantic recovery of the `+0x2D4538/+0x2D4560` transition/update cluster.
