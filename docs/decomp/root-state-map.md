@@ -14,6 +14,7 @@ multi-megabyte object ABI.
 
 Structurally proven regions now include:
 
+- `+0x214920`: four-slot player-object pointer table;
 - `+0x2D2DC0`: arena model table, 40 slots at exact stride `0x90`;
 - `+0x2D445C..+0x2D4488`: framebuffer-handle region recovered from
   `arenaGraphics.cpp`;
@@ -58,9 +59,26 @@ The adjacent fields other than `+0x2D4560` deliberately remain unnamed. The
 access shapes establish their widths and importance, but do not yet justify
 source-level meanings.
 
-`+0x2D4538` is the next especially useful anchor: it is written at
-`0x000CA288` and `0x000CE52C`, then repeatedly used as an iteration/count
-bound in gameplay code.
+## `+0x2D4538` — player count
+
+This field is now strong enough to promote from a generic count:
+
+- root construction writes zero at `0x000CA288`;
+- match/gameplay setup `0x000CE258` copies the live joined-player count from
+  the player registry into this field at `0x000CE52C`;
+- helper `0x000DB9F8` compares a requested player index against this field,
+  then indexes a pointer table at root `+0x214920` and reads the selected
+  object's team byte at object `+0x28`;
+- helpers `0x000DC358` and `0x000DC738` iterate the same `+0x214920`
+  pointer table up to this count while comparing that same team byte;
+- the large gameplay/UI path `0x000CE258` also iterates the table and tests
+  per-player bytes while using `+0x2D4538` as its bound.
+
+The registry allows four player pointers and the original code contains
+four-slot scans, matching the title's local multiplayer design. The native
+field is therefore **`player_count`**, with provenance constant
+`LegacyRootStateOffsets::player_object_table = 0x214920` and a four-slot
+legacy capacity.
 
 ## `+0x2D4560` — gameplay mode
 
