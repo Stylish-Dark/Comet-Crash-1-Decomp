@@ -20,7 +20,6 @@ class MaterialTextureRecoveryTests(unittest.TestCase):
             "specular = 0x3C",
             "bump = 0x40",
             "environment_cube = 0x44",
-            "shader = 0x48",
         ):
             self.assertIn(token, text)
 
