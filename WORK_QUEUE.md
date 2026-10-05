@@ -29,7 +29,7 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - Replace raw asset-registration sequences with semantic native structures.
 - Result: 37 model calls collapsed into a typed native manifest; exact 0x90 object-table stride, paths, slot offsets, option words and float arguments are preserved.
 
-[ ] **Recover model object initializer `0x00105308`**
+[x] **Recover model object initializer `0x00105308`**
 - [x] Map top-level geometry fields `+0x04..+0x24`: vertex/submesh/index counts, full/compact CPU arrays, submesh/index pointers, and both GPU vertex-buffer handles.
 - [x] Recover the exact 0x20-byte full vertex layout and 0x14-byte compact layout.
 - [x] Recover the 0x0C-byte OBJ face-reference staging stride and 0x78-byte submesh stride.
@@ -42,8 +42,8 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Recover MTL texture construction for `map_Kd`, `map_Ks`, `bump`, and `cube`: material resource slots +0x38/+0x3C/+0x40/+0x44 and separate 2D/cube loader paths.
 - [x] Recover MTL scalar/color directives: Ka ambient RGB, Kd diffuse RGB, Ks specular RGB, and Ns scaled specular exponent with exact 0.128000006 multiplier.
 - [x] Recover remaining material gaps: `+0x0C/+0x1C/+0x2C` are zero W lanes for Ka/Kd/Ks vec4 shader inputs; `+0x34` is `useTeamColor` from the `newmtl team*` prefix policy.
-- Recover exact OBJ source-index normalization/deduplication semantics.
-- Success: replace the opaque 0x78-byte submesh/material record and remaining model provenance fields with typed native structures.
+- [x] Recover exact OBJ source-index normalization and vertex-splitting semantics.
+- [x] Recover material `+0x48/+0x4C/+0x50/+0x54` as standard vertex, batched vertex, fragment program, and batched-path availability fields.\n- Success: opaque model/submesh/material state is replaced by typed native structures; PS3 offsets remain provenance only.
 
 [ ] **Build the root game-state type map**
 - Continue collecting recurring offsets from game-domain functions.
