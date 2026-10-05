@@ -43,13 +43,16 @@ The next native OBJ/MTL parser should map these four directives directly into a
 typed Material structure:
 
 ```text
-Material
+ModelMaterial
+  properties
   diffuse_texture
   specular_texture
   bump_texture
   environment_cube
-  shader
+  shader_base
+  legacy_program_paths
 ```
 
-The exact filename/path-token cleanup around the directives is still being
-recovered; the field ownership and texture-channel mapping above are proven.
+The exact four resource slots are proven. Program filenames are recovered
+separately in `docs/decomp/material-programs.md`, and the combined native
+boundary is `decomp/include/comet/model_submesh.hpp`.
