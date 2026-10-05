@@ -9,15 +9,18 @@ namespace comet::decomp {
 // reversing provenance only: the native port should own normal typed members
 // rather than reproduce a 0x2Dxxxx-byte PS3 object layout.
 struct LegacyRootStateOffsets {
+    static constexpr std::uint32_t player_object_table = 0x214920;
     static constexpr std::uint32_t arena_model_table = 0x2D2DC0;
     static constexpr std::uint32_t current_level_id = 0x2D451C;
     static constexpr std::uint32_t provisional_transition_level_id = 0x2D4520;
+    static constexpr std::uint32_t player_count = 0x2D4538;
     static constexpr std::uint32_t game_mode = 0x2D4560;
     static constexpr std::uint32_t level_map_state = 0x2D6438;
 };
 
 inline constexpr std::uint32_t kLegacyArenaModelStride = 0x90;
 inline constexpr std::uint32_t kLegacyArenaModelSlotCount = 40;
+inline constexpr std::uint32_t kLegacyPlayerSlotCount = 4;
 
 // Resource-handle slots recovered from arenaGraphics.cpp. Native renderer
 // resources replace these integer PSGL handles; the offsets remain useful for
@@ -51,6 +54,7 @@ struct RootGameState {
     // distinction is not yet independently proven.
     std::uint32_t transition_level_id = 0;
 
+    std::uint32_t player_count = 0;
     GameMode game_mode = GameMode::Campaign;
 };
 
