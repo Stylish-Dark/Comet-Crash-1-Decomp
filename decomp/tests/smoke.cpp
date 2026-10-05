@@ -8,6 +8,7 @@
 #include "comet/model_geometry.hpp"
 #include "comet/model_load_parameters.hpp"
 #include "comet/model_obj_semantics.hpp"
+#include "comet/model_submesh.hpp"
 #include "comet/model_batching.hpp"
 
 #include <array>
@@ -99,6 +100,20 @@ int main() {
         assert(cube->semantic == MaterialTextureSemantic::EnvironmentCube);
         assert(cube->loader_kind == MaterialTextureLoaderKind::CubeTexture);
         assert(cube->legacy_material_offset == 0x44);
+    }
+
+    {
+        ModelSubmesh submesh{};
+        submesh.draw_range = {4, 6, 2, 9};
+        submesh.material.properties.use_team_color = true;
+        submesh.material.shader_base = "lit_texture_shader";
+        submesh.material.legacy_program_paths =
+            material_program_paths(submesh.material.shader_base);
+        submesh.legacy_batched_path_available = true;
+        assert(submesh.draw_range.index_byte_offset() == 8);
+        assert(submesh.material.legacy_program_paths.standard_vertex ==
+               "lit_texture_shader.vpo");
+        assert(submesh.legacy_batched_path_available);
     }
 
     {
