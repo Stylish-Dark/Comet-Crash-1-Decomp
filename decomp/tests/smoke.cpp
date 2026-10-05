@@ -10,6 +10,7 @@
 #include "comet/model_obj_semantics.hpp"
 #include "comet/model_submesh.hpp"
 #include "comet/root_state.hpp"
+#include "comet/settings.hpp"
 #include "comet/model_batching.hpp"
 
 #include <array>
@@ -31,6 +32,19 @@ int main() {
         assert(root.game_mode == GameMode::Campaign);
         static_assert(static_cast<std::uint32_t>(GameMode::Training) == 1);
         static_assert(static_cast<std::uint32_t>(GameMode::Battle) == 2);
+
+        static_assert(kSettingsBlobSize == 3912);
+        static_assert(settings_value_offset(2, 2, 99) == 3611);
+        static_assert(settings_flag_offset(2, 99) == 3911);
+        auto settings = default_settings();
+        const auto encoded = serialize_settings(settings);
+        assert(encoded[0] == 8);
+        assert(encoded[1] == 1);
+        assert(encoded[2] == 60);
+        assert(encoded[3] == 90);
+        SettingsState decoded{};
+        assert(parse_settings(encoded, decoded));
+        assert(decoded.header.format_version == 8);
     }
 
     {
