@@ -2,6 +2,7 @@
 #include "comet/arena_assets.hpp"
 #include "comet/level_map.hpp"
 #include "comet/material_shader_policy.hpp"
+#include "comet/material_programs.hpp"
 #include "comet/material_textures.hpp"
 #include "comet/material_properties.hpp"
 #include "comet/model_geometry.hpp"
@@ -173,6 +174,21 @@ int main() {
         assert(collapsed.indices[1] == 0);
         assert(collapsed.indices[2] == 1);
         assert(collapsed.indices[3] == 2);
+    }
+
+    {
+        const auto programs = material_program_paths("lit_texture_shader");
+        assert(programs.standard_vertex == "lit_texture_shader.vpo");
+        assert(programs.batched_vertex == "lit_texture_shader_spu.vpo");
+        assert(programs.fragment == "lit_texture_shader.fpo");
+        static_assert(
+            LegacyMaterialProgramOffsets::standard_vertex_program == 0x48);
+        static_assert(
+            LegacyMaterialProgramOffsets::batched_vertex_program == 0x4C);
+        static_assert(
+            LegacyMaterialProgramOffsets::fragment_program == 0x50);
+        static_assert(
+            LegacyMaterialProgramOffsets::batch_enabled == 0x54);
     }
 
     {
