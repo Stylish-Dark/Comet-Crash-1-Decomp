@@ -20,6 +20,7 @@ Structurally proven regions now include:
 - `+0x2D448C..+0x2D44B8`: texture-handle region recovered from the same
   renderer setup;
 - `+0x2D451C/+0x2D4520`: level-selection state;
+- `+0x2D4560`: gameplay mode enum;
 - `+0x2D6438`: level-map runtime subobject.
 
 ## Root-state access miner
@@ -53,17 +54,31 @@ high-frequency gameplay fields immediately beside it:
 | `+0x2D4594` | 11 | 6 | 4 | 7 reads, 2 writes, 2 address takes |
 | `+0x2D459C` | 15 | 8 | 4 | 14 float reads, 1 float write |
 
-These adjacent fields deliberately remain unnamed. The access shapes establish
-their widths and importance, but do not yet justify source-level meanings.
+The adjacent fields other than `+0x2D4560` deliberately remain unnamed. The
+access shapes establish their widths and importance, but do not yet justify
+source-level meanings.
 
-Two especially useful next anchors are:
+`+0x2D4538` is the next especially useful anchor: it is written at
+`0x000CA288` and `0x000CE52C`, then repeatedly used as an iteration/count
+bound in gameplay code.
 
-- `+0x2D4538`: written at `0x000CA288` and `0x000CE52C`, then repeatedly
-  used as an iteration/count bound in gameplay code;
-- `+0x2D4560`: compared repeatedly with values 0, 1, 2 and 3 and written at
-  `0x000D0A60`, `0x000E03D8`, `0x000E1408`, and `0x000E1B94`.
-  This strongly establishes an enum/state-like role, but its semantic name is
-  withheld until the transition paths are recovered.
+## `+0x2D4560` — gameplay mode
+
+The four direct writes and their surrounding transition paths now support a
+semantic name rather than merely an enum-shaped field:
+
+| stored value | native meaning | exact transition evidence |
+| ---: | --- | --- |
+| `0` | `Campaign` | campaign transition/progression paths store 0 at `0x000D0A60` and `0x000E1408`; the latter then installs the selected/current level and calls the level loader |
+| `1` | `Training` | `0x000E1B94` stores 1 after zeroing both level-selection fields; `current_level_id=0` is then loaded immediately, matching the title's dedicated training level |
+| `2` | `Battle` | `0x000E03D8` stores 2 on the multiplayer setup branch; mode-2 checks recur in participant/team-management code, including `0x000DC9C8` |
+| `3` | unknown | original gameplay/UI code compares this value explicitly, but no write path or source-level label has yet proved its meaning |
+
+The external localized title data independently orders the top-level gameplay
+entries as `Training`, `Campaign`, and `Battle`, while the binary behavior
+above pins the actual internal numeric mapping. The native enum is therefore
+`GameMode::{Campaign, Training, Battle, Unknown3}`; only value 3 remains
+deliberately unnamed.
 
 ## `+0x2D451C` — current level ID
 
