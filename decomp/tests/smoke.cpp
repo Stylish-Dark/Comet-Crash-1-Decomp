@@ -9,6 +9,7 @@
 #include "comet/model_load_parameters.hpp"
 #include "comet/model_obj_semantics.hpp"
 #include "comet/model_submesh.hpp"
+#include "comet/root_state.hpp"
 #include "comet/model_batching.hpp"
 
 #include <array>
@@ -18,6 +19,17 @@
 using namespace comet::decomp;
 
 int main() {
+    {
+        static_assert(LegacyRootStateOffsets::arena_model_table == 0x2D2DC0);
+        static_assert(LegacyRootStateOffsets::current_level_id == 0x2D451C);
+        static_assert(LegacyRootStateOffsets::level_map_state == 0x2D6438);
+        static_assert(kLegacyFramebufferHandleOffsets.size() == 11);
+        static_assert(kLegacyTextureHandleOffsets.size() == 12);
+
+        RootGameState root{};
+        assert(root.current_level_id == 1);
+    }
+
     {
         constexpr auto batch =
             batched_stream_byte_counts(3, 100, 60);
