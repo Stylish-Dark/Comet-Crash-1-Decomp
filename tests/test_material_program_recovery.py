@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HEADER = ROOT / "decomp" / "include" / "comet" / "material_programs.hpp"
 SOURCE = ROOT / "decomp" / "src" / "material_programs.cpp"
-DOC = ROOT / "docs" / "decomp" / "model-object.md"
+DOC = ROOT / "docs" / "decomp" / "material-programs.md"
 
 
 class MaterialProgramRecoveryTests(unittest.TestCase):
@@ -39,7 +39,7 @@ class MaterialProgramRecoveryTests(unittest.TestCase):
             "material `+0x48`",
             "material `+0x4C`",
             "material `+0x50`",
-            "standard `.vpo`",
+            "standard vertex program",
             "`_spu.vpo`",
             "`.fpo`",
         ):
