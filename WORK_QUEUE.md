@@ -46,8 +46,11 @@ The canonical direction is semantic decompilation/native rewrite. Keep work unit
 - [x] Recover material `+0x48/+0x4C/+0x50/+0x54` as standard vertex, batched vertex, fragment program, and batched-path availability fields.\n- Success: opaque model/submesh/material state is replaced by typed native structures; PS3 offsets remain provenance only.
 
 [ ] **Build the root game-state type map**
+- [x] Add a direct exact-ELF root-state access miner and pin the already-proven model-table, renderer-resource, level-selection and level-map regions in a native root-state boundary.
+- [x] Inventory the first dense gameplay cluster at `+0x2D4538..+0x2D459C`, including widths, conservative read/write counts and owning-function cross-references.
+- Recover transition semantics for enum-like `+0x2D4560` and count-like `+0x2D4538` before assigning source-level names.
 - Continue collecting recurring offsets from game-domain functions.
-- Record width, read/write sites, lifetime and subobject boundaries.
+- Record lifetime and subobject boundaries as the update/entity hierarchy is recovered.
 - Name fields only after cross-reference support.
 
 ## Later
