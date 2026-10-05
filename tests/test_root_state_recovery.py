@@ -11,15 +11,26 @@ class RootStateRecoveryTests(unittest.TestCase):
     def test_proven_semantic_offsets_are_pinned(self):
         text = HEADER.read_text(encoding="utf-8")
         for token in (
+            "player_object_table = 0x214920",
             "arena_model_table = 0x2D2DC0",
             "current_level_id = 0x2D451C",
             "provisional_transition_level_id = 0x2D4520",
+            "player_count = 0x2D4538",
             "game_mode = 0x2D4560",
             "level_map_state = 0x2D6438",
             "kLegacyArenaModelStride = 0x90",
             "kLegacyArenaModelSlotCount = 40",
+            "kLegacyPlayerSlotCount = 4",
         ):
             self.assertIn(token, text)
+
+    def test_player_count_and_registry_are_recovered(self):
+        text = HEADER.read_text(encoding="utf-8")
+        doc = DOC.read_text(encoding="utf-8")
+        self.assertIn("player_count = 0x2D4538", text)
+        self.assertIn("player_object_table = 0x214920", text)
+        for anchor in ("0x000CA288", "0x000CE52C", "0x000DB9F8", "0x000DC358", "0x000DC738"):
+            self.assertIn(anchor, doc)
 
     def test_game_mode_mapping_is_recovered(self):
         text = HEADER.read_text(encoding="utf-8")
