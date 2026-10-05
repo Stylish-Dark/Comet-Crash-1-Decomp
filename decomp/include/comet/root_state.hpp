@@ -12,6 +12,7 @@ struct LegacyRootStateOffsets {
     static constexpr std::uint32_t arena_model_table = 0x2D2DC0;
     static constexpr std::uint32_t current_level_id = 0x2D451C;
     static constexpr std::uint32_t provisional_transition_level_id = 0x2D4520;
+    static constexpr std::uint32_t game_mode = 0x2D4560;
     static constexpr std::uint32_t level_map_state = 0x2D6438;
 };
 
@@ -31,6 +32,16 @@ inline constexpr std::array<std::uint32_t, 12> kLegacyTextureHandleOffsets{{
     0x2D44A4, 0x2D44A8, 0x2D44AC, 0x2D44B0, 0x2D44B4, 0x2D44B8,
 }};
 
+enum class GameMode : std::uint32_t {
+    Campaign = 0,
+    Training = 1,
+    Battle = 2,
+
+    // Value 3 is compared explicitly by original gameplay/UI code, but its
+    // source-level meaning has not yet been proved.
+    Unknown3 = 3,
+};
+
 struct RootGameState {
     // Native semantic state already strong enough to promote out of raw offsets.
     std::uint32_t current_level_id = 1;
@@ -39,6 +50,8 @@ struct RootGameState {
     // current_level_id during transitions, but its exact requested/next/display
     // distinction is not yet independently proven.
     std::uint32_t transition_level_id = 0;
+
+    GameMode game_mode = GameMode::Campaign;
 };
 
 }  // namespace comet::decomp
