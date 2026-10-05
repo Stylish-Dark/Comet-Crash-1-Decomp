@@ -114,10 +114,14 @@ Combining scalar/color, texture and shader work gives the material block:
 +0x3C            specular texture resource (map_Ks)
 +0x40            bump/normal texture resource (bump)
 +0x44            environment cube resource (cube)
-+0x48            shader resource / preassigned shader
++0x48            standard vertex program (.vpo)
++0x4C            batched vertex program (_spu.vpo)
++0x50            fragment program (.fpo)
++0x54            legacy batched-path availability byte
 ```
 
-This removes the four remaining anonymous gaps from the material region.
+This removes the four former scalar/color gaps and, combined with the program
+recovery, accounts for the material/render region through `+0x54`.
 
 Native files:
 
@@ -125,3 +129,4 @@ Native files:
 - `decomp/src/material_properties.cpp`
 - `decomp/include/comet/material_textures.hpp`
 - `decomp/include/comet/material_shader_policy.hpp`
+- `decomp/include/comet/material_programs.hpp`
