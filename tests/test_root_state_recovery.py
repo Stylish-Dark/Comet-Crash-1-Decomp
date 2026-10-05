@@ -14,11 +14,25 @@ class RootStateRecoveryTests(unittest.TestCase):
             "arena_model_table = 0x2D2DC0",
             "current_level_id = 0x2D451C",
             "provisional_transition_level_id = 0x2D4520",
+            "game_mode = 0x2D4560",
             "level_map_state = 0x2D6438",
             "kLegacyArenaModelStride = 0x90",
             "kLegacyArenaModelSlotCount = 40",
         ):
             self.assertIn(token, text)
+
+    def test_game_mode_mapping_is_recovered(self):
+        text = HEADER.read_text(encoding="utf-8")
+        doc = DOC.read_text(encoding="utf-8")
+        for token in (
+            "Campaign = 0",
+            "Training = 1",
+            "Battle = 2",
+            "Unknown3 = 3",
+        ):
+            self.assertIn(token, text)
+        for anchor in ("0x000D0A60", "0x000E03D8", "0x000E1408", "0x000E1B94"):
+            self.assertIn(anchor, doc)
 
     def test_renderer_handle_regions_are_explicit(self):
         text = HEADER.read_text(encoding="utf-8")
