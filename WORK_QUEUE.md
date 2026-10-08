@@ -68,3 +68,5 @@ The static-recomp runner remains available for tracing. Do not treat fixing its 
 [x] Establish independently testable OBJ face references, full `f` directives, triangulation, u16 indexing, and submesh ranges. Hash-based vertex identity and rollback guards have native CTest coverage; see PR #31 and `docs/decomp/obj-face-indices.md`.
 
 [ ] Differentially recover the original loader's signed index normalization, missing vt/vn rules, polygon ordering/triangulation, and source-triplet equality from `0x00105308..0x0010B537`. Until proven, do not label the native standard-OBJ behavior an exact decompilation.
+
+[ ] Capture exact-title loader instructions using `tools/decomp_model_disasm.py` on locally owned ELF; resolve source-index normalization and dedup semantics from actual branch/write sites (`docs/decomp/model-loader-evidence.md`).
