@@ -29,5 +29,22 @@ int main() {
     assert(mesh.indices() == old_indices);
     assert(mesh.vertices() == old_vertices);
     assert(mesh.ranges().size() == old_ranges);
+    // All 65,536 addressable u16 vertices are legal; a 65,537th is not.
+    ObjTriangleMeshBuilder boundary;
+    std::vector<ObjFaceVertex> refs;
+    refs.reserve(65536);
+    for (std::size_t i = 0; i < 65536; ++i)
+        refs.push_back({i, {}, {}});
+    const std::vector<std::vector<ObjFaceVertex>> limit{{refs}};
+    assert(boundary.append_submesh(limit));
+    assert(boundary.vertices().size() == 65536);
+    assert(boundary.indices().size() == (65536 - 2) * 3);
+    const auto boundary_indices = boundary.indices().size();
+    const std::vector<std::vector<ObjFaceVertex>> over{{{65536, {}, {}},
+                                                           {0, {}, {}},
+                                                           {1, {}, {}}}};
+    assert(boundary.append_submesh(over).error == ObjPolygonError::IndexOverflow);
+    assert(boundary.indices().size() == boundary_indices);
+    assert(boundary.vertices().size() == 65536);
     return 0;
 }
