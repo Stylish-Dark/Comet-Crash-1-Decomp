@@ -3,6 +3,7 @@ project(comet_native_recovery LANGUAGES CXX)
 
 add_library(comet_native_recovery STATIC
     src/level_map.cpp
+    src/native_session.cpp
     src/arena_render_targets.cpp
     src/arena_assets.cpp
     src/material_shader_policy.cpp
@@ -51,3 +52,12 @@ add_executable(comet_obj_face_line_tests tests/obj_face_line.cpp)
 target_link_libraries(comet_obj_face_line_tests PRIVATE comet_native_recovery)
 target_compile_features(comet_obj_face_line_tests PRIVATE cxx_std_20)
 add_test(NAME comet_obj_face_line_tests COMMAND comet_obj_face_line_tests)
+
+add_executable(comet_native src/main.cpp)
+target_link_libraries(comet_native PRIVATE comet_native_recovery)
+target_compile_features(comet_native PRIVATE cxx_std_20)
+
+add_executable(comet_native_session_tests tests/native_session.cpp)
+target_link_libraries(comet_native_session_tests PRIVATE comet_native_recovery)
+target_compile_features(comet_native_session_tests PRIVATE cxx_std_20)
+add_test(NAME comet_native_session_tests COMMAND comet_native_session_tests)
