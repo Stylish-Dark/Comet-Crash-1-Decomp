@@ -72,4 +72,16 @@ The static-recomp runner remains available for tracing. Do not treat fixing its 
 [ ] Capture exact-title loader instructions using `tools/decomp_model_disasm.py` on locally owned ELF; resolve source-index normalization and dedup semantics from actual branch/write sites (`docs/decomp/model-loader-evidence.md`).
 
 [x] Build a standalone native bootstrap executable for recovered level maps and arena model/render metadata.
-[ ] Load native model geometry, initialize graphical rendering, and enter the first arena update loop; see docs/decomp/native-bootstrap.md.
+[x] Load native model geometry and initialize graphical rendering; see docs/decomp/native-viewer.md.
+[ ] Recover and enter the first arena update loop. The asset viewer does not advance simulation.
+
+## Next shipping boundary
+
+[x] Load all 37 original arena manifest models and MTLs with recovered scales/options.
+[x] Decode shipped diffuse DDS formats and render real submeshes through native GPU buffers.
+[x] Instantiate and check all 11 recovered textures / 10 framebuffer configurations.
+[x] Add Windows build/package workflow and Linux rendered-pixel verification.
+[ ] Resolve level-map primary/secondary entity fields from actual construction consumers.
+[ ] Trace arena entity placement and the game-domain update entrypoint; replace with typed native state.
+[ ] Integrate a complete static arena scene, then prove one mission update path against the original.
+[ ] Recover original shader/team/normal/specular behavior; current fixed-function shading is approximate.

@@ -1,0 +1,57 @@
+name: native-source-port
+on: [push, pull_request]
+jobs:
+  linux-graphics:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install native graphics dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libgl1-mesa-dev libegl1-mesa-dev
+      - name: Build and verify native renderer
+        run: |
+          cmake -S decomp -B build-native -DCMAKE_BUILD_TYPE=Release -DCOMET_NATIVE_VIEWER=ON
+          cmake --build build-native --parallel 2
+          ctest --test-dir build-native --output-on-failure
+  windows-native:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Fetch pinned SDL2 source
+        uses: actions/checkout@v4
+        with:
+          repository: libsdl-org/SDL
+          ref: 859844eae358447be8d66e6da59b6fb3df0ed778
+          path: external/sdl
+      - name: Build SDL2 and native executable
+        shell: pwsh
+        run: |
+          cmake -S external/sdl -B build-sdl -A x64 -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF -DSDL_TESTS=OFF -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/native-deps"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build-sdl --config Release --parallel 2
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --install build-sdl --config Release
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake -S decomp -B build-native -A x64 -DCOMET_NATIVE_VIEWER=ON -DCMAKE_PREFIX_PATH="$env:GITHUB_WORKSPACE/native-deps" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build-native --config Release --parallel 2
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Copy-Item native-deps/bin/SDL2.dll build-native/Release/
+          ctest --test-dir build-native -C Release -LE graphics --output-on-failure
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Package Windows native viewer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force native-delivery | Out-Null
+          Copy-Item build-native/Release/comet_native.exe native-delivery/
+          Copy-Item native-deps/bin/SDL2.dll native-delivery/
+          Copy-Item scripts/open_native_viewer.cmd native-delivery/OPEN_VIEWER.cmd
+          Copy-Item docs/decomp/native-viewer-windows.txt native-delivery/README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CometCrash-Native-Viewer-Windows
+          if-no-files-found: error
+          path: native-delivery/

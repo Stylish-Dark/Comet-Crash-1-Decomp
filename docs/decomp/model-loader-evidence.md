@@ -43,3 +43,5 @@ in git. The `generated/` directory is for local capture artifacts.
 
 This document is a reproducible recovery protocol, **not** a declaration
 that the unresolved behaviour has been recovered.
+
+The 2026-10-08 local capture produced additional instruction-supported findings in [model-loader-runtime-evidence.md](model-loader-runtime-evidence.md); the remaining questions above are still open.

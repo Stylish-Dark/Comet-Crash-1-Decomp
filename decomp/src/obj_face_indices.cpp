@@ -25,7 +25,12 @@ std::optional<std::size_t> resolve(std::string_view token, std::size_t count,
     if (token.empty()) { error = ObjReferenceError::Syntax; return std::nullopt; }
     // std::from_chars does not accept a leading '+' for signed integers.
     // Explicit positive signs are accepted by standard OBJ integer syntax.
-    if (token.front() == '+') token.remove_prefix(1);
+    if (token.front() == '+') {
+        token.remove_prefix(1);
+        if (!token.empty() && (token.front() == '-' || token.front() == '+')) {
+            error = ObjReferenceError::Syntax; return std::nullopt;
+        }
+    }
     if (token.empty()) { error = ObjReferenceError::Syntax; return std::nullopt; }
     std::int64_t raw = 0;
     const char* first = token.data();

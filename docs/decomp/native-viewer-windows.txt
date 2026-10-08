@@ -1,0 +1,27 @@
+COMET CRASH - NATIVE MODEL VIEWER
+
+This is a real native C++/OpenGL asset viewer, not a playable game yet.
+It contains no Comet Crash game files.
+
+Extract the ZIP, then drag your extracted NPEB00142 game folder onto
+OPEN_VIEWER.cmd. The launcher finds USRDIR/data beneath that folder.
+It also accepts the USRDIR or data folder directly.
+
+Controls:
+  Left/right arrows: previous/next arena model
+  Left mouse drag: orbit camera
+  Mouse wheel: zoom
+  W: wireframe
+  R: reset camera
+  Escape: quit
+
+To inspect the static rock-comet geometry from a command prompt:
+  comet_native.exe --assets "D:\CometCrash\USRDIR\data" --object models/care/cometRock_03/cometRock.obj --viewer
+
+A GPU/driver supporting framebuffer objects, floating-point render targets
+and vertex buffers is required. The viewer reports an exact error if graphics
+initialization or an original asset load fails.
+
+Gameplay, missions, HUD, original material shaders, audio, saves and multiplayer
+remain to be recovered and connected. This executable must not be described
+as a finished Comet Crash port.

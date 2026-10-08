@@ -479,3 +479,11 @@ Next action: run the one-command Windows pipeline and use the generated boot log
 - Updated the native material type to three vec4 colors plus `use_team_color`, added the exact legacy offsets and `material_name_uses_team_color()`, and extended regression/smoke coverage.
 - Updated `WORK_QUEUE.md`, `STATE.md`, `docs/decomp/material-properties.md`, and `docs/decomp/model-object.md` so no stale “unknown material gaps” remain.
 - Current boundary: recover the producer transform that fills `position_tx`, `normal_ty`, and `objInfo` / establish the small-SPU relationship, plus exact OBJ source-index normalization and deduplication semantics.
+
+## 2026-10-08 — Original assets reach native graphics
+
+Continued PR #31 in isolated branch `decomp/native-arena-renderer-20261009`. Re-obtained the locally owned NPEB00142 v1.00 data and exact ELF; SHA-256 matches the pinned reference. Loaded all 37 original manifest models (20,802 vertices / 7,506 triangles), plus the static rock-comet (625 / 1,152). Implemented OBJ/MTL assembly, root confinement, DDS RGB/luminance/DXT decoding, GPU buffers/textures, orbit controls, bounded frames/screenshots and all 11 recovered textures / 10 framebuffer configurations. Actual-title offscreen rendering succeeded under Mesa llvmpipe.
+
+Added Linux graphics and Windows package CI with a drag-folder launcher. Independent code review found and fixed Windows `near` macro collision, POSIX rooted author-path handling and SDL DLL availability before CLI tests. Existing malformed OBJ `+-1` parsing now rejects. Verification: 228 Python tests, repository-safety scan, nine headless CTests and ten graphics CTests passed locally in Release. Windows CI still needs its own recorded result.
+
+New original-loader notes distinguish instruction-supported `.dds` rewriting and full-triplet quad ordering from general native policies. Gameplay/entity construction, update loop, HUD/audio/save and original shaders remain unimplemented; the visible result is a real original-asset native viewer, not a completed PC game.
