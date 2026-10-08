@@ -115,3 +115,7 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 - `PROJECT_PLAN.md`
 - `DECISIONS.md`
 - `SESSION_LOG.md`
+
+## Native geometry implementation note (October 2026)
+
+The development branch `decomp/obj-face-index-foundation-20261008` / PR #31 contains port-facing OBJ face-reference and `f` directive parsers, stable triplet deduplication, convex fan triangulation, transactional incremental submesh assembly, u16 index-limit enforcement, and CMake/CTest coverage. This is **implementation progress**, not new machine-code evidence. Original source-index normalization, triangulation, and expanded-batch producer semantics remain unproven. Do not promote these into recovered legacy facts without disassembly or dynamic-oracle evidence.
