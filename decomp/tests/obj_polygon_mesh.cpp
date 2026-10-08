@@ -35,7 +35,7 @@ int main() {
     refs.reserve(65536);
     for (std::size_t i = 0; i < 65536; ++i)
         refs.push_back({i, {}, {}});
-    const std::vector<std::vector<ObjFaceVertex>> limit{{refs}};
+    const std::vector<std::vector<ObjFaceVertex>> limit{refs};
     assert(boundary.append_submesh(limit));
     assert(boundary.vertices().size() == 65536);
     assert(boundary.indices().size() == (65536 - 2) * 3);
