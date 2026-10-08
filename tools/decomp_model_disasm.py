@@ -16,7 +16,7 @@ from pathlib import Path
 
 from capstone import CS_ARCH_PPC, CS_MODE_64, CS_MODE_BIG_ENDIAN, Cs
 
-from decomp_source_refs import load_segments, va_to_offset
+from decomp_source_refs import load_segments
 
 MODEL_START = 0x00105308
 MODEL_END_EXCLUSIVE = 0x0010B538
