@@ -70,3 +70,6 @@ The static-recomp runner remains available for tracing. Do not treat fixing its 
 [ ] Differentially recover the original loader's signed index normalization, missing vt/vn rules, polygon ordering/triangulation, and source-triplet equality from `0x00105308..0x0010B537`. Until proven, do not label the native standard-OBJ behavior an exact decompilation.
 
 [ ] Capture exact-title loader instructions using `tools/decomp_model_disasm.py` on locally owned ELF; resolve source-index normalization and dedup semantics from actual branch/write sites (`docs/decomp/model-loader-evidence.md`).
+
+[x] Build a standalone native bootstrap executable for recovered level maps and arena model/render metadata.
+[ ] Load native model geometry, initialize graphical rendering, and enter the first arena update loop; see docs/decomp/native-bootstrap.md.
