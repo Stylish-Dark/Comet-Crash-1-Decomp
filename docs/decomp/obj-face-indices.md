@@ -40,3 +40,24 @@ invalid polygons or vertex/index overflow leave prior mesh data intact.
 This is a port-side construction step, **not** newly proven legacy PPU
 triangulation semantics. Concave OBJ polygons are not supported by this
 fan policy. The dedicated CTest target is `comet_obj_polygon_mesh_tests`.
+
+## Subsequent pass: OBJ face directives and scalable mesh assembly
+
+The native pipeline can now parse whole `f` directives containing source
+triplets, arbitrary whitespace and trailing comments, then feed those polygons
+into an incremental mesh builder. Face parse errors expose both the general
+directive failure and the underlying invalid-index reason. Each failed face
+produces no partial face-reference vector.
+
+The mesh builder now uses a hash table for full source-triplet equality instead
+of a linear scan through all previously encountered vertices. Polygon
+triangle-count overflow is checked before allocation, and submesh commits
+remain transactional. Test coverage spans complete directive parsing,
+negative references, face-to-submesh conversion and invalid-input rollback.
+The additional CTest target is `comet_obj_face_line_tests`.
+
+**Provenance boundary:** these implementations are native OBJ policies, not
+verified equivalents of the original stripped PPU loader. Priorities for
+machine-code analysis remain signed-index handling, face order, material
+transition boundaries and equality rules. Native code must not be treated
+as title-accurate evidence merely because it passes its own tests.
