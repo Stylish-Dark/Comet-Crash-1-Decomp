@@ -15,6 +15,7 @@ int main() {
     const auto signed_positive = parse_obj_face_vertex("+1/+2/+2", counts);
     assert(signed_positive && signed_positive.vertex == full.vertex);
     assert(parse_obj_face_vertex("+", counts).error == ObjReferenceError::Syntax);
+    assert(parse_obj_face_vertex("+-1", counts).error == ObjReferenceError::Syntax);
     const auto back = parse_obj_face_vertex("-1/-2/-1", counts);
     assert(back && back.vertex.position == 3);
     assert(back.vertex.texcoord == 1 && back.vertex.normal == 1);

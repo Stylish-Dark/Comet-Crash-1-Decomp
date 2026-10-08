@@ -2,8 +2,8 @@
 
 The new `comet_native` target is a real, ordinary C++20 executable linked
 against the recovered native source library, independent of the old
-static-recomp host. It is currently a headless arena/bootstrap harness,
-**not a playable source port**.
+static-recomp host. The default build is a headless arena/bootstrap harness; an optional native
+SDL2/OpenGL viewer now renders original models and DDS textures. **Not a playable source port yet.**
 
 Build from the repository:
 
@@ -43,3 +43,11 @@ bootstrap, manifest population, extent normalization, and rollback.
    from recovered map records before implementing towers and waves.
 
 No recovered gameplay behaviour is claimed by this executable yet.
+
+## Native graphics milestone (2026-10-09)
+
+See `native-viewer.md` for graphics builds, original data-root selection and controls.
+CPU-side original model loading, GPU vertex/index buffers, diffuse DDS textures,
+and the recovered 11-texture/10-framebuffer plan are now implemented. The first
+arena geometry can be inspected with `--object models/care/cometRock_03/cometRock.obj`.
+Map records are still not instantiated as entities. Full simulation remains the next major boundary.

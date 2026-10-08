@@ -123,3 +123,12 @@ Rationale: the static-recomp track proved invaluable for function discovery, exa
 
 Consequence: `ps3recomp`, Boot Fix packages and runtime diagnostics remain valid reverse-engineering tools. New work should decompile and type game systems first; compatibility-runtime work is justified only when it yields evidence needed by the native rewrite.
 
+
+## 2026-10-08 — Native graphics uses local original assets
+
+- Keep recovered game semantics in `comet_native_recovery`; add optional SDL2/OpenGL rendering rather than extending PS3 HLE.
+- Standard OBJ behavior, generated normals and a native orbit camera are implementation policies until legacy proof exists.
+- Resolve stale rooted author texture paths to basenames under the material directory on all hosts, including Windows. Reject asset-root traversal.
+- Use CPU top-mip DDS decoding and diffuse texture upload first; original shader/material parity is a separate recovery task.
+- Allocate the recovered render-target graph now; only the primary draw/blit path is active. Do not imply postprocessing or gameplay integration from complete FBOs.
+- The Windows delivery is explicitly an asset viewer. No original copyrighted data, ELF, screenshots or instruction dumps enter git.

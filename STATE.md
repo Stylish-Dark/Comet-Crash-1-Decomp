@@ -6,7 +6,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current phase
 
-**Native source recovery is underway. Level-map loading, arena render-target setup, arena model bootstrap, and the core model geometry layout are now represented natively. Current work is inside the OBJ/MTL model loader and 0x78-byte submesh/material records.**
+**Native source recovery now includes a working SDL2/OpenGL asset renderer. All 37 original arena models load and render with diffuse DDS textures; all 11 recovered targets and 10 framebuffer configurations are instantiated. The executable is a model viewer, not a playable game. Next work must recover arena scene placement, map/entity semantics and the update loop.**
 
 ## Exact-title baseline retained
 
@@ -119,3 +119,9 @@ The existing `port/`, compatibility patches, build pipeline and boot diagnostics
 ## Native geometry implementation note (October 2026)
 
 The development branch `decomp/obj-face-index-foundation-20261008` / PR #31 contains port-facing OBJ face-reference and `f` directive parsers, stable triplet deduplication, convex fan triangulation, transactional incremental submesh assembly, u16 index-limit enforcement, and CMake/CTest coverage. This is **implementation progress**, not new machine-code evidence. Original source-index normalization, triangulation, and expanded-batch producer semantics remain unproven. Do not promote these into recovered legacy facts without disassembly or dynamic-oracle evidence.
+
+## Native graphics milestone (2026-10-08)
+
+Branch `decomp/native-arena-renderer-20261009` continues PR #31. See `docs/decomp/native-viewer.md` for build/controls and boundaries. Native OBJ/MTL assembly, confined asset loading, DDS top-mip decoding and optional GPU rendering are implemented. Real-title verification: 37 models, 20,802 vertices, 7,506 triangles; rock-comet 625 vertices/1,152 triangles; level 0 extent 16/147 primary/1 secondary. All 11 render textures and 10 FBOs pass completeness checks under Mesa llvmpipe. No original binaries or assets are published.
+
+The exact ELF hash was rechecked. `docs/decomp/model-loader-runtime-evidence.md` records further instruction evidence for `.dds` rewriting and the full-triplet triangle/quad branch. Native negative indices, generated normals, general polygons, basename adaptation and viewer controls remain port policies. Windows packaging is provided by `native-source-port` CI; do not claim Windows execution until that job passes.
