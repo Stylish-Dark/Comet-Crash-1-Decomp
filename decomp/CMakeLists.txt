@@ -9,6 +9,7 @@ add_library(comet_native_recovery STATIC
     src/model_geometry.cpp
     src/obj_face_indices.cpp
     src/obj_polygon_mesh.cpp
+    src/obj_face_line.cpp
     src/material_textures.cpp
     src/material_properties.cpp
     src/model_load_parameters.cpp
@@ -45,3 +46,8 @@ add_executable(comet_obj_polygon_mesh_tests tests/obj_polygon_mesh.cpp)
 target_link_libraries(comet_obj_polygon_mesh_tests PRIVATE comet_native_recovery)
 target_compile_features(comet_obj_polygon_mesh_tests PRIVATE cxx_std_20)
 add_test(NAME comet_obj_polygon_mesh_tests COMMAND comet_obj_polygon_mesh_tests)
+
+add_executable(comet_obj_face_line_tests tests/obj_face_line.cpp)
+target_link_libraries(comet_obj_face_line_tests PRIVATE comet_native_recovery)
+target_compile_features(comet_obj_face_line_tests PRIVATE cxx_std_20)
+add_test(NAME comet_obj_face_line_tests COMMAND comet_obj_face_line_tests)
