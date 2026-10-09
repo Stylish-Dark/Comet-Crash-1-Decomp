@@ -1,6 +1,6 @@
 # Active gameplay continuation
 
-- Recover construction-ring consumption and entity allocation/stage transitions, not merely dry-run submission.
+- Replace the FDE54 construction SPU job (0x1C5580..0x1C8000); CAB90 ring submission and completion are proved. Recover entity allocation/stage writes inside it.
 - Recover per-player resource initialization and exclusion-mask state; wire event resolver to ordered native cell lists.
 - Recover unit movement, pathfinding, combat, barracks production and win/loss progression.
 - Recover composite base/weapon parts and original HUD/input/camera.

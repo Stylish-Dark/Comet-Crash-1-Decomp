@@ -497,3 +497,9 @@ Recovered F1030 strict event dispatch, F0B80 delay/retry scheduling, 198760 shuf
 Independent recovery agents supplied evidence for RNG, environment transforms and command routing. Follow-up research and independent code review encountered account usage-limit errors; no successful independent review is claimed. Root verification covers synthetic routing/timing/RNG/queue tests, CPU and graphics CTest, original map initialisation and four-theme offscreen rendering. ASan/UBSan arena checks pass with leak detection disabled because the container cannot inspect /proc tasks.
 
 Game remains incomplete. Next executable bottleneck is original construction-ring consumption and entity stage/update semantics, followed by movement/combat and actual playable loop. Original binary/assets/generated disassembly/screenshots remain private and ignored.
+
+### Continuation — raw SPU job discovery and CI correction
+
+Found six additional raw SPURS binaries by following descriptor producers FDC5C/FDD5C/FE1C0/FE5D8/FDFE0/FDE54 through TOC pointer pairs. These lack ELF headers and were omitted by the earlier two-ELF scan. Construction ring CAB90 dispatches FDE54's 10,880-byte binary at 1C5580 via AddUrgentCommand/RunJobChain. Added private extraction with range/header validation and address/hash-only public metadata. This establishes the actual constructor execution bottleneck rather than guessing a direct PPU commit call.
+
+Initial PR33 native Linux graphics and Windows native CI passed; generic Python CI failed because its old source-count assertion included the new theme table. Scoped that existing assertion to the 37-entry ECCA8 manifest. Full local Python suite now passes 233 tests, including five new malformed-range/header and transactional extraction checks. Raw binaries, external decoder and all private generated analysis remain ignored.

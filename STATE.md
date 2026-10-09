@@ -134,3 +134,7 @@ The exact ELF hash was rechecked. `docs/decomp/model-loader-runtime-evidence.md`
 - `--arena` renders map instances with original themed assets and background transforms. Composite parts and original rendering effects remain open.
 - Evidence and explicit native policies: `docs/decomp/arena-state.md`.
 - Next: recover original construction-ring consumer and complete entity constructor/stage transitions, then unit movement/update dispatch.
+
+## SPU gameplay bottleneck recovered
+
+Six raw SPURS job binaries were missing from the embedded-ELF inventory. Their pointer pairs and hashes are now recorded in `docs/decomp/arena-spu-jobs.json`; `tools/extract_arena_spu_jobs.py` recovers them from the user-owned ELF. Construction ring orchestrator CAB90 submits the FDE54 job (10,880 bytes at 0x1C5580), not a PPU D6088 commit call. Next: replace that SPU command consumer's state writes with native construction; trace the larger cell/entity jobs for movement/combat. The two embedded ELF count remains correct for ELF images, but is not the full SPU code inventory.
