@@ -487,3 +487,59 @@ Continued PR #31 in isolated branch `decomp/native-arena-renderer-20261009`. Re-
 Added Linux graphics and Windows package CI with a drag-folder launcher. Independent code review found and fixed Windows `near` macro collision, POSIX rooted author-path handling and SDL DLL availability before CLI tests. Existing malformed OBJ `+-1` parsing now rejects. Verification: 228 Python tests, repository-safety scan, nine headless CTests and ten graphics CTests passed locally in Release. Windows CI still needs its own recorded result.
 
 New original-loader notes distinguish instruction-supported `.dds` rewriting and full-triplet quad ordering from general native policies. Gameplay/entity construction, update loop, HUD/audio/save and original shaders remain unimplemented; the visible result is a real original-asset native viewer, not a completed PC game.
+
+## 2026-10-09 — native arena and command continuation
+
+Continued after the renderer milestone instead of treating it as the final port. Recovered the D7A48 level consumer and D6088 constructor dispatch; implemented native entities, starts, grid visibility provenance and per-player event heaps. Recovered EB170 theme models/background transforms and added --arena initial-state rendering. Original built-in maps 0..28 initialise; original levels 0/7/14/21 render offscreen across four themes.
+
+Recovered F1030 strict event dispatch, F0B80 delay/retry scheduling, 198760 shuffled RNG and CC9CC pending-command reset. Corrected the initial hypothesis that F0B80 r8=0 executes immediately: r8 is unused and it always queues. Recovered CA2E0 exclusion-mask/ordered-list lookup and D6088 dry-run construction eligibility/costs. Added construction FIFO/scalar debit boundaries with full constructor supplied explicitly.
+
+Independent recovery agents supplied evidence for RNG, environment transforms and command routing. Follow-up research and independent code review encountered account usage-limit errors; no successful independent review is claimed. Root verification covers synthetic routing/timing/RNG/queue tests, CPU and graphics CTest, original map initialisation and four-theme offscreen rendering. ASan/UBSan arena checks pass with leak detection disabled because the container cannot inspect /proc tasks.
+
+Game remains incomplete. Next executable bottleneck is original construction-ring consumption and entity stage/update semantics, followed by movement/combat and actual playable loop. Original binary/assets/generated disassembly/screenshots remain private and ignored.
+
+### Continuation — raw SPU job discovery and CI correction
+
+Found six additional raw SPURS binaries by following descriptor producers FDC5C/FDD5C/FE1C0/FE5D8/FDFE0/FDE54 through TOC pointer pairs. These lack ELF headers and were omitted by the earlier two-ELF scan. Construction ring CAB90 dispatches FDE54's 10,880-byte binary at 1C5580 via AddUrgentCommand/RunJobChain. Added private extraction with range/header validation and address/hash-only public metadata. This establishes the actual constructor execution bottleneck rather than guessing a direct PPU commit call.
+
+Initial PR33 native Linux graphics and Windows native CI passed; generic Python CI failed because its old source-count assertion included the new theme table. Scoped that existing assertion to the 37-entry ECCA8 manifest. Full local Python suite now passes 233 tests, including five new malformed-range/header and transactional extraction checks. Raw binaries, external decoder and all private generated analysis remain ignored.
+
+
+## 2026-10-09: native SPU construction grid transaction
+
+Recovered the FDE54 raw job route field and transactional grid placement in `decomp/src/arena_routes.cpp`; see `docs/decomp/arena-routes.md`. Forty original-routine oracle fixtures matched all 23,040 route bytes. Sixty full original-job fixtures matched status and committed 9,344-byte snapshots (26 accepted, 34 rejected) for ordinary placement, gates and visibility removal. Pair-route storage is compact 12-slot indexing; path lengths use a distinct 4x4 matrix. Opcode 0 atomic cell-list removal, opcode 29 base relocation, entity/resource completion integration and simulation jobs remain unfinished. PR33 prior commit 08fcd2f passed both GitHub tests and native-source-port workflows. This remains an incomplete PC port.
+
+
+Base relocation grid branch recovered and verified against 24 full original-job fixtures (9 accepted, 15 rejected). PPU completion `0xCCC70..0xCCD3C` invokes D6088 with commit=1 after successful SPU validation; constructor failure queues opcode 255 for release. Therefore completion integration must run the recovered constructor boundary after grid reservation, and persist relocated-base events/coordinates separately.
+
+Constructor scalar debit now captures the validated cost before invoking the constructor callback, matching original ordering even if constructor work changes the override flag. A regression fixture failed before this correction and passes afterward. Current 13 native checks, including graphics, pass; 22445a0 passed both GitHub workflows.
+
+
+Opcode 0 cell-list clear is now native: original ordering drains the list before route validation and preserves that drained state even on grid rejection. Twenty-four full original-job fixtures matched status/grid output (16 accepted, 8 rejected), and the private atomic transport checked the original list count was cleared on every outcome. Concurrent reservation retries and broader list/player fixtures remain transport validation work. All published checks at 7d8ae68 passed.
+
+
+Broader routing comparison passed 36 original-job fixtures varying one to four players, team assignments, owner and inactive-player flags (30 accepted, 6 rejected). Together with placement/base/clear fixtures, 144 full-job comparisons match original status and committed grid snapshots. All 13 native checks pass after the shared route rebuild/refactor; portable regression coverage preserves inactive/same-team pair bytes and lengths.
+
+## 2026-10-09 continued: entity constructors and completion
+
+- Recovered FECFC shared 128-byte core initializer, preserving unwritten reused-slot fields and original float conversion order.
+- Recovered 12869C and 128C9C upgrade-core writes; original table constant at -5B84 is float 38D1B717.
+- Recovered entire opcode-21 256-byte entity-slot constructor D7138..D72E4 with explicit mutable-table tuning inputs.
+- Added synchronous funded construction boundary: one queued reservation, constructor/resource commit, deferred opcode-255 release on failure, base-coordinate persistence and F0B00 control writes without deleting events.
+- Private decoded-instruction evaluator matched 1,000 initializer and 500 full opcode-21 fixtures; this evaluator is bounded and not a hardware emulator. No proprietary binary or harness payload committed.
+- Python: 233 tests and 11 subtests passed. CPU native CTest: all 15 checks passed. Graphics CTest: all 16 checks passed. A zero-byte restored build executable caused the first CLI check to fail; relinking that local artifact resolved it. Repository safety and diff checks passed.
+- Remaining: CA514 allocation/cell lists, other constructors, owner-control-dependent unfunded effects/retries, simulation, input/HUD/progression. Port remains incomplete.
+
+## 2026-10-09 continued: entity allocation and ordered cell banks
+
+Recovered CA514 insertion, single-index FIFO allocation, both 256-byte entity-bank copies, 1117F0 packed cell records, selected-bank target lookup and summary-counter updates. The first packing call may change coordinates before the second; both list pointers retain their original cell. A thousand original-instruction packer fixtures matched all entry bytes, coordinates and result. Construction integration now calls real opcode-21 initialization and insertion. See `docs/decomp/arena-entity-storage.md`. Prior commit 7e511e6 passed both GitHub workflows. Remaining: pool bootstrap/recycling, other constructors, simulation readiness/movement/combat, unfunded effects/retries and interactive gameplay.
+
+Verification after entity-storage integration: 233 Python tests/11 subtests, 16 CPU CTest checks and 17 graphics CTest checks passed; entity-storage ASan/UBSan passed with leak detection disabled for this environment. Restored local graphics executables had zero-filled data or lost execution permission; removing those build artifacts and relinking resolved the infrastructure-only failures. Repository safety and diff checks passed.
+
+### Entity index-pool bootstrap
+
+CAF20 initializes root+AB00 from capacity root+2D44F0: ascending indices, head zero and full availability. Added native reset_arena_entity_index_pool and used it in the construction/insertion integration test. Invalid native capacity preserves the pool. Other world-reset fields, entity-bank memory allocation and index recycling remain separate. CPU 16/16 and graphics 17/17 checks pass after this addition.
+
+### Opcode-20 constructor
+
+Recovered complete D7090..D7134 slot initialization with mutable-table tuning inputs. Five hundred original-instruction fixtures matched all 256 bytes. Entity fixture total is now 3,000. Commit a5f4550 passed Python, Linux graphics and Windows native CI. The remaining constructor types, other world bootstrap/reset fields, recycling and simulation/gameplay remain unfinished.

@@ -23,5 +23,13 @@ int main() {
     std::vector<unsigned char> pixels(320*240*3);input.read(reinterpret_cast<char*>(pixels.data()),pixels.size());
     int colored=0;for(std::size_t i=0;i<pixels.size();i+=3)if(pixels[i+1]>pixels[i]*2 && pixels[i+1]>60)++colored;
     if(colored<100)throw std::runtime_error("model triangles not visible");
+    ArenaState arena;arena.extent=4;arena.background_position={2,0,2};
+    ArenaEntity entity;entity.model_slot=m.spec.original_slot_index;entity.position={1,0,1};arena.entities.push_back(entity);
+    auto background=m;background.spec.original_slot_index=37;
+    config.arena=&arena;
+    const auto scene=run_native_viewer({m,background},config);
+    if(!scene)throw std::runtime_error(scene.detail);
+    const auto missing=run_native_viewer({m},config);
+    if(missing||missing.detail.find("slot missing: 37")==std::string::npos)throw std::runtime_error("missing arena model was not rejected");
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }

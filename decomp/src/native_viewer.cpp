@@ -90,14 +90,14 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         const GLfloat ambient[]={0.28f,0.28f,0.32f,1};glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
         std::size_t selected=config.initial_model;float yaw=25,pitch=55,zoom=1;bool quit=false,wireframe=false;
         std::uint32_t frames=0;int width=config.width,height=config.height;
-        auto title=[&]{const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
+        auto title=[&]{if(config.arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         while(!quit){
             SDL_Event event;
             while(SDL_PollEvent(&event)){
                 if(event.type==SDL_QUIT)quit=true;
                 if(event.type==SDL_KEYDOWN){
                     if(event.key.keysym.sym==SDLK_ESCAPE)quit=true;
-                    if(event.key.keysym.sym==SDLK_RIGHT||event.key.keysym.sym==SDLK_LEFT){selected=(selected+models.size()+(event.key.keysym.sym==SDLK_RIGHT?1:-1))%models.size();zoom=1;title();}
+                    if(!config.arena&&(event.key.keysym.sym==SDLK_RIGHT||event.key.keysym.sym==SDLK_LEFT)){selected=(selected+models.size()+(event.key.keysym.sym==SDLK_RIGHT?1:-1))%models.size();zoom=1;title();}
                     if(event.key.keysym.sym==SDLK_w)wireframe=!wireframe;
                     if(event.key.keysym.sym==SDLK_r){yaw=25;pitch=55;zoom=1;}
                 }
@@ -108,8 +108,8 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             SDL_GL_GetDrawableSize(platform.window,&width,&height);
             if(width<=0||height<=0){SDL_Delay(16);continue;}
             const auto&m=models[selected].model;
-            const ModelPosition center{(m.bounds_min.x+m.bounds_max.x)*0.5f,(m.bounds_min.y+m.bounds_max.y)*0.5f,(m.bounds_min.z+m.bounds_max.z)*0.5f};
-            const auto radius=std::max(0.01f,0.5f*std::hypot(m.bounds_max.x-m.bounds_min.x,m.bounds_max.y-m.bounds_min.y,m.bounds_max.z-m.bounds_min.z));
+            const ModelPosition center=config.arena?ModelPosition{config.arena->extent*0.5f,0,config.arena->extent*0.5f}:ModelPosition{(m.bounds_min.x+m.bounds_max.x)*0.5f,(m.bounds_min.y+m.bounds_max.y)*0.5f,(m.bounds_min.z+m.bounds_max.z)*0.5f};
+            const auto radius=config.arena?config.arena->extent*0.6f:std::max(0.01f,0.5f*std::hypot(m.bounds_max.x-m.bounds_min.x,m.bounds_max.y-m.bounds_min.y,m.bounds_max.z-m.bounds_min.z));
             if(!targets.matches(width,height)){
                 targets.resize(width,height);
                 std::cout<<"Native arena resources: "<<targets.texture_count()<<" textures, "<<targets.framebuffer_count()<<" complete framebuffers\n";
@@ -122,18 +122,35 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             const GLfloat light[]={-3,5,8,0};glLightfv(GL_LIGHT0,GL_POSITION,light);
             glTranslatef(0,0,-radius*3.2f*zoom/std::min(1.0f,static_cast<float>(aspect)));
             glRotatef(pitch,1,0,0);glRotatef(yaw,0,1,0);glTranslatef(-center.x,-center.y,-center.z);
-            gpu.api.bind(GL_ARRAY_BUFFER,gpu.buffers[selected][0]);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,gpu.buffers[selected][1]);
+            auto draw=[&](std::size_t index){
+            gpu.api.bind(GL_ARRAY_BUFFER,gpu.buffers[index][0]);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,gpu.buffers[index][1]);
             glVertexPointer(3,GL_FLOAT,sizeof(NativeVertex),reinterpret_cast<const void*>(offsetof(NativeVertex,position)));
             glNormalPointer(GL_FLOAT,sizeof(NativeVertex),reinterpret_cast<const void*>(offsetof(NativeVertex,normal)));
             glTexCoordPointer(2,GL_FLOAT,sizeof(NativeVertex),reinterpret_cast<const void*>(offsetof(NativeVertex,u)));
             glPolygonMode(GL_FRONT_AND_BACK,wireframe?GL_LINE:GL_FILL);
-            for(const auto&submesh:m.submeshes){
+            for(const auto&submesh:models[index].model.submeshes){
                 const auto&c=submesh.material.properties.diffuse;
                 const bool textured=!submesh.material.diffuse_texture.empty();
                 const GLfloat diffuse[]={textured?1.0f:c.r,textured?1.0f:c.g,textured?1.0f:c.b,1};glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,diffuse);
                 if(textured){glEnable(GL_TEXTURE_2D);glBindTexture(GL_TEXTURE_2D,gpu.textures.at(submesh.material.diffuse_texture.string()));}else glDisable(GL_TEXTURE_2D);
                 glDrawElements(GL_TRIANGLES,static_cast<GLsizei>(submesh.range.index_count),GL_UNSIGNED_SHORT,reinterpret_cast<const void*>(static_cast<std::uintptr_t>(submesh.range.first_index)*sizeof(std::uint16_t)));
             }
+            };
+            if(config.arena){
+                auto instance=[&](std::uint32_t slot,ModelPosition position,const std::array<float,4>& orientation){
+                    const auto found=std::find_if(models.begin(),models.end(),[&](const auto& model){return model.spec.original_slot_index==slot;});
+                    if(found==models.end())throw std::runtime_error("arena entity model slot missing: "+std::to_string(slot));
+                    glPushMatrix();glTranslatef(position.x,position.y,position.z);
+                    const auto& q=orientation;
+                    // Standard x/y/z/w quaternion display transform; simulation retains raw words.
+                    const GLfloat rotation[]={1-2*(q[1]*q[1]+q[2]*q[2]),2*(q[0]*q[1]+q[2]*q[3]),2*(q[0]*q[2]-q[1]*q[3]),0,
+                        2*(q[0]*q[1]-q[2]*q[3]),1-2*(q[0]*q[0]+q[2]*q[2]),2*(q[1]*q[2]+q[0]*q[3]),0,
+                        2*(q[0]*q[2]+q[1]*q[3]),2*(q[1]*q[2]-q[0]*q[3]),1-2*(q[0]*q[0]+q[1]*q[1]),0,0,0,0,1};
+                    glMultMatrixf(rotation);draw(static_cast<std::size_t>(found-models.begin()));glPopMatrix();
+                };
+                instance(37,config.arena->background_position,config.arena->background_orientation);
+                for(const auto& entity:config.arena->entities)instance(entity.model_slot,entity.position,entity.orientation);
+            }else draw(selected);
             if(glGetError()!=GL_NO_ERROR)return error("OpenGL draw failed");
             targets.present();
             ++frames;

@@ -11,7 +11,9 @@ class ArenaAssetRecoveryTests(unittest.TestCase):
     def test_manifest_has_all_37_model_calls(self):
         text = SOURCE.read_text(encoding="utf-8")
         self.assertIn("std::array<ArenaModelAssetSpec, 37>", text)
-        self.assertEqual(text.count('{"models/'), 37)
+        # EB170's theme table is separate from ECCA8's 37 bootstrap calls.
+        manifest = text.split("kArenaModels{{", 1)[1].split("}};", 1)[0]
+        self.assertEqual(manifest.count('{"models/'), 37)
 
     def test_regular_0x90_slot_provenance_is_locked(self):
         header = HEADER.read_text(encoding="utf-8")

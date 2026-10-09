@@ -17,4 +17,6 @@ private:
 };
 struct ArenaNativeModel { ArenaModelAssetSpec spec; NativeModel model; };
 AssetLoadResult load_arena_models(const AssetStore& assets, std::vector<ArenaNativeModel>& output);
+AssetLoadResult load_arena_environment_models(const AssetStore&, std::uint8_t theme,
+    std::vector<ArenaNativeModel>& output);
 } // namespace comet::decomp
