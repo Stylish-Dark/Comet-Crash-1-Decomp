@@ -9,16 +9,18 @@
 namespace {
 bool integer(std::string_view text,std::uint32_t& value){auto p=std::from_chars(text.data(),text.data()+text.size(),value);return p.ec==std::errc{}&&p.ptr==text.data()+text.size();}
 int usage(){std::cerr<<"Usage: comet_native [map-directory [level-id]] [--assets game-data-root]\n"
-    <<"                    [--validate-assets | --viewer] [--model index] [--frames count]\n"
+    <<"                    [--validate-assets | --viewer | --arena] [--model index] [--frames count]\n"
     <<"                    [--screenshot output.ppm] [--object relative-model.obj] [--hidden]\n";return 2;}
 }
 int main(int argc,char**argv){
     using namespace comet::decomp;
     std::filesystem::path maps,assets,screenshot,object;
-    std::uint32_t level=0,model=0,frames=0;bool viewer=false,validate=false,hidden=false,level_set=false;
+    std::uint32_t level=0,model=0,frames=0;bool viewer=false,arena=false,validate=false,hidden=false,level_set=false;
+    NativeSession session;
     for(int i=1;i<argc;++i){
         const std::string_view arg=argv[i];
         if(arg=="--viewer")viewer=true;
+        else if(arg=="--arena"){arena=true;viewer=true;}
         else if(arg=="--validate-assets")validate=true;
         else if(arg=="--hidden")hidden=true;
         else if(arg=="--assets"||arg=="--screenshot"||arg=="--model"||arg=="--frames"||arg=="--object"){
@@ -32,15 +34,16 @@ int main(int argc,char**argv){
         else if(!level_set){if(!integer(arg,level))return usage();level_set=true;}
         else return usage();
     }
-    if((maps.empty()&&assets.empty())||((viewer||validate||!object.empty())&&assets.empty())||
+    if((arena&&(maps.empty()||!object.empty()))||(maps.empty()&&assets.empty())||((viewer||validate||!object.empty())&&assets.empty())||
         (!viewer&&(frames||model||hidden||!screenshot.empty())))return usage();
     try{
         if(!maps.empty()){
-            NativeSessionConfig config;config.data_root=maps;NativeSession session;
+            NativeSessionConfig config;config.data_root=maps;
             const auto result=initialize_native_session(config,level,session);
             if(!result){std::cerr<<result.detail<<'\n';return 1;}
             std::cout<<"Comet Crash native arena bootstrap\nLevel: "<<session.current_level_id<<"\nExtent: "<<session.level.arena_extent
                 <<"\nPrimary records: "<<session.level.primary_records.size()<<"\nSecondary records: "<<session.level.secondary_records.size()
+                <<"\nArena entities: "<<session.arena.entities.size()<<"\nUnsupported primary records: "<<session.arena.unsupported_records.size()
                 <<"\nModel asset entries: "<<session.model_assets.size()<<"\nRender targets: "<<session.targets.textures.size()<<'\n';
         }
         if(!assets.empty()){
@@ -53,13 +56,14 @@ int main(int argc,char**argv){
                 result=store.load_model(object,{},0,0,selected.model);
                 if(result) models.push_back(std::move(selected));
             }
+            if(result&&arena){std::vector<ArenaNativeModel> environment;result=load_arena_environment_models(store,session.arena.theme,environment);if(result)for(auto& m:environment)models.push_back(std::move(m));}
             if(!result){std::cerr<<result.detail<<" (line "<<result.line<<")\n";return 1;}
             std::size_t triangles=0,vertices=0;
             for(const auto&m:models){triangles+=m.model.indices.size()/3;vertices+=m.model.vertices.size();}
             std::cout<<"Loaded "<<models.size()<<" arena model entries, "<<vertices<<" vertices, "<<triangles<<" triangles\n";
             if(viewer){
 #ifdef COMET_NATIVE_VIEWER
-                NativeViewerConfig config;config.initial_model=model;config.frame_limit=frames;config.hidden=hidden;config.screenshot=screenshot;
+                NativeViewerConfig config;config.initial_model=model;config.frame_limit=frames;config.hidden=hidden;config.screenshot=screenshot;config.arena=arena?&session.arena:nullptr;
                 const auto rendered=run_native_viewer(models,config);
                 if(!rendered){std::cerr<<rendered.detail<<'\n';return 1;}
 #else

@@ -22,6 +22,10 @@ NativeSessionResult initialize_native_session(
     next.config = config;
     next.current_level_id = level_id;
     next.level = std::move(new_level);
+    auto arena_config=config.arena;
+    arena_config.level_id=level_id;
+    const auto arena = initialize_arena_state(next.level, arena_config, next.arena);
+    if (!arena) return {NativeSessionError::InvalidArenaData, arena.detail};
     next.targets = recover_arena_render_target_plan(
         config.display_width, config.display_height,
         config.auxiliary_width, config.auxiliary_height,

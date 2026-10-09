@@ -24,5 +24,7 @@ inline constexpr std::uint32_t kArenaModelTableBaseOffset = 0x2D2DC0;
 inline constexpr std::uint32_t kArenaModelObjectStride = 0x90;
 
 std::span<const ArenaModelAssetSpec> arena_model_asset_manifest();
+// Theme-dependent slots from 0xEB170. Unsupported themes return an empty span.
+std::span<const ArenaModelAssetSpec> arena_environment_asset_manifest(std::uint8_t theme);
 
 }  // namespace comet::decomp

@@ -48,6 +48,21 @@ constexpr std::array<ArenaModelAssetSpec, 37> kArenaModels{{
     {"models/gateway.obj",                                 0x2D4170, 35, 0x010, 1.00f,  0.00f},
 }};
 
+constexpr std::array<std::array<ArenaModelAssetSpec, 3>, 4> kEnvironmentModels{{
+    {{{"models/care/cometIce/iceObsticleA.obj", 0x2D40E0, 34, 0x47, 1, 0.85f},
+      {"models/care/cometIce/cometIce.obj", 0x2D4290, 37, 0x4f, 1, 0},
+      {"models/border.obj", 0x2D4320, 38, 0x414, 1, 0}}},
+    {{{"models/care/rockA.obj", 0x2D40E0, 34, 0x47, 1.8f, 0.85f},
+      {"models/care/cometRock_03/cometRock.obj", 0x2D4290, 37, 0x4f, 1, 0},
+      {"models/border.obj", 0x2D4320, 38, 0x414, 1, 0}}},
+    {{{"models/care/cometGaseous/cometGaseous_ObsticalA.obj", 0x2D40E0, 34, 0x47, 0.95f, 0.85f},
+      {"models/care/cometGaseous/cometGaseous.obj", 0x2D4290, 37, 0x4f, 1, 0},
+      {"models/border.obj", 0x2D4320, 38, 0x414, 1, 0}}},
+    {{{"models/care/cometLava/lavaObsticleA_00.obj", 0x2D40E0, 34, 0x47, 0.95f, 0.85f},
+      {"models/care/cometLava/lavaComet.obj", 0x2D4290, 37, 0x4f, 1, 0},
+      {"models/border.obj", 0x2D4320, 38, 0x414, 1, 0}}},
+}};
+
 constexpr bool provenance_offsets_match_slots() {
     for (const auto& asset : kArenaModels) {
         if (asset.original_root_offset !=
@@ -65,6 +80,11 @@ static_assert(provenance_offsets_match_slots());
 
 std::span<const ArenaModelAssetSpec> arena_model_asset_manifest() {
     return kArenaModels;
+}
+
+std::span<const ArenaModelAssetSpec> arena_environment_asset_manifest(std::uint8_t theme) {
+    if (theme >= kEnvironmentModels.size()) return {};
+    return kEnvironmentModels[theme];
 }
 
 }  // namespace comet::decomp

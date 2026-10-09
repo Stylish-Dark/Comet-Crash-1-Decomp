@@ -6,7 +6,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current phase
 
-**Native source recovery now includes a working SDL2/OpenGL asset renderer. All 37 original arena models load and render with diffuse DDS textures; all 11 recovered targets and 10 framebuffer configurations are instantiated. The executable is a model viewer, not a playable game. Next work must recover arena scene placement, map/entity semantics and the update loop.**
+**Native source recovery now includes an initial-state arena renderer. All 29 built-in maps construct native terrain/structure state. Themed environment slots 34/37/38, player starts, event heaps, shuffled RNG, pending-command/retry boundaries and construction validation are recovered. Original maps from all four environment themes render with original assets. This remains an arena preview: construction commits, movement, combat, HUD and progression are not wired into a playable loop.**
 
 ## Exact-title baseline retained
 
@@ -125,3 +125,12 @@ The development branch `decomp/obj-face-index-foundation-20261008` / PR #31 cont
 Branch `decomp/native-arena-renderer-20261009` continues PR #31. See `docs/decomp/native-viewer.md` for build/controls and boundaries. Native OBJ/MTL assembly, confined asset loading, DDS top-mip decoding and optional GPU rendering are implemented. Real-title verification: 37 models, 20,802 vertices, 7,506 triangles; rock-comet 625 vertices/1,152 triangles; level 0 extent 16/147 primary/1 secondary. All 11 render textures and 10 FBOs pass completeness checks under Mesa llvmpipe. No original binaries or assets are published.
 
 The exact ELF hash was rechecked. `docs/decomp/model-loader-runtime-evidence.md` records further instruction evidence for `.dds` rewriting and the full-triplet triangle/quad branch. Native negative indices, generated normals, general polygons, basename adaptation and viewer controls remain port policies. Windows packaging is provided by `native-source-port` CI; do not claim Windows execution until that job passes.
+
+## Native arena continuation (2026-10-09)
+
+- New `arena_state` consumes supported primary/secondary records from `0xD7A48`, transactionally creates grid/ownership/model state and preserves orientation words.
+- `0xF1030` / `0xF0B80` / `0x198760`: strict due-event gating, pending/retry orchestration, exact shuffled RNG and timed repeats. Resolver requires recovered exclusion masks and ordered entry flags, rather than guessed occupancy.
+- `arena_construction`: recovered cost/eligibility/duplicate boundary, bounded FIFO and scalar debit after supplied constructor succeeds. Full constructor/update semantics still open.
+- `--arena` renders map instances with original themed assets and background transforms. Composite parts and original rendering effects remain open.
+- Evidence and explicit native policies: `docs/decomp/arena-state.md`.
+- Next: recover original construction-ring consumer and complete entity constructor/stage transitions, then unit movement/update dispatch.

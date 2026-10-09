@@ -1,3 +1,11 @@
+# Active gameplay continuation
+
+- Recover construction-ring consumption and entity allocation/stage transitions, not merely dry-run submission.
+- Recover per-player resource initialization and exclusion-mask state; wire event resolver to ordered native cell lists.
+- Recover unit movement, pathfinding, combat, barracks production and win/loss progression.
+- Recover composite base/weapon parts and original HUD/input/camera.
+- Arena preview, event boundaries and construction eligibility are implemented; none establishes a playable game.
+
 # WORK QUEUE
 
 The canonical direction is semantic decompilation/native rewrite. Keep work units bounded and evidence-driven.

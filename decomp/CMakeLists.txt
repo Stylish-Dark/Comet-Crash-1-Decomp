@@ -3,6 +3,8 @@ project(comet_native_recovery LANGUAGES CXX)
 
 add_library(comet_native_recovery STATIC
     src/level_map.cpp
+    src/arena_state.cpp
+    src/arena_construction.cpp
     src/native_session.cpp
     src/native_model.cpp
     src/dds_image.cpp
@@ -65,6 +67,13 @@ target_link_libraries(comet_native_session_tests PRIVATE comet_native_recovery)
 target_compile_features(comet_native_session_tests PRIVATE cxx_std_20)
 add_test(NAME comet_native_session_tests COMMAND comet_native_session_tests)
 
+add_executable(comet_arena_state_tests tests/arena_state.cpp)
+target_link_libraries(comet_arena_state_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_state_tests COMMAND comet_arena_state_tests)
+add_executable(comet_arena_construction_tests tests/arena_construction.cpp)
+target_link_libraries(comet_arena_construction_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_construction_tests COMMAND comet_arena_construction_tests)
+
 add_executable(comet_native_model_tests tests/native_model.cpp)
 target_link_libraries(comet_native_model_tests PRIVATE comet_native_recovery)
 add_test(NAME comet_native_model_tests COMMAND comet_native_model_tests)
@@ -98,8 +107,8 @@ add_test(NAME comet_dds_image_tests COMMAND comet_dds_image_tests)
 
 # Existing recovery tests use assert; keep checks active in Release CI too.
 foreach(test_target comet_native_recovery_smoke comet_obj_face_indices_tests
-    comet_obj_polygon_mesh_tests comet_obj_face_line_tests comet_native_session_tests
-    comet_native_model_tests comet_asset_store_tests comet_dds_image_tests)
+    comet_obj_polygon_mesh_tests comet_obj_face_line_tests comet_native_session_tests comet_arena_state_tests
+    comet_native_model_tests comet_asset_store_tests comet_dds_image_tests comet_arena_construction_tests)
     if(MSVC)
         target_compile_options(${test_target} PRIVATE /UNDEBUG)
     else()

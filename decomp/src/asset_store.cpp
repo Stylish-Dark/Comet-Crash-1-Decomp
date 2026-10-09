@@ -66,4 +66,17 @@ AssetLoadResult load_arena_models(const AssetStore& assets,std::vector<ArenaNati
     }
     output=std::move(next);return {};
 }
+AssetLoadResult load_arena_environment_models(const AssetStore& assets,std::uint8_t theme,
+    std::vector<ArenaNativeModel>& output) {
+    const auto specs=arena_environment_asset_manifest(theme);
+    if(specs.empty())return {false,0,"environment models not recovered for theme "+std::to_string(theme)};
+    std::vector<ArenaNativeModel> next;
+    for(const auto& spec:specs){
+        ArenaNativeModel model{spec,{}};
+        const auto result=assets.load_model(spec.path,{spec.geometry_scale,spec.signed_radius_scale},spec.original_loader_options,0,model.model);
+        if(!result)return result;
+        next.push_back(std::move(model));
+    }
+    output=std::move(next);return {};
+}
 } // namespace comet::decomp

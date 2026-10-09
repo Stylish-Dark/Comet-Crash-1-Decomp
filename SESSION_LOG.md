@@ -487,3 +487,13 @@ Continued PR #31 in isolated branch `decomp/native-arena-renderer-20261009`. Re-
 Added Linux graphics and Windows package CI with a drag-folder launcher. Independent code review found and fixed Windows `near` macro collision, POSIX rooted author-path handling and SDL DLL availability before CLI tests. Existing malformed OBJ `+-1` parsing now rejects. Verification: 228 Python tests, repository-safety scan, nine headless CTests and ten graphics CTests passed locally in Release. Windows CI still needs its own recorded result.
 
 New original-loader notes distinguish instruction-supported `.dds` rewriting and full-triplet quad ordering from general native policies. Gameplay/entity construction, update loop, HUD/audio/save and original shaders remain unimplemented; the visible result is a real original-asset native viewer, not a completed PC game.
+
+## 2026-10-09 — native arena and command continuation
+
+Continued after the renderer milestone instead of treating it as the final port. Recovered the D7A48 level consumer and D6088 constructor dispatch; implemented native entities, starts, grid visibility provenance and per-player event heaps. Recovered EB170 theme models/background transforms and added --arena initial-state rendering. Original built-in maps 0..28 initialise; original levels 0/7/14/21 render offscreen across four themes.
+
+Recovered F1030 strict event dispatch, F0B80 delay/retry scheduling, 198760 shuffled RNG and CC9CC pending-command reset. Corrected the initial hypothesis that F0B80 r8=0 executes immediately: r8 is unused and it always queues. Recovered CA2E0 exclusion-mask/ordered-list lookup and D6088 dry-run construction eligibility/costs. Added construction FIFO/scalar debit boundaries with full constructor supplied explicitly.
+
+Independent recovery agents supplied evidence for RNG, environment transforms and command routing. Follow-up research and independent code review encountered account usage-limit errors; no successful independent review is claimed. Root verification covers synthetic routing/timing/RNG/queue tests, CPU and graphics CTest, original map initialisation and four-theme offscreen rendering. ASan/UBSan arena checks pass with leak detection disabled because the container cannot inspect /proc tasks.
+
+Game remains incomplete. Next executable bottleneck is original construction-ring consumption and entity stage/update semantics, followed by movement/combat and actual playable loop. Original binary/assets/generated disassembly/screenshots remain private and ignored.
