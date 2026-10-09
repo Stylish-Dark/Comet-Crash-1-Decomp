@@ -10,8 +10,9 @@ call the constructor. Empty and malformed requests have explicit native results.
 `process_next_arena_construction` uses the completion arguments at
 `0xCCD18..0xCCD28`: commit, occupancy override, and full opcode cost. The caller's
 temporary context flags are restored. The constructor callback owns allocation
-and cell-list insertion; a real opcode-21 initializer is exercised through this
-boundary in the portable integration test. This is not yet the running viewer's
+and cell-list insertion; a real opcode-21 initializer and CA514 insertion are
+exercised through this boundary in the portable integration test. See
+`arena-entity-storage.md`. This is not yet the running viewer's
 gameplay loop. The owner-control-dependent insufficient-funds notification path
 at `0xD6654`, completion retry scheduling, and remaining constructor types are
 not integrated. The native funded boundary rejects insufficient resources and

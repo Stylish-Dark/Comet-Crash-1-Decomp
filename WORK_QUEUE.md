@@ -111,3 +111,7 @@ Broader routing comparison passed 36 original-job fixtures varying one to four p
 ## 2026-10-09: entity construction continuation
 
 Recovered shared entity initializer FECFC, upgrade-core transitions 12869C/128C9C, the complete opcode-21 slot constructor and funded reservation/completion/release integration. Decoded-original checks matched 1,000 core fixtures and 500 opcode-21 fixtures. Base completion preserves the event heap. See `docs/decomp/arena-entity-construction.md`. Next: CA514 allocation and ordered cell-list insertion, remaining constructors, simulation bank membership and FE5D8 movement/combat. No playable loop yet.
+
+## 2026-10-09 continued: entity allocation and ordered cell banks
+
+Recovered CA514 insertion, single-index FIFO allocation, both 256-byte entity-bank copies, 1117F0 packed cell records, selected-bank target lookup and summary-counter updates. The first packing call may change coordinates before the second; both list pointers retain their original cell. A thousand original-instruction packer fixtures matched all entry bytes, coordinates and result. Construction integration now calls real opcode-21 initialization and insertion. See `docs/decomp/arena-entity-storage.md`. Prior commit 7e511e6 passed both GitHub workflows. Remaining: pool bootstrap/recycling, other constructors, simulation readiness/movement/combat, unfunded effects/retries and interactive gameplay.

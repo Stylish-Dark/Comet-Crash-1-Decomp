@@ -7,6 +7,7 @@ add_library(comet_native_recovery STATIC
     src/arena_construction.cpp
     src/arena_entity_core.cpp
     src/arena_structure_entity.cpp
+    src/arena_entity_storage.cpp
     src/arena_construction_runtime.cpp
     src/arena_routes.cpp
     src/native_session.cpp
@@ -83,6 +84,9 @@ add_test(NAME comet_arena_entity_core_tests COMMAND comet_arena_entity_core_test
 add_executable(comet_arena_structure_entity_tests tests/arena_structure_entity.cpp)
 target_link_libraries(comet_arena_structure_entity_tests PRIVATE comet_native_recovery)
 add_test(NAME comet_arena_structure_entity_tests COMMAND comet_arena_structure_entity_tests)
+add_executable(comet_arena_entity_storage_tests tests/arena_entity_storage.cpp)
+target_link_libraries(comet_arena_entity_storage_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_entity_storage_tests COMMAND comet_arena_entity_storage_tests)
 add_executable(comet_arena_construction_runtime_tests tests/arena_construction_runtime.cpp)
 target_link_libraries(comet_arena_construction_runtime_tests PRIVATE comet_native_recovery)
 add_test(NAME comet_arena_construction_runtime_tests COMMAND comet_arena_construction_runtime_tests)

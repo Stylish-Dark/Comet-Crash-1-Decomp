@@ -529,3 +529,9 @@ Broader routing comparison passed 36 original-job fixtures varying one to four p
 - Private decoded-instruction evaluator matched 1,000 initializer and 500 full opcode-21 fixtures; this evaluator is bounded and not a hardware emulator. No proprietary binary or harness payload committed.
 - Python: 233 tests and 11 subtests passed. CPU native CTest: all 15 checks passed. Graphics CTest: all 16 checks passed. A zero-byte restored build executable caused the first CLI check to fail; relinking that local artifact resolved it. Repository safety and diff checks passed.
 - Remaining: CA514 allocation/cell lists, other constructors, owner-control-dependent unfunded effects/retries, simulation, input/HUD/progression. Port remains incomplete.
+
+## 2026-10-09 continued: entity allocation and ordered cell banks
+
+Recovered CA514 insertion, single-index FIFO allocation, both 256-byte entity-bank copies, 1117F0 packed cell records, selected-bank target lookup and summary-counter updates. The first packing call may change coordinates before the second; both list pointers retain their original cell. A thousand original-instruction packer fixtures matched all entry bytes, coordinates and result. Construction integration now calls real opcode-21 initialization and insertion. See `docs/decomp/arena-entity-storage.md`. Prior commit 7e511e6 passed both GitHub workflows. Remaining: pool bootstrap/recycling, other constructors, simulation readiness/movement/combat, unfunded effects/retries and interactive gameplay.
+
+Verification after entity-storage integration: 233 Python tests/11 subtests, 16 CPU CTest checks and 17 graphics CTest checks passed; entity-storage ASan/UBSan passed with leak detection disabled for this environment. Restored local graphics executables had zero-filled data or lost execution permission; removing those build artifacts and relinking resolved the infrastructure-only failures. Repository safety and diff checks passed.
