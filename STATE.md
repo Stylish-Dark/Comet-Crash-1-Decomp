@@ -152,3 +152,7 @@ Opcode 0 cell-list clear is now native: original ordering drains the list before
 
 
 Broader routing comparison passed 36 original-job fixtures varying one to four players, team assignments, owner and inactive-player flags (30 accepted, 6 rejected). Together with placement/base/clear fixtures, 144 full-job comparisons match original status and committed grid snapshots. All 13 native checks pass after the shared route rebuild/refactor; portable regression coverage preserves inactive/same-team pair bytes and lengths.
+
+## 2026-10-09: entity construction continuation
+
+Native recovery now includes shared entity core FECFC, upgrade-core transitions, complete opcode-21 entity-slot initialization, and the funded reservation/completion/release boundary. The initializer matched 1,000 decoded-original fixtures and opcode 21 matched 500. Allocation/cell-list insertion, other constructor types, insufficient-funds notifications, completion retries and simulation remain incomplete. See `docs/decomp/arena-entity-construction.md`; these boundaries are not wired into the viewer gameplay loop.

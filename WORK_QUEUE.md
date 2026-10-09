@@ -1,6 +1,6 @@
 # Active gameplay continuation
 
-- Replace the FDE54 construction SPU job (0x1C5580..0x1C8000); CAB90 ring submission and completion are proved. Recover entity allocation/stage writes inside it.
+- FDE54 grid transaction and funded completion boundary are recovered. Recover entity allocation/cell insertion at CA514, remaining constructors, insufficient-funds notifications and completion retries.
 - Recover per-player resource initialization and exclusion-mask state; wire event resolver to ordered native cell lists.
 - Recover unit movement, pathfinding, combat, barracks production and win/loss progression.
 - Recover composite base/weapon parts and original HUD/input/camera.
@@ -107,3 +107,7 @@ Opcode 0 cell-list clear is now native: original ordering drains the list before
 
 
 Broader routing comparison passed 36 original-job fixtures varying one to four players, team assignments, owner and inactive-player flags (30 accepted, 6 rejected). Together with placement/base/clear fixtures, 144 full-job comparisons match original status and committed grid snapshots. All 13 native checks pass after the shared route rebuild/refactor; portable regression coverage preserves inactive/same-team pair bytes and lengths.
+
+## 2026-10-09: entity construction continuation
+
+Recovered shared entity initializer FECFC, upgrade-core transitions 12869C/128C9C, the complete opcode-21 slot constructor and funded reservation/completion/release integration. Decoded-original checks matched 1,000 core fixtures and 500 opcode-21 fixtures. Base completion preserves the event heap. See `docs/decomp/arena-entity-construction.md`. Next: CA514 allocation and ordered cell-list insertion, remaining constructors, simulation bank membership and FE5D8 movement/combat. No playable loop yet.

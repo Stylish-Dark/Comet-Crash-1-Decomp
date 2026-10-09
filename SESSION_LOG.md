@@ -519,3 +519,13 @@ Opcode 0 cell-list clear is now native: original ordering drains the list before
 
 
 Broader routing comparison passed 36 original-job fixtures varying one to four players, team assignments, owner and inactive-player flags (30 accepted, 6 rejected). Together with placement/base/clear fixtures, 144 full-job comparisons match original status and committed grid snapshots. All 13 native checks pass after the shared route rebuild/refactor; portable regression coverage preserves inactive/same-team pair bytes and lengths.
+
+## 2026-10-09 continued: entity constructors and completion
+
+- Recovered FECFC shared 128-byte core initializer, preserving unwritten reused-slot fields and original float conversion order.
+- Recovered 12869C and 128C9C upgrade-core writes; original table constant at -5B84 is float 38D1B717.
+- Recovered entire opcode-21 256-byte entity-slot constructor D7138..D72E4 with explicit mutable-table tuning inputs.
+- Added synchronous funded construction boundary: one queued reservation, constructor/resource commit, deferred opcode-255 release on failure, base-coordinate persistence and F0B00 control writes without deleting events.
+- Private decoded-instruction evaluator matched 1,000 initializer and 500 full opcode-21 fixtures; this evaluator is bounded and not a hardware emulator. No proprietary binary or harness payload committed.
+- Python: 233 tests and 11 subtests passed. CPU native CTest: all 15 checks passed. Graphics CTest: all 16 checks passed. A zero-byte restored build executable caused the first CLI check to fail; relinking that local artifact resolved it. Repository safety and diff checks passed.
+- Remaining: CA514 allocation/cell lists, other constructors, owner-control-dependent unfunded effects/retries, simulation, input/HUD/progression. Port remains incomplete.

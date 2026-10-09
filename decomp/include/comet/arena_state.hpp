@@ -56,6 +56,8 @@ struct ArenaPlayer {
   bool dispatch_blocked = false;
   std::uint8_t command_mode = 11;
   ArenaPendingCommand pending;
+  // F0B00 writes exactly these control bytes after base completion.
+  std::uint8_t control_23a = 0, control_42 = 0, control_43 = 0;
   std::size_t event_capacity =
       4096; // native policy; caller may set recovered capacity
 };
