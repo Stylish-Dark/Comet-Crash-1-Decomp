@@ -21,11 +21,13 @@ struct ArenaStructureTableValues {
   std::uint8_t first_byte = 0, second_byte = 0;
   float scalar_84 = 0;
 };
-// Supports 20,21,22,23,24,26,28. Unsupported opcodes leave the slot unchanged.
+// Supports 20..26 and 28. Opcode 25 requires random; other arms ignore it.
+// Unsupported opcodes or missing required random leave the slot unchanged.
 bool initialize_arena_structure_entity(std::span<std::uint8_t, 256>,
                                        std::uint8_t opcode, std::uint8_t owner,
                                        ArenaGridPosition,
-                                       const ArenaStructureTableValues &);
+                                       const ArenaStructureTableValues &,
+                                       ArenaRandom *random = nullptr);
 // Entire opcode-21 entity-slot initialization at D7138..D72E4, including
 // FECFC and 12869C. Allocation, economy and cell-list insertion are external.
 void initialize_arena_type21_entity(std::span<std::uint8_t, 256>,

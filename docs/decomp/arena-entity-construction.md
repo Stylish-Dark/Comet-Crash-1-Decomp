@@ -120,3 +120,26 @@ Together with the 1,000 core and 1,000 packed-cell fixtures, this batch covers
 5,500 comparisons. These are bounded instruction-evaluator checks, not
 original hardware execution. Gate opcode 25, base 29 and terrain 9 remain
 separate recovery work; none of these checks establishes playable simulation.
+
+## Gate constructor continuation
+
+Opcode 25 now accepts a required `ArenaRandom*`; omitting it preserves the
+entire slot and returns false. It reuses the existing 198760 shuffled LCG
+and consumes one draw. D7744..D7888 creates model 35, stage 4, quantity 15,
+flags 00014200, +10=2 and a level-5 upgrade reset. Its +80/+88 angle is
+float(random)*2^-30*3.14, with zero +84/+8C. The +90 vector adds the original
+0.35-scaled sine/cosine displacement to the grid-center position.
+
+The finite, nonnegative 193CB4 path uses the original quadrant reduction,
+split pi/2 constants, fused float polynomials and tiny-remainder threshold.
+Host `sin`/`cos` are not substituted. Separate multiply rounding is retained
+before position addition. This helper is private to gate angles in [0,3.14];
+it does not claim general-purpose trigonometric recovery.
+
+The standalone portable structure test compiled and passed, checking core
+fields, angle duplication, zero vector lanes and exactly one RNG draw.
+The full decoded-original gate comparison was interrupted by the local
+execution service disconnect; no matching gate fixture count is claimed.
+Linux/Windows CI remains the build verification path for this continuation.
+The seven-type mixed completion test remains unchanged; eight-type runtime
+integration and the original gate comparison still need confirmation.

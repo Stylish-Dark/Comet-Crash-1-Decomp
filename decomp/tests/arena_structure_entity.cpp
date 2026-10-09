@@ -75,6 +75,17 @@ int main() {
   auto untouched = extended;
   check(!initialize_arena_structure_entity(extended, 25, 2, {3, 4}, tuning) &&
         extended == untouched);
+  ArenaRandom gate_random(1);
+  extended.fill(0xa5);
+  check(initialize_arena_structure_entity(extended, 25, 2, {3, 4}, tuning,
+                                         &gate_random));
+  check(extended[0xf] == 25 && extended[0x6f] == 35 && extended[0x6e] == 5);
+  check(extended[0x7c] == 15 && word(extended, 0x60) == 0x0001428e);
+  check(word(extended, 0x10) == 2 && word(extended, 0x84) == 0 &&
+        word(extended, 0x8c) == 0 && word(extended, 0x5c) == 0);
+  check(word(extended, 0x80) == word(extended, 0x88));
+  check(word(extended, 0x94) == 0 && word(extended, 0x9c) == 0);
+  check(gate_random.next() == 135115861); // Exactly one random draw consumed.
   std::array<std::uint8_t, 256> type20;
   type20.fill(0xa5);
   initialize_arena_type20_entity(type20, 1, {3, 4}, {80, 20});

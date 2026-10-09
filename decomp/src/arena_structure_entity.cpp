@@ -1,11 +1,98 @@
 #include "comet/arena_structure_entity.hpp"
 #include "comet/arena_entity_core.hpp"
 #include <bit>
+#include <cmath>
 namespace comet::decomp {
+namespace {
+float constant(std::uint32_t bits) { return std::bit_cast<float>(bits); }
+float multiply(float a, float b) {
+  volatile float result = a * b;
+  return result;
+}
+// 193CB4's finite, nonnegative angle path. Gate draws produce [0,3.14].
+// Preserve its float rounding and fused polynomial operations rather than
+// substituting the host's trigonometric library.
+float gate_trig(float angle, unsigned mode) {
+  if (angle == 0)
+    return mode == 0 ? angle : 1.0f;
+  const float scaled = multiply(angle, constant(0x3f22f983));
+  const auto quadrant = static_cast<unsigned>(scaled + 0.5f);
+  const float n = static_cast<float>(quadrant);
+  float reduced = std::fma(n, constant(0xbfc90fda), angle);
+  reduced = std::fma(n, constant(0xb3a22169), reduced);
+  const auto selector = quadrant + mode;
+  float value;
+  if (reduced <= -constant(0x39800000) ||
+      reduced >= constant(0x39800000)) {
+    const float square = multiply(reduced, reduced);
+    if (selector & 1) {
+      float p = std::fma(square, constant(0xbab24993), constant(0x3d2aa036));
+      p = std::fma(square, p, -constant(0x3effffdf));
+      value = std::fma(square, p, 1.0f);
+    } else {
+      const float cube = multiply(reduced, square);
+      float p = std::fma(square, constant(0xb94c8c6e), constant(0x3c088342));
+      p = std::fma(square, p, -constant(0x3e2aaaa1));
+      value = std::fma(cube, p, reduced);
+    }
+  } else {
+    value = (selector & 1) ? 1.0f : reduced;
+  }
+  return (selector & 2) ? -value : value;
+}
+void initialize_gate(std::span<std::uint8_t, 256> bytes, std::uint8_t owner,
+                     ArenaGridPosition grid, const ArenaStructureTableValues &t,
+                     ArenaRandom &random) {
+  ArenaEntityCoreParameters p;
+  p.type = 25;
+  p.model_slot = 35;
+  p.owner = owner;
+  p.stage = 4;
+  p.quantity = 15;
+  p.flags = 0x00014200;
+  p.position = {static_cast<float>(grid.x) + 0.5f, 0,
+                static_cast<float>(grid.z) + 0.5f, 0};
+  p.scalar_58 = 200;
+  p.scalar_64 = static_cast<float>(t.scalar_64);
+  p.scalar_38 = p.scalar_64 / static_cast<float>(t.scalar_38_denominator);
+  initialize_arena_entity_core(bytes.first<128>(), p);
+  auto word = [&](unsigned off, std::uint32_t value) {
+    for (unsigned i = 0; i < 4; ++i)
+      bytes[off + i] = static_cast<std::uint8_t>(value >> (24 - 8 * i));
+  };
+  auto scalar = [&](unsigned off, float value) {
+    word(off, std::bit_cast<std::uint32_t>(value));
+  };
+  const float unit =
+      multiply(static_cast<float>(random.next()), constant(0x30800000));
+  const float angle = std::fma(unit, constant(0x4048f5c3), 0.0f);
+  scalar(0x80, angle);
+  word(0x84, 0);
+  scalar(0x88, angle);
+  word(0x8c, 0);
+  const float dx = multiply(gate_trig(angle, 0), constant(0x3eb33333));
+  const float dz = multiply(gate_trig(angle, 1), constant(0x3eb33333));
+  scalar(0x90, p.position[0] + dx);
+  word(0x94, 0);
+  scalar(0x98, p.position[2] + dz);
+  word(0x9c, 0);
+  word(0x10, 2);
+  word(0x5c, 0);
+  reset_arena_entity_upgrade_core(bytes.first<128>(), 5);
+}
+} // namespace
+
 bool initialize_arena_structure_entity(std::span<std::uint8_t, 256> bytes,
                                        std::uint8_t opcode, std::uint8_t owner,
                                        ArenaGridPosition grid,
-                                       const ArenaStructureTableValues &t) {
+                                       const ArenaStructureTableValues &t,
+                                       ArenaRandom *random) {
+  if (opcode == 25) {
+    if (!random)
+      return false;
+    initialize_gate(bytes, owner, grid, t, *random);
+    return true;
+  }
   if (opcode == 20) {
     initialize_arena_type20_entity(bytes, owner, grid,
                                    {t.scalar_64, t.scalar_38_denominator});
