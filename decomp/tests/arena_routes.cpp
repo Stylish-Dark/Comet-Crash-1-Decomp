@@ -64,4 +64,27 @@ int main() {
   check(relocated.cells[12 * 24 + 3].visibility == 0x10);
   check(relocated.cells[12 * 24 + 2].visibility == 0x10);
   check(relocated.pair_lengths[1] == 18);
+  std::vector<ArenaGridPosition> clearing{{12, 12}};
+  ArenaRoutingGrid cleared;
+  cleared.cells[12 * 24 + 12].visibility = 0x1f;
+  check(clear_arena_grid_cell_list(cleared, clearing, players));
+  check(clearing.empty() && cleared.cells[12 * 24 + 12].visibility == 0);
+  for (int z = 0; z < 24; ++z)
+    cleared.cells[z * 24 + 12].visibility = 0x1f;
+  clearing.push_back({1, 1});
+  occupied = cleared;
+  check(!clear_arena_grid_cell_list(cleared, clearing, players));
+  check(clearing.empty() && cleared == occupied);
+  auto same_team = players;
+  same_team[1].team = 0;
+  ArenaRoutingGrid preserved;
+  preserved.cells[0].route_usage = 0xffff;
+  preserved.cells[0].routes.fill(0xab);
+  preserved.pair_lengths.fill(123);
+  check(apply_arena_grid_placement(preserved, 0, 21, {12, 12}, same_team));
+  check(preserved.cells[0].route_usage == 0);
+  for (auto route : preserved.cells[0].routes)
+    check(route == 0xab);
+  for (auto length : preserved.pair_lengths)
+    check(length == 123);
 }

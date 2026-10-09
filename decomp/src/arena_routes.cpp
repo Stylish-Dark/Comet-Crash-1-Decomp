@@ -75,38 +75,8 @@ std::uint8_t arena_gate_visibility(std::uint8_t player, std::uint8_t team_bit) {
   return static_cast<std::uint8_t>(((player + 1) << 4) |
                                    (std::rotl(0xfffffffeu, team_bit) & 15));
 }
-bool apply_arena_grid_placement(ArenaRoutingGrid &grid, std::uint8_t owner,
-                                std::uint8_t opcode, ArenaGridPosition location,
-                                std::span<const ArenaRoutePlayer> players) {
-  if (owner >= players.size() || players.size() > 4 || location.x >= 24 ||
-      location.z >= 24 || (opcode != 255 && !arena_construction_cost(opcode)))
-    throw std::invalid_argument("unsupported arena grid command");
-  for (const auto &player : players)
-    if (player.team >= 4 ||
-        (!player.inactive && (player.base.x >= 24 || player.base.z >= 24)))
-      throw std::invalid_argument("invalid arena route player");
-  std::array<ArenaRoutePlayer, 4> updated_players{};
-  std::copy(players.begin(), players.end(), updated_players.begin());
-  const auto player_count = players.size();
-  auto candidate = grid;
-  auto &cell = candidate.cells[location.z * 24 + location.x];
-  if (opcode == 255) {
-    if ((cell.visibility >> 4) == owner + 1)
-      cell.visibility = 0;
-  } else {
-    if ((cell.visibility & 0xf0) != 0)
-      return false;
-    cell.visibility = opcode == 25
-                          ? arena_gate_visibility(owner, players[owner].team)
-                          : static_cast<std::uint8_t>(((owner + 1) << 4) |
-                                                      (opcode == 29 ? 0 : 15));
-    if (opcode == 29) {
-      updated_players[owner].base = location;
-      updated_players[owner].inactive = false;
-      players = std::span<const ArenaRoutePlayer>(updated_players.data(),
-                                                  player_count);
-    }
-  }
+static bool rebuild_arena_routes(ArenaRoutingGrid &candidate,
+                                 std::span<const ArenaRoutePlayer> players) {
   // +0x3D0 clears usage masks even for inactive/same-team pairs. Other cell
   // fields and inactive pair route bytes/lengths retain their previous values.
   std::array<std::uint8_t, 576> visibility{};
@@ -158,6 +128,66 @@ bool apply_arena_grid_placement(ArenaRoutingGrid &grid, std::uint8_t owner,
       candidate.pair_lengths[4 * i + j] = length;
     }
   }
+  return true;
+}
+bool apply_arena_grid_placement(ArenaRoutingGrid &grid, std::uint8_t owner,
+                                std::uint8_t opcode, ArenaGridPosition location,
+                                std::span<const ArenaRoutePlayer> players) {
+  if (owner >= players.size() || players.size() > 4 || location.x >= 24 ||
+      location.z >= 24 || (opcode != 255 && !arena_construction_cost(opcode)))
+    throw std::invalid_argument("unsupported arena grid command");
+  for (const auto &player : players)
+    if (player.team >= 4 ||
+        (!player.inactive && (player.base.x >= 24 || player.base.z >= 24)))
+      throw std::invalid_argument("invalid arena route player");
+  std::array<ArenaRoutePlayer, 4> updated_players{};
+  std::copy(players.begin(), players.end(), updated_players.begin());
+  const auto player_count = players.size();
+  auto candidate = grid;
+  auto &cell = candidate.cells[location.z * 24 + location.x];
+  if (opcode == 255) {
+    if ((cell.visibility >> 4) == owner + 1)
+      cell.visibility = 0;
+  } else {
+    if ((cell.visibility & 0xf0) != 0)
+      return false;
+    cell.visibility = opcode == 25
+                          ? arena_gate_visibility(owner, players[owner].team)
+                          : static_cast<std::uint8_t>(((owner + 1) << 4) |
+                                                      (opcode == 29 ? 0 : 15));
+    if (opcode == 29) {
+      updated_players[owner].base = location;
+      updated_players[owner].inactive = false;
+      players = std::span<const ArenaRoutePlayer>(updated_players.data(),
+                                                  player_count);
+    }
+  }
+  if (!rebuild_arena_routes(candidate, players))
+    return false;
+  grid = candidate;
+  return true;
+}
+bool clear_arena_grid_cell_list(ArenaRoutingGrid &grid,
+                                std::vector<ArenaGridPosition> &coordinates,
+                                std::span<const ArenaRoutePlayer> players) {
+  if (coordinates.size() > 63 || players.size() > 4)
+    throw std::invalid_argument("invalid arena cell list");
+  for (const auto &position : coordinates)
+    if (position.x >= 24 || position.z >= 24)
+      throw std::invalid_argument("invalid arena cell list coordinate");
+  for (const auto &player : players)
+    if (player.team >= 4 ||
+        (!player.inactive && (player.base.x >= 24 || player.base.z >= 24)))
+      throw std::invalid_argument("invalid arena route player");
+  auto candidate = grid;
+  // +0xBA8 atomically takes the 128-byte list and zeroes its count before
+  // +0x8E8 clears visibility. That side effect precedes route rejection.
+  auto removed = std::move(coordinates);
+  coordinates.clear();
+  for (const auto &position : removed)
+    candidate.cells[position.z * 24 + position.x].visibility = 0;
+  if (!rebuild_arena_routes(candidate, players))
+    return false;
   grid = candidate;
   return true;
 }

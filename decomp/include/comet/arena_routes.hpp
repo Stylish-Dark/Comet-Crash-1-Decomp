@@ -33,9 +33,14 @@ struct ArenaRoutePlayer {
 };
 // Transactional grid portion of the raw construction job. Opcode 29 uses the
 // new base for routing; caller owns persistence of player/pair-record state.
-// Opcode 0's atomic cell-list removal remains a separate boundary.
+// Opcode 0 uses clear_arena_grid_cell_list below.
 // A rejected candidate leaves the supplied grid intact.
 bool apply_arena_grid_placement(ArenaRoutingGrid &, std::uint8_t owner,
                                 std::uint8_t opcode, ArenaGridPosition,
+                                std::span<const ArenaRoutePlayer>);
+// Opcode 0 drains the coordinate list before validating the candidate grid.
+// Even when route validation rejects the grid, that list remains drained.
+bool clear_arena_grid_cell_list(ArenaRoutingGrid &,
+                                std::vector<ArenaGridPosition> &,
                                 std::span<const ArenaRoutePlayer>);
 } // namespace comet::decomp
