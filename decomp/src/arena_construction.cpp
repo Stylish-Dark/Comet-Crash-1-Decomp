@@ -83,12 +83,12 @@ bool commit_arena_construction(
   if (validate_arena_construction(request, context, queue) !=
       ArenaConstructionError::None)
     return false;
-  if (!construct(request))
-    return false;
   const auto cost =
       context.cost_override
           ? 1.0f
           : static_cast<float>(*arena_construction_cost(request.opcode));
+  if (!construct(request))
+    return false;
   context.resource = std::min(context.resource - cost, context.resource_max);
   return true;
 }

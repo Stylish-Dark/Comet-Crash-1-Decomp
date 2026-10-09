@@ -61,6 +61,13 @@ int main() {
   check(commit_arena_construction(request, context, queue,
                                   [](auto) { return true; }));
   check(context.resource == 0);
+  auto changed_flags = context;
+  changed_flags.resource = 60;
+  check(commit_arena_construction(request, changed_flags, queue, [&](auto) {
+    changed_flags.cost_override = true;
+    return true;
+  }));
+  check(changed_flags.resource == 0);
   request.opcode = 29;
   check(commit_arena_construction(request, context, queue,
                                   [](auto) { return true; }));

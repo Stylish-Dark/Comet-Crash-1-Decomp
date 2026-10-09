@@ -58,4 +58,10 @@ int main() {
   occupied = grid;
   check(!apply_arena_grid_placement(grid, 0, 21, {12, 12}, players));
   check(grid == occupied);
+  ArenaRoutingGrid relocated;
+  relocated.cells[12 * 24 + 2].visibility = 0x10;
+  check(apply_arena_grid_placement(relocated, 0, 29, {3, 12}, players));
+  check(relocated.cells[12 * 24 + 3].visibility == 0x10);
+  check(relocated.cells[12 * 24 + 2].visibility == 0x10);
+  check(relocated.pair_lengths[1] == 18);
 }

@@ -31,8 +31,9 @@ struct ArenaRoutePlayer {
   std::uint32_t team = 0;
   bool inactive = false;
 };
-// Transactional grid portion of the raw construction job. Opcode 0's atomic
-// cell-list removal and opcode 29's base relocation remain separate boundaries.
+// Transactional grid portion of the raw construction job. Opcode 29 uses the
+// new base for routing; caller owns persistence of player/pair-record state.
+// Opcode 0's atomic cell-list removal remains a separate boundary.
 // A rejected candidate leaves the supplied grid intact.
 bool apply_arena_grid_placement(ArenaRoutingGrid &, std::uint8_t owner,
                                 std::uint8_t opcode, ArenaGridPosition,
