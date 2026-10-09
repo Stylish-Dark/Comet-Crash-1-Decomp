@@ -59,22 +59,23 @@ int main() {
         {{{2, 12}, 0, false}, {{21, 12}, 1, false}}};
     std::array<ArenaPlayer, 2> batch_players;
     ArenaEntityStorage batch_storage;
-    batch_storage.banks[0].resize(7);
-    batch_storage.banks[1].resize(7);
-    reset_arena_entity_index_pool(batch_storage, 7);
+    batch_storage.banks[0].resize(8);
+    batch_storage.banks[1].resize(8);
+    reset_arena_entity_index_pool(batch_storage, 8);
     ArenaConstructionContext batch_context;
-    batch_context.available_entities = 7;
+    batch_context.available_entities = 8;
     batch_context.resource = batch_context.resource_max = 400;
-    constexpr std::array<std::uint8_t, 7> opcodes{20, 21, 22, 23, 24, 26, 28};
+    constexpr std::array<std::uint8_t, 8> opcodes{20, 21, 22, 23, 24, 25, 26, 28};
     for (unsigned i = 0; i < opcodes.size(); ++i)
       check(batch.push({0, opcodes[i], static_cast<std::uint8_t>(4 + i), 8}));
     unsigned allocated = 0;
+    ArenaRandom batch_random(1);
     auto allocate = [&](auto request) {
       ArenaEntitySlot slot;
       slot.fill(0xa5);
       check(initialize_arena_structure_entity(
           slot, request.opcode, request.player,
-          {request.grid_x, request.grid_z}, {100, 50, 10, 20, 7.5f}));
+          {request.grid_x, request.grid_z}, {100, 50, 10, 20, 7.5f}, &batch_random));
       const auto id = insert_arena_entity(
           batch_storage, {request.grid_x, request.grid_z}, slot);
       check(id.has_value() && *id == allocated++);
@@ -92,9 +93,9 @@ int main() {
       check(batch_storage.cells[0][cell].size() == 1 &&
             batch_storage.cells[1][cell].size() == 1);
       check(batch_storage.summary_counts[cell] == 1 &&
-            batch_grid.cells[cell].visibility == 0x1f);
+            batch_grid.cells[cell].visibility == (opcodes[i] == 25 ? 0x1e : 0x1f));
     }
-    check(batch.empty() && allocated == 7 && batch_context.resource == 45);
+    check(batch.empty() && allocated == 8 && batch_context.resource == 35);
     check(batch_context.available_entities == 0 &&
           batch_storage.free_indices.empty());
   }

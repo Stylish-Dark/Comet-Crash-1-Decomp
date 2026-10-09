@@ -141,5 +141,7 @@ fields, angle duplication, zero vector lanes and exactly one RNG draw.
 The full decoded-original gate comparison was interrupted by the local
 execution service disconnect; no matching gate fixture count is claimed.
 Linux/Windows CI remains the build verification path for this continuation.
-The seven-type mixed completion test remains unchanged; eight-type runtime
-integration and the original gate comparison still need confirmation.
+The mixed completion test now includes the gate as an eighth constructor,
+with one shared RNG, expected gate visibility 1E, exhausted capacity 8 and
+400 minus total cost 365 equals 35. Its CI result remains pending; the
+original decoded-instruction gate comparison still needs confirmation.
