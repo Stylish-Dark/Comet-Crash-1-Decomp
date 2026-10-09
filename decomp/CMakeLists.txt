@@ -5,6 +5,7 @@ add_library(comet_native_recovery STATIC
     src/level_map.cpp
     src/arena_state.cpp
     src/arena_construction.cpp
+    src/arena_routes.cpp
     src/native_session.cpp
     src/native_model.cpp
     src/dds_image.cpp
@@ -73,6 +74,9 @@ add_test(NAME comet_arena_state_tests COMMAND comet_arena_state_tests)
 add_executable(comet_arena_construction_tests tests/arena_construction.cpp)
 target_link_libraries(comet_arena_construction_tests PRIVATE comet_native_recovery)
 add_test(NAME comet_arena_construction_tests COMMAND comet_arena_construction_tests)
+add_executable(comet_arena_routes_tests tests/arena_routes.cpp)
+target_link_libraries(comet_arena_routes_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_routes_tests COMMAND comet_arena_routes_tests)
 
 add_executable(comet_native_model_tests tests/native_model.cpp)
 target_link_libraries(comet_native_model_tests PRIVATE comet_native_recovery)

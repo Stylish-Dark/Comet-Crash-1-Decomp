@@ -93,3 +93,8 @@ The static-recomp runner remains available for tracing. Do not treat fixing its 
 [ ] Trace arena entity placement and the game-domain update entrypoint; replace with typed native state.
 [ ] Integrate a complete static arena scene, then prove one mission update path against the original.
 [ ] Recover original shader/team/normal/specular behavior; current fixed-function shading is approximate.
+
+
+## 2026-10-09: native SPU construction grid transaction
+
+Recovered the FDE54 raw job route field and transactional grid placement in `decomp/src/arena_routes.cpp`; see `docs/decomp/arena-routes.md`. Forty original-routine oracle fixtures matched all 23,040 route bytes. Sixty full original-job fixtures matched status and committed 9,344-byte snapshots (26 accepted, 34 rejected) for ordinary placement, gates and visibility removal. Pair-route storage is compact 12-slot indexing; path lengths use a distinct 4x4 matrix. Opcode 0 atomic cell-list removal, opcode 29 base relocation, entity/resource completion integration and simulation jobs remain unfinished. PR33 prior commit 08fcd2f passed both GitHub tests and native-source-port workflows. This remains an incomplete PC port.

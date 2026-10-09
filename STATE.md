@@ -138,3 +138,8 @@ The exact ELF hash was rechecked. `docs/decomp/model-loader-runtime-evidence.md`
 ## SPU gameplay bottleneck recovered
 
 Six raw SPURS job binaries were missing from the embedded-ELF inventory. Their pointer pairs and hashes are now recorded in `docs/decomp/arena-spu-jobs.json`; `tools/extract_arena_spu_jobs.py` recovers them from the user-owned ELF. Construction ring orchestrator CAB90 submits the FDE54 job (10,880 bytes at 0x1C5580), not a PPU D6088 commit call. Next: replace that SPU command consumer's state writes with native construction; trace the larger cell/entity jobs for movement/combat. The two embedded ELF count remains correct for ELF images, but is not the full SPU code inventory.
+
+
+## 2026-10-09: native SPU construction grid transaction
+
+Recovered the FDE54 raw job route field and transactional grid placement in `decomp/src/arena_routes.cpp`; see `docs/decomp/arena-routes.md`. Forty original-routine oracle fixtures matched all 23,040 route bytes. Sixty full original-job fixtures matched status and committed 9,344-byte snapshots (26 accepted, 34 rejected) for ordinary placement, gates and visibility removal. Pair-route storage is compact 12-slot indexing; path lengths use a distinct 4x4 matrix. Opcode 0 atomic cell-list removal, opcode 29 base relocation, entity/resource completion integration and simulation jobs remain unfinished. PR33 prior commit 08fcd2f passed both GitHub tests and native-source-port workflows. This remains an incomplete PC port.
