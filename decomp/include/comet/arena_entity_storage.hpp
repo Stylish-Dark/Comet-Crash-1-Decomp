@@ -14,6 +14,10 @@ struct ArenaEntityStorage {
   std::uint32_t width = 24, height = 24;
   std::uint8_t read_bank = 0;
 };
+// CAF20 pool portion: ascending indices with head zero and all slots available.
+// Capacity is root+2D44F0; bank allocation and other reset fields are separate.
+void reset_arena_entity_index_pool(ArenaEntityStorage &,
+                                   std::uint32_t capacity);
 // 1117F0 writes all eight bytes and clamps the entity's truncated x/z to the
 // configured extent. Returns whether the supplied cell coordinate changed.
 bool pack_arena_cell_entry(ArenaPackedCellEntry &,

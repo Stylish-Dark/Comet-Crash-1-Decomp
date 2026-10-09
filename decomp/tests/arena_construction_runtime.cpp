@@ -21,7 +21,9 @@ int main() {
   ArenaEntityStorage storage;
   storage.banks[0].resize(2);
   storage.banks[1].resize(2);
-  storage.free_indices = {0, 1};
+  reset_arena_entity_index_pool(storage, 2);
+  context.available_entities =
+      static_cast<std::uint32_t>(storage.free_indices.size());
   auto construct = [&](auto request) {
     ++calls;
     check(request.opcode == 21);

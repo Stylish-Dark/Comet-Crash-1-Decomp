@@ -2,6 +2,28 @@
 #include "comet/arena_entity_core.hpp"
 #include <bit>
 namespace comet::decomp {
+void initialize_arena_type20_entity(std::span<std::uint8_t, 256> bytes,
+                                    std::uint8_t owner, ArenaGridPosition grid,
+                                    const ArenaType20Tuning &tuning) {
+  ArenaEntityCoreParameters p;
+  p.type = 20;
+  p.model_slot = 17;
+  p.owner = owner;
+  p.stage = 4;
+  p.quantity = 40;
+  p.flags = 0x0001c200;
+  p.position = {static_cast<float>(grid.x) + 0.5f, 0,
+                static_cast<float>(grid.z) + 0.5f, 0};
+  p.scalar_58 = 200;
+  p.scalar_64 = static_cast<float>(tuning.scalar_64);
+  p.scalar_38 = p.scalar_64 / static_cast<float>(tuning.scalar_38_denominator);
+  initialize_arena_entity_core(bytes.first<128>(), p);
+  bytes[0x10] = bytes[0x11] = bytes[0x12] = 0;
+  bytes[0x13] = 2;
+  for (unsigned off = 0x8c; off < 0x90; ++off)
+    bytes[off] = 0;
+  reset_arena_entity_upgrade_core(bytes.first<128>(), 1);
+}
 void initialize_arena_type21_entity(std::span<std::uint8_t, 256> bytes,
                                     std::uint8_t owner, ArenaGridPosition grid,
                                     const ArenaType21Tuning &tuning) {

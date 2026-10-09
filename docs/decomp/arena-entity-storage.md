@@ -4,8 +4,12 @@
 operation requested from `0x130A1C`. The caller supplies bootstrap's free-index
 order and bank capacity. The original pool holds a head, capacity, available
 count and a ring of 32-bit indices; the native deque preserves its logical FIFO
-order. Bootstrap initialization and index return/recycling are not recovered
-here.
+order. `reset_arena_entity_index_pool` recovers the pool portion of CAF20:
+capacity comes from root +0x2D44F0, and indices initialize in ascending order
+0..capacity-1 with all available and head zero. `0xCBC18` allocates the original
+index array; `0xCAF98..0xCB490` fills it and sets the counters. Native bank
+allocation and other world reset fields are separate. Index return/recycling
+is not recovered here. Invalid native capacity leaves the pool untouched.
 
 Both cell lists must have room before allocation. The selected index consumes
 one pool entry. The 256-byte template is copied to both entity banks, then the
@@ -66,6 +70,6 @@ The evaluator's VMX multiply-add path asserts the encountered addend is zero;
 this proves this bounded helper, not general VMX emulation. The full CA514/pool
 routine has source-anchored native tests, rather than a full-routine oracle.
 
-Together with the preceding initializer/constructor checks there are 2,500
+Together with the preceding initializer/constructor checks there are 3,000
 decoded-original entity fixtures. Proprietary instructions and harness files
 remain private under ignored `generated/ppu-oracle/`.

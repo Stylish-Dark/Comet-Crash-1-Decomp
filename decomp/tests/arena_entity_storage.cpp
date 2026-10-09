@@ -13,6 +13,24 @@ static void put_float(ArenaEntitySlot &b, unsigned o, float f) {
     b[o + i] = std::uint8_t(n >> (24 - 8 * i));
 }
 int main() {
+  ArenaEntityStorage bootstrap;
+  bootstrap.banks[0].resize(5);
+  bootstrap.banks[1].resize(5);
+  bootstrap.free_indices = {4, 2};
+  bootstrap.banks[0][1][0xf] = 21;
+  bootstrap.cells[0][0].push_back({});
+  reset_arena_entity_index_pool(bootstrap, 5);
+  check(bootstrap.free_indices == std::deque<std::uint32_t>{0, 1, 2, 3, 4});
+  check(bootstrap.banks[0][1][0xf] == 21 && bootstrap.cells[0][0].size() == 1);
+  reset_arena_entity_index_pool(bootstrap, 0);
+  check(bootstrap.free_indices.empty());
+  bool invalid = false;
+  try {
+    reset_arena_entity_index_pool(bootstrap, 6);
+  } catch (const std::invalid_argument &) {
+    invalid = true;
+  }
+  check(invalid && bootstrap.free_indices.empty());
   ArenaEntitySlot slot;
   slot.fill(0xa5);
   initialize_arena_type21_entity(slot, 2, {8, 12}, {50, 10, 25, 10});

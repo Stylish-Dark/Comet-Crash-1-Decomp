@@ -3,7 +3,18 @@
 #include <bit>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 namespace comet::decomp {
+void reset_arena_entity_index_pool(ArenaEntityStorage &storage,
+                                   std::uint32_t capacity) {
+  if (capacity > 65536 || capacity > storage.banks[0].size() ||
+      capacity > storage.banks[1].size())
+    throw std::invalid_argument("invalid native entity pool capacity");
+  std::deque<std::uint32_t> indices;
+  for (std::uint32_t index = 0; index < capacity; ++index)
+    indices.push_back(index);
+  storage.free_indices = std::move(indices);
+}
 namespace {
 float read_float(std::span<const std::uint8_t, 256> bytes, unsigned off) {
   return std::bit_cast<float>((std::uint32_t(bytes[off]) << 24) |

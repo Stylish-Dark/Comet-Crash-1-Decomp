@@ -10,6 +10,19 @@ static std::uint32_t word(const std::array<std::uint8_t, 256> &b, unsigned o) {
          (std::uint32_t(b[o + 2]) << 8) | b[o + 3];
 }
 int main() {
+  std::array<std::uint8_t, 256> type20;
+  type20.fill(0xa5);
+  initialize_arena_type20_entity(type20, 1, {3, 4}, {80, 20});
+  check(type20[0xf] == 20 && type20[0x6f] == 17 && type20[0x33] == 0x30);
+  check(word(type20, 0x38) == 0x40800000 && word(type20, 0x64) == 0x42a00000);
+  check(word(type20, 0x3c) == 0 && word(type20, 0x58) == 0x43480000);
+  check(word(type20, 0x60) == 0x0001c28e && type20[0x7c] == 40 &&
+        type20[0xe] == 0);
+  check(word(type20, 0x10) == 2 && word(type20, 0x8c) == 0 &&
+        type20[0x6e] == 1);
+  check(word(type20, 0x80) == 0xa5a5a5a5 && word(type20, 0x88) == 0xa5a5a5a5);
+  for (unsigned off = 0x90; off < 256; ++off)
+    check(type20[off] == 0xa5);
   std::array<std::uint8_t, 256> bytes;
   bytes.fill(0xa5);
   initialize_arena_type21_entity(bytes, 2, {8, 12}, {50, 10, 25, 10});

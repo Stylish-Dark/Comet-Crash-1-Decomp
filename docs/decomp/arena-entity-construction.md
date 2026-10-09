@@ -76,3 +76,7 @@ signed tuning values, stage boundary values, and large signed quantity patterns.
 This bounded evaluator is an additional recovery check, not a hardware-perfect
 PPU emulator or evidence of a complete game. Proprietary code and private
 harness files remain under ignored `generated/ppu-oracle/`.
+
+## Opcode 20 continuation
+
+`initialize_arena_type20_entity` replaces D7090..D7134: model 17, stage 4, quantity 40, constructor flags 0001C200, scalar +3C=0, +58=200, the signed mutable-table scalar/ratio, +10=2, +8C=0 and the level-1 upgrade reset. Other bytes beyond the core and +8C remain untouched. Five hundred decoded-original fixtures (seed 2009) matched all 256 bytes. Together with opcode 21, core and packed-cell checks there are now 3,000 entity fixtures. The remaining constructor types are still unimplemented.

@@ -1,6 +1,13 @@
 #pragma once
 #include "comet/arena_state.hpp"
 namespace comet::decomp {
+struct ArenaType20Tuning {
+  std::int16_t scalar_64 = 0, scalar_38_denominator = 1;
+};
+// Complete opcode-20 slot writes at D7090..D7134, including both leaf calls.
+void initialize_arena_type20_entity(std::span<std::uint8_t, 256>,
+                                    std::uint8_t owner, ArenaGridPosition,
+                                    const ArenaType20Tuning &);
 // Values read from mutable bootstrap tables by the opcode-21 constructor.
 // Names retain destination offsets while gameplay semantics are unproved.
 struct ArenaType21Tuning {
