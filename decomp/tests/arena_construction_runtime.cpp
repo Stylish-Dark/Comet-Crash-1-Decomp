@@ -50,6 +50,54 @@ int main() {
         storage.cells[1][12 * 24 + 8].size() == 1);
   check(storage.summary_counts[12 * 24 + 8] == 1 &&
         context.available_entities == 1);
+  // Construct every recovered structure through route reservation, completion,
+  // allocation and both cell banks, rather than testing only leaf writes.
+  {
+    ArenaConstructionQueue batch;
+    ArenaRoutingGrid batch_grid;
+    std::array<ArenaRoutePlayer, 2> batch_routes{
+        {{{2, 12}, 0, false}, {{21, 12}, 1, false}}};
+    std::array<ArenaPlayer, 2> batch_players;
+    ArenaEntityStorage batch_storage;
+    batch_storage.banks[0].resize(7);
+    batch_storage.banks[1].resize(7);
+    reset_arena_entity_index_pool(batch_storage, 7);
+    ArenaConstructionContext batch_context;
+    batch_context.available_entities = 7;
+    batch_context.resource = batch_context.resource_max = 400;
+    constexpr std::array<std::uint8_t, 7> opcodes{20, 21, 22, 23, 24, 26, 28};
+    for (unsigned i = 0; i < opcodes.size(); ++i)
+      check(batch.push({0, opcodes[i], static_cast<std::uint8_t>(4 + i), 8}));
+    unsigned allocated = 0;
+    auto allocate = [&](auto request) {
+      ArenaEntitySlot slot;
+      slot.fill(0xa5);
+      check(initialize_arena_structure_entity(
+          slot, request.opcode, request.player,
+          {request.grid_x, request.grid_z}, {100, 50, 10, 20, 7.5f}));
+      const auto id = insert_arena_entity(
+          batch_storage, {request.grid_x, request.grid_z}, slot);
+      check(id.has_value() && *id == allocated++);
+      batch_context.available_entities =
+          static_cast<std::uint32_t>(batch_storage.free_indices.size());
+      return true;
+    };
+    for (unsigned i = 0; i < opcodes.size(); ++i) {
+      check(process_next_arena_construction(
+                batch, batch_grid, batch_routes, batch_players, batch_context,
+                allocate) == ArenaConstructionStep::Constructed);
+      const auto cell = 8 * 24 + 4 + i;
+      check(batch_storage.banks[0][i][0xf] == opcodes[i]);
+      check(batch_storage.banks[0][i] == batch_storage.banks[1][i]);
+      check(batch_storage.cells[0][cell].size() == 1 &&
+            batch_storage.cells[1][cell].size() == 1);
+      check(batch_storage.summary_counts[cell] == 1 &&
+            batch_grid.cells[cell].visibility == 0x1f);
+    }
+    check(batch.empty() && allocated == 7 && batch_context.resource == 45);
+    check(batch_context.available_entities == 0 &&
+          batch_storage.free_indices.empty());
+  }
   // An entity failure leaves the reservation until a queued 255 job completes.
   check(queue.push({0, 21, 9, 12}));
   check(process_next_arena_construction(queue, grid, routes, players, context,

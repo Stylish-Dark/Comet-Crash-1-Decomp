@@ -10,6 +10,71 @@ static std::uint32_t word(const std::array<std::uint8_t, 256> &b, unsigned o) {
          (std::uint32_t(b[o + 2]) << 8) | b[o + 3];
 }
 int main() {
+  std::array<std::uint8_t, 256> extended;
+  extended.fill(0xa5);
+  ArenaStructureTableValues tuning{100, 50, 10, 20, 7.5f};
+  check(initialize_arena_structure_entity(extended, 22, 2, {3, 4}, tuning));
+  check(extended[0xf] == 22 && extended[0x6f] == 16 && extended[0x7c] == 40);
+  check(word(extended, 0x60) == 0x0040c28f && extended[0x6e] == 1);
+  check(extended[0x90] == 255 && extended[0x91] == 255);
+  check(word(extended, 0xb0) == 0x42a00000 &&
+        word(extended, 0xb4) == 0x3f800000);
+  check(extended[0xb8] == 0 && extended[0xb9] == 0 && extended[0xba] == 0 &&
+        extended[0xbb] == 1);
+  check(word(extended, 0xc0) == 0 && word(extended, 0xc4) == 0x3f800000 &&
+        word(extended, 0xc8) == 0xbf800000);
+  check(word(extended, 0x5c) == 0x3f800000 &&
+        word(extended, 0x98) == 0xa5a5a5a5);
+  extended.fill(0xa5);
+  check(initialize_arena_structure_entity(extended, 23, 2, {3, 4}, tuning));
+  check(extended[0x6f] == 14 && extended[0x7c] == 38 &&
+        word(extended, 0x3c) == 0x41c80000);
+  check(extended[0xcc] == 15 && extended[0xcd] == 15 && extended[0xdc] == 23 &&
+        extended[0xdd] == 1);
+  check(word(extended, 0xd4) == 0x40c90fdb &&
+        word(extended, 0xd8) == 0x40490fdb);
+  check(word(extended, 0xe0) == 0x3dcccccd &&
+        word(extended, 0xe4) == 0x3e4ccccd);
+  check(word(extended, 0xe8) == 0x3f7d70a4 &&
+        word(extended, 0xec) == 0xbe99999a && word(extended, 0xf0) == 110);
+  check(word(extended, 0x5c) == 0x40000000);
+  extended.fill(0xa5);
+  check(initialize_arena_structure_entity(extended, 24, 2, {3, 4}, tuning));
+  check(extended[0x6f] == 18 && extended[0x7c] == 40);
+  check(word(extended, 0xb8) == 0x40000000 && extended[0xcc] == 20 &&
+        extended[0xcd] == 30);
+  check(extended[0xdc] == 29 && extended[0xdd] == 50);
+  check(word(extended, 0xe4) == 0x3f000000 &&
+        word(extended, 0xec) == 0x3f000000);
+  check(word(extended, 0xf0) == 0x41a00000 &&
+        word(extended, 0xf4) == 0x3ec28f5c);
+  check(word(extended, 0xf8) == 0x3dcccccd &&
+        word(extended, 0xfc) == 0x3f800000);
+  extended.fill(0xa5);
+  check(initialize_arena_structure_entity(extended, 26, 2, {3, 4}, tuning));
+  check(extended[0x6f] == 24 && extended[0x6e] == 2 &&
+        word(extended, 0x60) == 0x0040c28e);
+  check(word(extended, 0x10) == 32); // D788C arm preserves FECFC's default.
+  check(word(extended, 0x84) == 0x40f00000 && word(extended, 0x88) == 0 &&
+        word(extended, 0x8c) == 0xa5a5a5a5);
+  check(extended[0x96] == 255 && extended[0x97] == 255 && extended[0xa8] == 0 &&
+        extended[0xa9] == 0xa5 && extended[0xaa] == 0 && extended[0xab] == 0);
+  check(word(extended, 0xb8) == 40 && word(extended, 0xbc) == 2 &&
+        word(extended, 0xc0) == 1);
+  check(word(extended, 0xc4) == 4 && word(extended, 0xc8) == 4 &&
+        word(extended, 0xcc) == 0);
+  extended.fill(0xa5);
+  check(initialize_arena_structure_entity(extended, 28, 2, {3, 4}, tuning));
+  check(extended[0xf] == 28 && extended[0x6f] == 25 && extended[0x6e] == 5);
+  check(word(extended, 0x10) == 32 && word(extended, 0x84) == 0x40f00000);
+  check(word(extended, 0xb8) == 44 && word(extended, 0xbc) == 6);
+  check(word(extended, 0xc0) == 4 && word(extended, 0xc4) == 4 &&
+        word(extended, 0xc8) == 5);
+  check(word(extended, 0x8c) == 0xa5a5a5a5 && extended[0xa9] == 0xa5);
+  check(extended[0x96] == 255 && extended[0x97] == 255);
+  auto untouched = extended;
+  check(!initialize_arena_structure_entity(extended, 25, 2, {3, 4}, tuning) &&
+        extended == untouched);
   std::array<std::uint8_t, 256> type20;
   type20.fill(0xa5);
   initialize_arena_type20_entity(type20, 1, {3, 4}, {80, 20});

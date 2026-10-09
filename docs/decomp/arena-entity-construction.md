@@ -10,7 +10,7 @@ call the constructor. Empty and malformed requests have explicit native results.
 `process_next_arena_construction` uses the completion arguments at
 `0xCCD18..0xCCD28`: commit, occupancy override, and full opcode cost. The caller's
 temporary context flags are restored. The constructor callback owns allocation
-and cell-list insertion; a real opcode-21 initializer and CA514 insertion are
+and cell-list insertion; all seven recovered structure initializers and CA514 insertion are
 exercised through this boundary in the portable integration test. See
 `arena-entity-storage.md`. This is not yet the running viewer's
 gameplay loop. The owner-control-dependent insufficient-funds notification path
@@ -62,7 +62,7 @@ allocation, simulation readiness, weapon behavior or the other constructors.
 ## Verification
 
 Portable tests cover preserved bytes, owner/stage masks, signed quantity
-conversion, counter wrap, constructor fields, real opcode-21 construction through
+conversion, counter wrap, constructor fields, all seven recovered structures through
 the reservation/completion boundary, failed-constructor release ordering, full
 cost, route rejection, and base relocation with an existing event heap.
 
@@ -79,4 +79,44 @@ harness files remain under ignored `generated/ppu-oracle/`.
 
 ## Opcode 20 continuation
 
-`initialize_arena_type20_entity` replaces D7090..D7134: model 17, stage 4, quantity 40, constructor flags 0001C200, scalar +3C=0, +58=200, the signed mutable-table scalar/ratio, +10=2, +8C=0 and the level-1 upgrade reset. Other bytes beyond the core and +8C remain untouched. Five hundred decoded-original fixtures (seed 2009) matched all 256 bytes. Together with opcode 21, core and packed-cell checks there are now 3,000 entity fixtures. The remaining constructor types are still unimplemented.
+`initialize_arena_type20_entity` replaces D7090..D7134: model 17, stage 4, quantity 40, constructor flags 0001C200, scalar +3C=0, +58=200, the signed mutable-table scalar/ratio, +10=2, +8C=0 and the level-1 upgrade reset. Other bytes beyond the core and +8C remain untouched. Five hundred decoded-original fixtures (seed 2009) matched all 256 bytes. The continuation below extends the recovered set.
+
+## Generic structure dispatch: 22, 23, 24, 26 and 28
+
+`initialize_arena_structure_entity` dispatches opcodes 20, 21, 22, 23, 24,
+26 and 28. Unsupported requests return false and preserve the whole slot.
+The new arms cover D72E8..D72E4 (22, returning through the shared tail),
+D7404..D72E4 (23), D7590..D7740 (24), D788C..D7990 (26), and
+D683C..D6940 (28), including FECFC and 12869C. Fields that the original
+leaves unwritten remain intact, including +8C and +A9 for 26/28.
+The original comparison caught a significant difference: 26/28 retain
+FECFC's +10=32, while 20..24 overwrite it with 2. Opcode 24 retains
+pre-switch f30=0.5 for +E4/+EC. Upgrade reset levels are 1 for 20..24,
+2 for 26 and 5 for 28.
+
+The common signed halfword inputs read table TOC -6DB4 and -6DCC at
+2*(opcode-20). Other mutable inputs remain explicit:
+
+| Opcode | first_byte | second_byte | scalar_84 |
+| --- | --- | --- | --- |
+| 20 | unused | unused | unused |
+| 21 | TOC -6DA8, byte 0 | TOC -6D80, byte 0 | unused |
+| 22 | TOC -6D80, byte 5 | unused | unused |
+| 23 | TOC -6D48, byte 0 | TOC -6D80, byte 10 | unused |
+| 24 | TOC -6D80, byte 15 | TOC -6D64, byte 0 | unused |
+| 26 | unused | unused | TOC -6D50, float +0 |
+| 28 | unused | unused | TOC -6D50, float +10 |
+
+Here “TOC” means a pointer loaded from that TOC displacement; table offsets
+are hexadecimal. A fresh mixed test constructs all seven opcodes through
+routing and completion, verifies ascending allocated indices, equal entity
+banks, both ordered cell lists and summaries, exhausts the pool and checks
+400 minus the original total cost of 355 equals 45.
+
+The private decoded-instruction evaluator now matches 500 fixtures for each
+of the seven constructor arms (seed 2634), checking all 256 bytes with random
+reused-slot contents, owners, grid positions and signed mutable tuning.
+Together with the 1,000 core and 1,000 packed-cell fixtures, this batch covers
+5,500 comparisons. These are bounded instruction-evaluator checks, not
+original hardware execution. Gate opcode 25, base 29 and terrain 9 remain
+separate recovery work; none of these checks establishes playable simulation.
