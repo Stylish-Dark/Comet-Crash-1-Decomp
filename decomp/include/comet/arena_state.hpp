@@ -69,6 +69,7 @@ struct ArenaEntity {
   // Map +0x04..+0x10 -> entity +0x20..+0x2C, preserved in source order.
   std::array<float, 4> orientation{0, 0, 0, 1};
   std::size_t source_record = 0;
+  std::optional<std::uint16_t> live_entity_index;
 };
 struct ArenaCell {
   std::optional<std::size_t> entity_index;

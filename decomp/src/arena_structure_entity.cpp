@@ -289,4 +289,18 @@ void initialize_arena_type21_entity(std::span<std::uint8_t, 256> bytes,
   put_word(0x10, 2);
   reset_arena_entity_upgrade_core(bytes.first<128>(), 1);
 }
+// D7FE0..D8094 / D81E8..D8224 bounded map post-constructor transition.
+std::optional<std::uint8_t> arena_structure_initial_level(std::uint8_t type){
+ if(type==25||type==28)return 5;
+ if(type==26)return 2;
+ if(type>=20&&type<=24)return 1;
+ return std::nullopt;
+}
+bool settle_arena_map_structure(std::span<std::uint8_t,256> s,std::uint8_t level,std::uint8_t variant){
+ if(!arena_structure_initial_level(s[15])||level>s[0x6e])return false;
+ if(s[0x63]&8)settle_arena_entity_upgrade_core(s.first<128>());
+ for(unsigned i=0;i<4;++i)s[0x38+i]=s[0x64+i];
+ if(s[15]==28){if(s[0xaa]!=variant)for(unsigned i=0;i<4;++i)s[0x80+i]=0;s[0xaa]=variant;}
+ return true;
+}
 } // namespace comet::decomp

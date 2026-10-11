@@ -9,6 +9,9 @@ add_library(comet_native_recovery STATIC
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
     src/arena_construction_runtime.cpp
+    src/arena_construction_simulation.cpp
+    src/arena_construction_config.cpp
+    src/native_construction_scene.cpp
     src/arena_routes.cpp
     src/native_session.cpp
     src/native_model.cpp
@@ -62,6 +65,18 @@ add_executable(comet_obj_face_line_tests tests/obj_face_line.cpp)
 target_link_libraries(comet_obj_face_line_tests PRIVATE comet_native_recovery)
 target_compile_features(comet_obj_face_line_tests PRIVATE cxx_std_20)
 add_test(NAME comet_obj_face_line_tests COMMAND comet_obj_face_line_tests)
+
+add_executable(comet_arena_construction_simulation_tests tests/arena_construction_simulation.cpp)
+target_link_libraries(comet_arena_construction_simulation_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_construction_simulation_tests COMMAND comet_arena_construction_simulation_tests)
+if(MSVC)
+    target_compile_options(comet_arena_construction_simulation_tests PRIVATE /UNDEBUG)
+else()
+    target_compile_options(comet_arena_construction_simulation_tests PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_construction_replay src/construction_replay.cpp)
+target_link_libraries(comet_construction_replay PRIVATE comet_native_recovery)
 
 add_executable(comet_native src/main.cpp)
 target_link_libraries(comet_native PRIVATE comet_native_recovery)
@@ -118,6 +133,7 @@ endif()
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_FOUND)
+    add_test(NAME comet_construction_replay_tests COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/construction_replay.py $<TARGET_FILE:comet_construction_replay>)
     add_test(NAME comet_native_cli_tests COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_cli.py $<TARGET_FILE:comet_native>)
 endif()
 

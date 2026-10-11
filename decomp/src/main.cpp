@@ -3,18 +3,22 @@
 #ifdef COMET_NATIVE_VIEWER
 #include "comet/native_viewer.hpp"
 #endif
+#include "comet/arena_construction_config.hpp"
+#include "comet/native_construction_scene.hpp"
+#include <fstream>
+#include <memory>
 #include <charconv>
 #include <iostream>
 #include <string_view>
 namespace {
 bool integer(std::string_view text,std::uint32_t& value){auto p=std::from_chars(text.data(),text.data()+text.size(),value);return p.ec==std::errc{}&&p.ptr==text.data()+text.size();}
 int usage(){std::cerr<<"Usage: comet_native [map-directory [level-id]] [--assets game-data-root]\n"
-    <<"                    [--validate-assets | --viewer | --arena] [--model index] [--frames count]\n"
+    <<"                    [--validate-assets | --viewer | --arena] [--construction-config file] [--model index] [--frames count]\n"
     <<"                    [--screenshot output.ppm] [--object relative-model.obj] [--hidden]\n";return 2;}
 }
 int main(int argc,char**argv){
     using namespace comet::decomp;
-    std::filesystem::path maps,assets,screenshot,object;
+    std::filesystem::path maps,assets,screenshot,object,construction_config;
     std::uint32_t level=0,model=0,frames=0;bool viewer=false,arena=false,validate=false,hidden=false,level_set=false;
     NativeSession session;
     for(int i=1;i<argc;++i){
@@ -23,9 +27,10 @@ int main(int argc,char**argv){
         else if(arg=="--arena"){arena=true;viewer=true;}
         else if(arg=="--validate-assets")validate=true;
         else if(arg=="--hidden")hidden=true;
-        else if(arg=="--assets"||arg=="--screenshot"||arg=="--model"||arg=="--frames"||arg=="--object"){
+        else if(arg=="--assets"||arg=="--screenshot"||arg=="--model"||arg=="--frames"||arg=="--object"||arg=="--construction-config"){
             if(++i>=argc)return usage();
-            if(arg=="--assets")assets=argv[i];
+            if(arg=="--construction-config")construction_config=argv[i];
+            else if(arg=="--assets")assets=argv[i];
             else if(arg=="--object")object=argv[i];
             else if(arg=="--screenshot")screenshot=argv[i];
             else if(!integer(argv[i],arg=="--model"?model:frames))return usage();
@@ -37,8 +42,16 @@ int main(int argc,char**argv){
     if((arena&&(maps.empty()||!object.empty()))||(maps.empty()&&assets.empty())||((viewer||validate||!object.empty())&&assets.empty())||
         (!viewer&&(frames||model||hidden||!screenshot.empty())))return usage();
     try{
+        std::optional<ArenaConstructionSimulationConfig> construction;
+        std::unique_ptr<NativeConstructionScene> scene;
+        if(!construction_config.empty()){
+            if(!arena)throw std::invalid_argument("construction config requires --arena");
+            std::ifstream input(construction_config);if(!input)throw std::invalid_argument("cannot open construction config");std::size_t line=0;
+            construction=read_arena_construction_config(input,line);
+            for(std::string text;std::getline(input,text);){text=text.substr(0,text.find('#'));if(text.find_first_not_of(" \t\r")!=std::string::npos)throw std::invalid_argument("viewer config cannot contain scenario commands");}
+        }
         if(!maps.empty()){
-            NativeSessionConfig config;config.data_root=maps;
+            NativeSessionConfig config;config.data_root=maps;if(construction){config.arena.player_count=construction->players.size();config.arena.secondary_player=construction->players.size()>1?1:-1;}
             const auto result=initialize_native_session(config,level,session);
             if(!result){std::cerr<<result.detail<<'\n';return 1;}
             std::cout<<"Comet Crash native arena bootstrap\nLevel: "<<session.current_level_id<<"\nExtent: "<<session.level.arena_extent
@@ -46,6 +59,7 @@ int main(int argc,char**argv){
                 <<"\nArena entities: "<<session.arena.entities.size()<<"\nUnsupported primary records: "<<session.arena.unsupported_records.size()
                 <<"\nModel asset entries: "<<session.model_assets.size()<<"\nRender targets: "<<session.targets.textures.size()<<'\n';
         }
+        if(construction){scene=std::make_unique<NativeConstructionScene>(session.arena,*construction);std::cout<<"Live map structures: "<<scene->imports().live<<"; display-only: "<<scene->imports().display_only<<'\n';}
         if(!assets.empty()){
             AssetStore store(assets);std::vector<ArenaNativeModel> models;
             const std::string object_name=object.generic_string();
@@ -63,7 +77,7 @@ int main(int argc,char**argv){
             std::cout<<"Loaded "<<models.size()<<" arena model entries, "<<vertices<<" vertices, "<<triangles<<" triangles\n";
             if(viewer){
 #ifdef COMET_NATIVE_VIEWER
-                NativeViewerConfig config;config.initial_model=model;config.frame_limit=frames;config.hidden=hidden;config.screenshot=screenshot;config.arena=arena?&session.arena:nullptr;
+                NativeViewerConfig config;config.initial_model=model;config.frame_limit=frames;config.hidden=hidden;config.screenshot=screenshot;config.arena=arena?&session.arena:nullptr;config.construction=scene.get();
                 const auto rendered=run_native_viewer(models,config);
                 if(!rendered){std::cerr<<rendered.detail<<'\n';return 1;}
 #else

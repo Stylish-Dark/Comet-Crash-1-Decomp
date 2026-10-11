@@ -31,6 +31,8 @@ struct ArenaRoutePlayer {
   std::uint32_t team = 0;
   bool inactive = false;
 };
+bool initialize_arena_routing_grid(std::span<const std::uint8_t,576>,
+ std::span<const ArenaRoutePlayer>,ArenaRoutingGrid &);
 // Transactional grid portion of the raw construction job. Opcode 29 uses the
 // new base for routing; caller owns persistence of player/pair-record state.
 // Opcode 0 uses clear_arena_grid_cell_list below.

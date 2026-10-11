@@ -71,6 +71,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         for(auto i:m.model.indices)if(i>=m.model.vertices.size())return error("invalid model index");
         for(const auto&s:m.model.submeshes)if(s.range.first_index>m.model.indices.size()||s.range.index_count>m.model.indices.size()-s.range.first_index||s.range.index_count>static_cast<unsigned>(std::numeric_limits<GLsizei>::max()))return error("invalid submesh draw range");
     }
+    const ArenaState *arena=config.construction?&config.construction->arena():config.arena;
     Platform platform;SDL_SetMainReady();
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS)!=0)return error(SDL_GetError());
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,2);SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,1);
@@ -90,14 +91,29 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         const GLfloat ambient[]={0.28f,0.28f,0.32f,1};glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
         std::size_t selected=config.initial_model;float yaw=25,pitch=55,zoom=1;bool quit=false,wireframe=false;
         std::uint32_t frames=0;int width=config.width,height=config.height;
-        auto title=[&]{if(config.arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
+        ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool playing=false,manual_tick=false;
+        auto last_counter=SDL_GetPerformanceCounter();
+        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, T: tick, P: play | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(playing?" playing":" paused");SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         while(!quit){
             SDL_Event event;
             while(SDL_PollEvent(&event)){
                 if(event.type==SDL_QUIT)quit=true;
                 if(event.type==SDL_KEYDOWN){
                     if(event.key.keysym.sym==SDLK_ESCAPE)quit=true;
-                    if(!config.arena&&(event.key.keysym.sym==SDLK_RIGHT||event.key.keysym.sym==SDLK_LEFT)){selected=(selected+models.size()+(event.key.keysym.sym==SDLK_RIGHT?1:-1))%models.size();zoom=1;title();}
+                    if(!arena&&(event.key.keysym.sym==SDLK_RIGHT||event.key.keysym.sym==SDLK_LEFT)){selected=(selected+models.size()+(event.key.keysym.sym==SDLK_RIGHT?1:-1))%models.size();zoom=1;title();}
+                    if(config.construction&&!event.key.repeat){
+                        auto key=event.key.keysym.sym;
+                        if(key==SDLK_RIGHT&&cursor.x+1u<arena->extent)++cursor.x;
+                        if(key==SDLK_LEFT&&cursor.x)--cursor.x;
+                        if(key==SDLK_DOWN&&cursor.z+1u<arena->extent)++cursor.z;
+                        if(key==SDLK_UP&&cursor.z)--cursor.z;
+                        if(key>=SDLK_1&&key<=SDLK_8){constexpr unsigned types[]={20,21,22,23,24,25,26,28};opcode=types[key-SDLK_1];}
+                        if(key==SDLK_TAB)owner=(owner+1)%config.construction->simulation().accounts().size();
+                        if(key==SDLK_b||key==SDLK_SPACE){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';if(result==ArenaConstructionSubmit::Queued)manual_tick=true;}
+                        if(key==SDLK_t)manual_tick=true;
+                        if(key==SDLK_p)playing=!playing;
+                        title();
+                    }
                     if(event.key.keysym.sym==SDLK_w)wireframe=!wireframe;
                     if(event.key.keysym.sym==SDLK_r){yaw=25;pitch=55;zoom=1;}
                 }
@@ -105,11 +121,17 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                 if(event.type==SDL_MOUSEWHEEL)zoom=std::clamp(zoom*std::pow(0.9f,static_cast<float>(event.wheel.y)),0.1f,20.0f);
             }
             if(quit)break;
+            auto counter=SDL_GetPerformanceCounter();
+            if(config.construction&&(playing||manual_tick)){
+                const auto delta=playing?static_cast<float>(double(counter-last_counter)/SDL_GetPerformanceFrequency()):1.0f;
+                config.construction->advance(config.construction->simulation().clock()+delta);manual_tick=false;title();
+            }
+            last_counter=counter;
             SDL_GL_GetDrawableSize(platform.window,&width,&height);
             if(width<=0||height<=0){SDL_Delay(16);continue;}
             const auto&m=models[selected].model;
-            const ModelPosition center=config.arena?ModelPosition{config.arena->extent*0.5f,0,config.arena->extent*0.5f}:ModelPosition{(m.bounds_min.x+m.bounds_max.x)*0.5f,(m.bounds_min.y+m.bounds_max.y)*0.5f,(m.bounds_min.z+m.bounds_max.z)*0.5f};
-            const auto radius=config.arena?config.arena->extent*0.6f:std::max(0.01f,0.5f*std::hypot(m.bounds_max.x-m.bounds_min.x,m.bounds_max.y-m.bounds_min.y,m.bounds_max.z-m.bounds_min.z));
+            const ModelPosition center=arena?ModelPosition{arena->extent*0.5f,0,arena->extent*0.5f}:ModelPosition{(m.bounds_min.x+m.bounds_max.x)*0.5f,(m.bounds_min.y+m.bounds_max.y)*0.5f,(m.bounds_min.z+m.bounds_max.z)*0.5f};
+            const auto radius=arena?arena->extent*0.6f:std::max(0.01f,0.5f*std::hypot(m.bounds_max.x-m.bounds_min.x,m.bounds_max.y-m.bounds_min.y,m.bounds_max.z-m.bounds_min.z));
             if(!targets.matches(width,height)){
                 targets.resize(width,height);
                 std::cout<<"Native arena resources: "<<targets.texture_count()<<" textures, "<<targets.framebuffer_count()<<" complete framebuffers\n";
@@ -136,7 +158,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                 glDrawElements(GL_TRIANGLES,static_cast<GLsizei>(submesh.range.index_count),GL_UNSIGNED_SHORT,reinterpret_cast<const void*>(static_cast<std::uintptr_t>(submesh.range.first_index)*sizeof(std::uint16_t)));
             }
             };
-            if(config.arena){
+            if(arena){
                 auto instance=[&](std::uint32_t slot,ModelPosition position,const std::array<float,4>& orientation){
                     const auto found=std::find_if(models.begin(),models.end(),[&](const auto& model){return model.spec.original_slot_index==slot;});
                     if(found==models.end())throw std::runtime_error("arena entity model slot missing: "+std::to_string(slot));
@@ -148,8 +170,14 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                         2*(q[0]*q[2]+q[1]*q[3]),2*(q[1]*q[2]-q[0]*q[3]),1-2*(q[0]*q[0]+q[1]*q[1]),0,0,0,0,1};
                     glMultMatrixf(rotation);draw(static_cast<std::size_t>(found-models.begin()));glPopMatrix();
                 };
-                instance(37,config.arena->background_position,config.arena->background_orientation);
-                for(const auto& entity:config.arena->entities)instance(entity.model_slot,entity.position,entity.orientation);
+                instance(37,arena->background_position,arena->background_orientation);
+                for(const auto& entity:arena->entities)instance(entity.model_slot,entity.position,entity.orientation);
+                if(config.construction){
+                    gpu.api.bind(GL_ARRAY_BUFFER,0);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,0);
+                    glDisable(GL_LIGHTING);glDisable(GL_TEXTURE_2D);glDisableClientState(GL_VERTEX_ARRAY);glDisableClientState(GL_NORMAL_ARRAY);glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    glColor3f(1,1,0);glBegin(GL_LINE_LOOP);glVertex3f(cursor.x,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z+1);glVertex3f(cursor.x,0.05f,cursor.z+1);glEnd();
+                    glEnable(GL_LIGHTING);glEnableClientState(GL_VERTEX_ARRAY);glEnableClientState(GL_NORMAL_ARRAY);glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                }
             }else draw(selected);
             if(glGetError()!=GL_NO_ERROR)return error("OpenGL draw failed");
             targets.present();

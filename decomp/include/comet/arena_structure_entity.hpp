@@ -33,4 +33,6 @@ bool initialize_arena_structure_entity(std::span<std::uint8_t, 256>,
 void initialize_arena_type21_entity(std::span<std::uint8_t, 256>,
                                     std::uint8_t owner, ArenaGridPosition,
                                     const ArenaType21Tuning &);
+std::optional<std::uint8_t> arena_structure_initial_level(std::uint8_t);
+bool settle_arena_map_structure(std::span<std::uint8_t,256>,std::uint8_t source_level,std::uint8_t variant);
 } // namespace comet::decomp

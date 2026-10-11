@@ -1,6 +1,7 @@
 #pragma once
 #include "comet/asset_store.hpp"
 #include "comet/arena_state.hpp"
+#include "comet/native_construction_scene.hpp"
 namespace comet::decomp {
 struct NativeViewerConfig {
     int width=1280,height=720;
@@ -9,6 +10,7 @@ struct NativeViewerConfig {
     std::filesystem::path screenshot;
     bool hidden=false;
     const ArenaState* arena=nullptr;
+    NativeConstructionScene* construction=nullptr;
 };
 AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,
     const NativeViewerConfig& config);

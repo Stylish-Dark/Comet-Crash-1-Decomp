@@ -130,6 +130,15 @@ static bool rebuild_arena_routes(ArenaRoutingGrid &candidate,
   }
   return true;
 }
+bool initialize_arena_routing_grid(std::span<const std::uint8_t,576> visibility,
+ std::span<const ArenaRoutePlayer> players,ArenaRoutingGrid &grid){
+ if(players.empty()||players.size()>4)throw std::invalid_argument("invalid route player count");
+ for(const auto &p:players)if(p.team>3||p.base.x>=24||p.base.z>=24)throw std::invalid_argument("invalid route player");
+ ArenaRoutingGrid candidate;
+ for(unsigned i=0;i<576;++i)candidate.cells[i].visibility=visibility[i];
+ if(!rebuild_arena_routes(candidate,players))return false;
+ grid=candidate;return true;
+}
 bool apply_arena_grid_placement(ArenaRoutingGrid &grid, std::uint8_t owner,
                                 std::uint8_t opcode, ArenaGridPosition location,
                                 std::span<const ArenaRoutePlayer> players) {

@@ -77,3 +77,6 @@ save/load and multiplayer are not implemented. Standard OBJ signed-negative-inde
 handling, generated missing normals, convex-fan polygon construction and viewer
 controls are native policies until independently verified. A successful graphics
 frame is not evidence of full gameplay parity.
+
+Construction controls, configuration and repeatable map scenarios are documented
+in [native-construction.md](native-construction.md).
