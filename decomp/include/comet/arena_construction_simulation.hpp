@@ -1,4 +1,5 @@
 #pragma once
+#include "comet/arena_construction_progress.hpp"
 #include "comet/arena_construction_runtime.hpp"
 #include "comet/arena_entity_storage.hpp"
 #include "comet/arena_structure_entity.hpp"
@@ -43,6 +44,7 @@ enum class ArenaTimedStatus {
 struct ArenaConstructionTick {
   std::array<ArenaTimedStatus, 4> players{};
   ArenaConstructionSimulationStep construction;
+  std::vector<std::uint16_t> ready_entities;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;

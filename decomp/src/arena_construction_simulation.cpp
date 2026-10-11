@@ -176,8 +176,21 @@ ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
 ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   if (!std::isfinite(clock) || clock < clock_)
     throw std::invalid_argument("clock must be finite and monotonic");
-  clock_ = clock;
   ArenaConstructionTick tick;
+  const float elapsed = clock - clock_;
+  if (elapsed > 0) {
+    auto next = storage_.banks[storage_.read_bank];
+    for (std::size_t i = 0; i < next.size(); ++i) {
+      if (!next[i][15])
+        continue;
+      if (advance_arena_structure_construction(next[i], elapsed) ==
+          ArenaConstructionProgress::Ready)
+        tick.ready_entities.push_back(static_cast<std::uint16_t>(i));
+    }
+    storage_.banks[0] = next;
+    storage_.banks[1] = std::move(next);
+  }
+  clock_ = clock;
   for (std::size_t owner = 0; owner < players_.size(); ++owner) {
     auto &p = players_[owner];
     auto &status = tick.players[owner];

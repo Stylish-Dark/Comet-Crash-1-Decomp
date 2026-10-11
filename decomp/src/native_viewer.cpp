@@ -93,7 +93,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         std::uint32_t frames=0;int width=config.width,height=config.height;
         ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool playing=false,manual_tick=false;
         auto last_counter=SDL_GetPerformanceCounter();
-        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, T: tick, P: play | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(playing?" playing":" paused");SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
+        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, T: tick, P: play | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(playing?" playing":" paused");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         while(!quit){
             SDL_Event event;
             while(SDL_PollEvent(&event)){
@@ -175,6 +175,13 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                 if(config.construction){
                     gpu.api.bind(GL_ARRAY_BUFFER,0);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,0);
                     glDisable(GL_LIGHTING);glDisable(GL_TEXTURE_2D);glDisableClientState(GL_VERTEX_ARRAY);glDisableClientState(GL_NORMAL_ARRAY);glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    for(const auto& entity:arena->entities){
+                        if(!entity.construction_progress||entity.construction_ready)continue;
+                        const float progress=std::clamp(*entity.construction_progress,0.0f,1.0f);
+                        glColor3f(0.1f,0.9f,1.0f);glBegin(GL_LINES);
+                        glVertex3f(entity.grid.x+0.1f,0.08f,entity.grid.z+0.1f);
+                        glVertex3f(entity.grid.x+0.1f+0.8f*progress,0.08f,entity.grid.z+0.1f);glEnd();
+                    }
                     glColor3f(1,1,0);glBegin(GL_LINE_LOOP);glVertex3f(cursor.x,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z+1);glVertex3f(cursor.x,0.05f,cursor.z+1);glEnd();
                     glEnable(GL_LIGHTING);glEnableClientState(GL_VERTEX_ARRAY);glEnableClientState(GL_NORMAL_ARRAY);glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 }

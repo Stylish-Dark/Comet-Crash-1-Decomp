@@ -130,12 +130,19 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for (auto index : tick.ready_entities)
+          std::cout << "ready entity=" << index << '\n';
       } else if (w[0] == "expect" && w.size() == 3) {
         const auto expected = number<unsigned>(w[2]);
         std::size_t actual;
         if (w[1] == "allocated")
           actual = config.capacity - state().storage().free_indices.size();
-        else if (w[1] == "pending")
+        else if (w[1] == "ready") {
+          actual = 0;
+          for (const auto &slot :
+               state().storage().banks[state().storage().read_bank])
+            actual += arena_structure_ready(slot);
+        } else if (w[1] == "pending")
           actual = state().pending();
         else if (w[1] == "display" && scene)
           actual = scene->arena().entities.size();

@@ -21,3 +21,11 @@ expect pending 0
 expect display 147
 expect resource0 370
 expect events0 1
+expect ready 9
+advance 3
+advance 4
+expect ready 10
+# The original map event at time 2 also allocates a new structure on tick 3.
+expect allocated 11
+expect resource0 310
+expect events0 0

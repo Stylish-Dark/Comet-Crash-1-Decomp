@@ -26,10 +26,11 @@ milestone is an executable, assertion-based scenario runner over actual maps.
 - Keyboard construction and paused/automatic event clock advancement in the
   native SDL/OpenGL viewer.
 
-No timer-driven construction readiness, units, weapons, combat, income or
-victory loop is implemented by this integration. A constructed entity still
-has the original constructor's in-progress state. Map settlement only applies
-to pre-existing map structures at or below each constructor's initial level.
+Newly constructed structures now advance through the recovered original core
+progress update and become ready. Units, weapons, combat, income and victory
+remain absent. Readiness means the original core flags/counters are settled;
+it does not imply that weapon or production behavior exists. Map settlement
+still applies only to pre-existing structures at or below the initial level.
 
 ## Build and run
 
@@ -80,7 +81,8 @@ After `run`, the replay runner accepts:
 | `step` | Process one construction-ring request |
 | `drain` | Process the ring until empty; does not advance event time |
 | `event owner time selector opcode x z` | Schedule an explicit event |
-| `advance absolute_time` | Dispatch eligible events and process one ring request |
+| `advance absolute_time` | Age existing builds, dispatch events and process one ring request |
+| `expect ready N` | Count supported live structures with the original ready flag |
 | `expect allocated N` | Check occupied live entity slots |
 | `expect pending N` | Check pending ring entries |
 | `expect display N` | Check rendered entity count when using a map |
@@ -97,7 +99,8 @@ build/native/comet_native /path/to/extracted/data 0 --assets /path/to/extracted/
 Arrows move the highlighted cell; 1..8 choose opcodes 20–26/28; Tab changes
 owner; B or Space submits a build and advances one tick; T advances a tick;
 P toggles continuous clock advancement. The viewer starts paused. The title
-shows owner, cell, opcode, resource balance and clock mode.
+shows owner, cell, opcode, resource balance, clock mode and the selected live
+structure's percentage or ready status. Cyan lines show progress at build cells.
 
 ## Validation recorded for this continuation
 
@@ -116,15 +119,59 @@ shows owner, cell, opcode, resource balance and clock mode.
 Private game bytes, decoded-original fixtures and build outputs remain outside
 tracked source. Windows graphics/build behavior has not been validated here.
 
-## Remaining playable-port milestones
+## Construction readiness milestone
 
-1. Recover and execute the original construction/upgrade progress update so
-   newly built structures become operational through verified timing.
-2. Recover unit production, movement and targeting, then weapons and damage.
-3. Recover authentic economy and mutable tuning/bootstrap inputs.
-4. Execute remaining event selectors, base construction and higher map upgrades.
-5. Integrate mission outcome, restart/save behavior and normal gameplay UI.
+Current validation: all 19 CPU/CLI CTest checks, 233 Python regressions,
+SDL/OpenGL offscreen rendering with injected build/tick/ready controls,
+and construction/projection tests under AddressSanitizer and UBSan pass.
+The original level-0 replay reaches 10 ready structures at clock 4; the map's
+existing event also leaves an eleventh newly allocated structure in progress.
 
-There is no defensible overall completion percentage yet. Progress is reported
-as validated capabilities and remaining playable-loop milestones rather than
-repeating a speculative 20–25% figure.
+The FE5D8 SPU job's construction arm at `0x4DDC..0x4F18` updates health,
+progress and quantity, then invokes settlement `0x1FEE8..0x1FFB4`. Its duration
+table at `0x20BE0` contains 2 for all ten type rows and five levels. The native
+leaf supports the eight recovered buildable constructors, levels 1–5; other
+state is retained without invention. The first-update bit is cleared without
+allocating the original transient effect. Selling/other timer arms, effects,
+sound and completion notifications remain outside this boundary.
+
+The leaf preserves SPU round-toward-zero arithmetic, denormal flushing and the
+original reciprocal estimate/refinement sequence. The caller's rounding mode
+is restored. Floating overflow/nonfinite core inputs are rejected as unsupported.
+This finite gameplay boundary does not emulate SPU extended-range floats.
+Existing builds age by the elapsed clock interval before new requests are
+constructed, and both native banks receive the same result. A new entity starts
+aging on the next tick. The ready transition is reported once per entity.
+
+Private validation executes the untouched original instructions through the
+core boundaries with synchronous DMA and empty auxiliary effect pools. Across
+2,500 complete 256-byte fixtures (seed 9417), all bytes match the native leaf:
+eight types, five levels, first-update and subsequent states, varying progress,
+health, quantities, counter wrap, zero/normal/threshold/overshooting intervals.
+The interpreter is ps3recomp commit `5244db92669b54831c6d3ebb7a96d58c4dbfa6df`;
+original bytes and private harnesses are untracked. This comparison validates
+core state, not omitted audiovisual side effects. Public tests retain exact
+arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
+
+## Remaining playable-port milestones and estimate
+
+**Rough estimate: 30% toward a playable single-player mission**, using the
+weighted capability checklist below. This is a planning estimate, not a
+measured fraction of all original code or a full-release completion claim.
+The prior capability checkpoint scores 25 under this same rubric; verified
+construction progression/readiness contributes the additional 5.
+
+| Capability | Weight | Earned | Remaining |
+| --- | ---: | ---: | --- |
+| Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
+| Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
+| Unit production, movement and targeting | 20 | 0 | Execute the original unit loop |
+| Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
+| Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
+| Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
+| **Total** | **100** | **30** | |
+
+Next: recover unit production from ready structures and execute it in this
+same simulation. Remaining event selectors and higher map upgrades also need
+recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
+is explicit test configuration, not recovered title balance.

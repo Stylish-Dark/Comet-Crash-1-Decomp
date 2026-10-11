@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(comet_native_recovery LANGUAGES CXX)
 
+# This recovered SPU leaf changes rounding mode for its arithmetic sequence.
+if(MSVC)
+    set_source_files_properties(src/arena_construction_progress.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+    set_source_files_properties(src/arena_construction_progress.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
 add_library(comet_native_recovery STATIC
     src/level_map.cpp
     src/arena_state.cpp
@@ -9,6 +16,7 @@ add_library(comet_native_recovery STATIC
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
     src/arena_construction_runtime.cpp
+    src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
     src/arena_construction_config.cpp
     src/native_construction_scene.cpp
@@ -73,6 +81,15 @@ if(MSVC)
     target_compile_options(comet_arena_construction_simulation_tests PRIVATE /UNDEBUG)
 else()
     target_compile_options(comet_arena_construction_simulation_tests PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_construction_progress_tests tests/arena_construction_progress.cpp)
+target_link_libraries(comet_arena_construction_progress_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_construction_progress_tests COMMAND comet_arena_construction_progress_tests)
+if(MSVC)
+    target_compile_options(comet_arena_construction_progress_tests PRIVATE /UNDEBUG)
+else()
+    target_compile_options(comet_arena_construction_progress_tests PRIVATE -UNDEBUG)
 endif()
 
 add_executable(comet_construction_replay src/construction_replay.cpp)

@@ -11,7 +11,7 @@ config = "world 16 1\nplayer 0 0 0 400 400 0\ntuning 20 100 50 10 20 7.5\nrun\n"
 def run(text, args=()):
     return subprocess.run([str(exe), *args], input=text, text=True, capture_output=True)
 
-result = run(config + "queue 0 20 2 2\nstep\nevent 0 2 0 20 3 3\nadvance 2\nexpect allocated 1\nadvance 3\nexpect allocated 2\nexpect resource0 360\nexpect pending 0\n")
+result = run(config + "queue 0 20 2 2\nstep\nevent 0 2 0 20 3 3\nadvance 2\nexpect allocated 1\nexpect ready 1\nadvance 3\nexpect allocated 2\nexpect resource0 360\nexpect pending 0\nexpect ready 1\nadvance 5\nexpect ready 2\n")
 assert result.returncode == 0, result.stderr
 assert "clock 2 player0=idle" in result.stdout
 assert "clock 3 player0=submitted" in result.stdout
@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory() as directory:
     structure[:4] = bytes([20, 1, 2, 2])
     structure[16:20] = struct.pack(">f", 1)
     Path(directory, "level0.map").write_bytes(struct.pack(">II", 2, 0) + bytes(128) + start + structure)
-    result = run(config + "expect allocated 1\nexpect display 1\nqueue 0 20 3 3\nstep\nexpect allocated 2\nexpect display 2\nexpect resource0 380\n", ["--map", directory, "--level", "0"])
+    result = run(config + "expect allocated 1\nexpect display 1\nexpect ready 1\nqueue 0 20 3 3\nstep\nexpect allocated 2\nexpect display 2\nexpect resource0 380\nexpect ready 1\nadvance 2\nexpect ready 2\n", ["--map", directory, "--level", "0"])
     assert result.returncode == 0, (result.stdout, result.stderr)
     assert "live=1 display-only=0" in result.stdout
 print("headless construction scenarios passed")

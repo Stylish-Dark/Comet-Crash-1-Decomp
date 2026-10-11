@@ -62,11 +62,22 @@ int main() {
   assert(scene.step().status == ArenaConstructionStep::Constructed);
   assert(scene.arena().entities.size() == 2 &&
          scene.arena().entities.back().live_entity_index == 1);
+  assert(scene.arena().entities[0].construction_ready);
+  assert(scene.arena().entities[0].construction_progress == 1.0f);
+  assert(!scene.arena().entities[1].construction_ready);
+  scene.advance(1);
+  assert(*scene.arena().entities[1].construction_progress > .49f);
+  assert(!scene.arena().entities[1].construction_ready);
+  scene.advance(2);
+  assert(scene.arena().entities[1].construction_ready);
+  assert(scene.arena().entities[1].construction_progress == 1.0f);
   assert(scene.enqueue({0, 20, 8, 0}) ==
          ArenaConstructionSubmit::InvalidRequest);
   ArenaState shared = a;
   ArenaEntity rock;
   rock.type = 9;
+  rock.construction_progress = 1;
+  rock.construction_ready = true;
   rock.grid = {2, 2};
   rock.position = {2.5f, 0, 2.5f};
   shared.entities.insert(shared.entities.begin(), rock);
@@ -78,6 +89,8 @@ int main() {
   NativeConstructionScene shared_scene(shared, c);
   assert(shared_scene.imports().live == 1 &&
          shared_scene.imports().display_only == 1);
+  assert(!shared_scene.arena().entities[0].construction_progress &&
+         !shared_scene.arena().entities[0].construction_ready);
   assert(shared_scene.arena().cells[50].visibility ==
          arena_gate_visibility(0, 0));
   assert(shared_scene.enqueue_event(0, {1, 8, 0, 0, 20}) ==

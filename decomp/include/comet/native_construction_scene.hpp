@@ -10,6 +10,7 @@ class NativeConstructionScene {
   ArenaMapImportSummary imports_;
   static ArenaConstructionSimulationConfig
   bootstrap(const ArenaState &, ArenaConstructionSimulationConfig);
+  void refresh_construction();
   void project(const ArenaConstructionSimulationStep &);
 
 public:

@@ -59,6 +59,8 @@ NativeConstructionScene::NativeConstructionScene(
   std::uint16_t index = 0;
   for (auto &e : arena_.entities) {
     e.live_entity_index.reset();
+    e.construction_progress.reset();
+    e.construction_ready = false;
     if (native_map_structure_importable(e)) {
       e.live_entity_index = index++;
       ++imports_.live;
@@ -69,12 +71,27 @@ NativeConstructionScene::NativeConstructionScene(
     arena_.cells[i].visibility = simulation_.grid().cells[i].visibility;
     arena_.cells[i].visibility_recovered = true;
   }
+  refresh_construction();
 }
 ArenaConstructionSubmit
 NativeConstructionScene::enqueue(ArenaConstructionRequest r) {
   if (r.grid_x >= arena_.extent || r.grid_z >= arena_.extent)
     return ArenaConstructionSubmit::InvalidRequest;
   return simulation_.enqueue(r);
+}
+void NativeConstructionScene::refresh_construction() {
+  const auto &bank =
+      simulation_.storage().banks[simulation_.storage().read_bank];
+  for (auto &entity : arena_.entities) {
+    if (!entity.live_entity_index)
+      continue;
+    const auto &slot = bank[*entity.live_entity_index];
+    std::uint32_t word = 0;
+    for (unsigned i = 0; i < 4; ++i)
+      word = (word << 8) | slot[0x78 + i];
+    entity.construction_progress = std::bit_cast<float>(word);
+    entity.construction_ready = arena_structure_ready(slot);
+  }
 }
 void NativeConstructionScene::project(
     const ArenaConstructionSimulationStep &s) {
@@ -108,12 +125,14 @@ void NativeConstructionScene::project(
 ArenaConstructionSimulationStep NativeConstructionScene::step() {
   auto s = simulation_.step();
   project(s);
+  refresh_construction();
   arena_.players = simulation_.players();
   return s;
 }
 ArenaConstructionTick NativeConstructionScene::advance(float t) {
   auto tick = simulation_.advance(t);
   project(tick.construction);
+  refresh_construction();
   arena_.players = simulation_.players();
   return tick;
 }

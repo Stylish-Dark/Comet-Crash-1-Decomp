@@ -43,11 +43,13 @@ int main() {
     std::thread controls([&]{
         while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
         SDL_Delay(100);SDL_Event key{};key.type=SDL_KEYDOWN;key.key.keysym.sym=SDLK_b;SDL_PushEvent(&key);
+        for(int i=0;i<2;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
         SDL_Delay(100);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
     });
     auto built=run_native_viewer({structure,background},config);finished.store(true);controls.join();
     if(!built)throw std::runtime_error(built.detail);
     if(editable_scene.arena().entities.size()!=1||editable_scene.simulation().accounts()[0].resource!=380)throw std::runtime_error("keyboard construction did not commit");
+    if(!editable_scene.arena().entities[0].construction_ready)throw std::runtime_error("keyboard ticks did not finish construction");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }
