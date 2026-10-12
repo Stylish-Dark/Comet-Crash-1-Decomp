@@ -3,9 +3,9 @@ project(comet_native_recovery LANGUAGES CXX)
 
 # This recovered SPU leaf changes rounding mode for its arithmetic sequence.
 if(MSVC)
-    set_source_files_properties(src/arena_construction_progress.cpp src/arena_factory_production.cpp src/arena_unit_entity.cpp src/arena_unit_binding.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+    set_source_files_properties(src/arena_construction_progress.cpp src/arena_factory_production.cpp src/arena_unit_entity.cpp src/arena_unit_binding.cpp src/arena_player_statistics.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
 else()
-    set_source_files_properties(src/arena_construction_progress.cpp src/arena_factory_production.cpp src/arena_unit_entity.cpp src/arena_unit_binding.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+    set_source_files_properties(src/arena_construction_progress.cpp src/arena_factory_production.cpp src/arena_unit_entity.cpp src/arena_unit_binding.cpp src/arena_player_statistics.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()
 
 add_library(comet_native_recovery STATIC
@@ -19,6 +19,7 @@ add_library(comet_native_recovery STATIC
     src/arena_factory_production.cpp
     src/arena_unit_entity.cpp
     src/arena_unit_binding.cpp
+    src/arena_player_statistics.cpp
     src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
@@ -208,3 +209,12 @@ foreach(test_target comet_native_recovery_smoke comet_obj_face_indices_tests
         target_compile_options(${test_target} PRIVATE -UNDEBUG)
     endif()
 endforeach()
+
+add_executable(comet_arena_player_statistics_tests tests/arena_player_statistics.cpp)
+target_link_libraries(comet_arena_player_statistics_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_player_statistics_tests COMMAND comet_arena_player_statistics_tests)
+if(MSVC)
+    target_compile_options(comet_arena_player_statistics_tests PRIVATE /UNDEBUG)
+else()
+    target_compile_options(comet_arena_player_statistics_tests PRIVATE -UNDEBUG)
+endif()

@@ -169,28 +169,29 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 37% toward a playable single-player mission**, using the
+**Rough estimate: 38% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
 construction progression/readiness contributes 5, and verified factory timing
 and quota reservations contribute 3; unit initializer/claim primitives add 2.
-Ground constructor binding/heading adds 2. Live units remain absent.
+Ground constructor binding/heading adds 2; verified statistics registration and
+its quota bridge add 1. Live units remain absent.
 
 | Capability | Weight | Earned | Remaining |
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 7 | Register/allocate live units, aircraft binding, movement and targeting updates |
+| Unit production, movement and targeting | 20 | 8 | Allocate live units, aircraft binding, movement and targeting updates |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
-| **Total** | **100** | **37** | |
+| **Total** | **100** | **38** | |
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
-original statistics-registration and allocation/failure path in this same
-simulation, using verified ground constructors and the claim helper. Remaining
+original spawn positions and allocation/failure path in this same
+simulation, using verified ground constructors, registration and the claim helper. Remaining
 event selectors and higher map upgrades also need recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.
 
@@ -202,3 +203,6 @@ recorded in [native-unit-templates.md](native-unit-templates.md).
 
 Completed ground constructor binding/heading and remaining allocation boundaries
 are recorded in [native-ground-unit-binding.md](native-ground-unit-binding.md).
+
+Verified entity registration, capacity side effects and the quota bridge are
+recorded in [native-unit-registration.md](native-unit-registration.md).

@@ -95,7 +95,9 @@ this is integration validation, not authentic title balance.
 
 `48C8` was previously described as placement validation. Its recovered body
 actually builds a statistics delta and calls `BB30`, which updates a player
-statistics block. Full registration/capacity/failure behavior remains unrecovered.
+statistics block. Registration and capacity behavior are now ported; see
+[native-unit-registration.md](native-unit-registration.md). Live allocation and
+the producer failure path remain unrecovered.
 `C380` calls the unit constructor, this registration path, and allocator `2058`;
 the surrounding producer's failure handling also remains to be ported. Completing
 a unit constructor is therefore not sufficient to claim live spawning.
@@ -127,5 +129,5 @@ state values, not original instructions. Windows behavior remains unvalidated.
 The weighted capability estimate is now 37% toward a playable single-player
 mission, up from 35%. Two points cover completed ground constructor target/
 heading initialization; live allocation, movement and combat are still absent.
-Next: recover statistics registration and the allocation/failure path, followed
+Next: recover the allocation/failure path using verified statistics registration, followed
 by live-unit advancement. Aircraft binding and mission rules remain outstanding.
