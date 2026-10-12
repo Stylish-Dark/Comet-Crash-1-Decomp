@@ -21,6 +21,7 @@ event 0 1 8 26 14 2
 advance 1
 advance 2
 expect-mode 8 4
+expect-factory-unit 8 44 6
 expect ready 9
 expect allocated 9
 expect resource0 340
@@ -35,3 +36,5 @@ expect-unit 0 44 1
 expect ready 10
 expect allocated 10
 expect resource0 280
+expect-factory-unit 1 40 2
+expect-factory-unit 9 40 2

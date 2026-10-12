@@ -88,6 +88,20 @@ int main() {
   assert(advance_arena_factory_production(slot, 1, true, fresh) ==
          ArenaFactoryProduction::Unsupported);
   assert(slot == unsupported && fresh.pending == 2);
+  auto claim_quota = fresh;
+  assert(claim_arena_unit_production(claim_quota, 48) == 48);
+  assert(claim_quota.pending == 1 && claim_quota.by_type[8] == 0 &&
+         claim_quota.active == 1);
+  const auto claimed_active = claim_quota.active;
+  assert(!claim_arena_unit_production(claim_quota, 48));
+  assert(!claim_arena_unit_production(claim_quota, 39));
+  assert(claim_quota.pending == 1 && claim_quota.active == claimed_active);
+  ArenaUnitProductionQuota wrapping;
+  wrapping.active = 32767;
+  wrapping.pending = wrapping.by_type[0] = 1;
+  assert(claim_arena_unit_production(wrapping, 40) == 40);
+  assert(wrapping.active == -32768 && wrapping.pending == 0 &&
+         wrapping.by_type[0] == 0);
   const auto before = slot;
   for (float invalid : {-1.0f, std::numeric_limits<float>::infinity(),
                         std::numeric_limits<float>::quiet_NaN()}) {

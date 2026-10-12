@@ -1,0 +1,44 @@
+# Original unit initializer inspection; synthetic construction inputs.
+world 16 1
+player 0 0 0 400 400 0
+tuning 26 100 50 10 20 7.5
+tuning 28 100 50 10 20 7.5
+production 1
+unit-quota 0 0 2
+run
+queue 0 26 2 2
+step
+queue 0 28 4 4
+step
+factory 0 4
+expect-factory-unit 0 40 2
+factory 1 4
+expect-factory-unit 1 44 6
+factory 0 5
+expect-factory-unit 0 41 3
+factory 1 5
+expect-factory-unit 1 45 7
+factory 0 6
+expect-factory-unit 0 42 4
+factory 1 6
+expect-factory-unit 1 46 8
+factory 0 7
+expect-factory-unit 0 43 5
+factory 1 7
+expect-factory-unit 1 47 9
+factory 0 8
+expect-factory-unit 0 44 6
+factory 1 8
+expect-factory-unit 1 48 10
+expect allocated 2
+expect unit-pending0 0
+expect resource0 190
+factory 0 4
+advance 2
+advance 4
+expect unit-pending0 1
+expect-unit 0 40 1
+expect-factory-unit 0 40 2
+expect-factory-unit 1 48 10
+expect allocated 2
+expect resource0 190

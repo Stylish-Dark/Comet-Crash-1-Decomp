@@ -193,6 +193,29 @@ ArenaConstructionSimulation::select_factory(std::uint16_t index,
                                             std::uint8_t selector) {
   return select_factory_index(index, selector);
 }
+std::optional<ArenaEntitySlot>
+ArenaConstructionSimulation::factory_unit_template(std::uint16_t index) const {
+  const auto &bank = storage_.banks[storage_.read_bank];
+  if (index >= bank.size())
+    return {};
+  const auto &factory = bank[index];
+  if ((factory[15] != 26 && factory[15] != 28) || factory[0xaa] > 4)
+    return {};
+  std::array<float, 4> position{};
+  for (unsigned axis = 0; axis < 3; ++axis) {
+    std::uint32_t bits = 0;
+    for (unsigned i = 0; i < 4; ++i)
+      bits = (bits << 8) | factory[4 * axis + i];
+    position[axis] = std::bit_cast<float>(bits);
+  }
+  ArenaEntitySlot unit{};
+  auto random = random_;
+  const unsigned base = factory[15] == 26 ? 40 : 44;
+  if (!initialize_arena_unit_template(unit, base + factory[0xaa],
+                                      factory[0x33] >> 5, position, random))
+    return {};
+  return unit;
+}
 ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
                                                             ArenaEvent e) {
   if (owner >= players_.size() || !std::isfinite(e.time) ||

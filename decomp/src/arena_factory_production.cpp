@@ -34,6 +34,17 @@ struct Rounding {
   ~Rounding() { std::fesetround(previous); }
 };
 } // namespace
+std::optional<std::uint8_t>
+claim_arena_unit_production(ArenaUnitProductionQuota &quota,
+                            std::uint8_t kind) {
+  if (kind < 40 || kind > 48 || quota.by_type[kind - 40] == 0)
+    return {};
+  --quota.by_type[kind - 40];
+  --quota.pending;
+  quota.active = std::bit_cast<std::int16_t>(
+      static_cast<std::uint16_t>(static_cast<std::uint16_t>(quota.active) + 1));
+  return kind;
+}
 ArenaFactoryProduction
 advance_arena_factory_production(std::span<std::uint8_t, 256> slot,
                                  float elapsed, bool enabled,

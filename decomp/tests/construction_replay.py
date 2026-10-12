@@ -50,4 +50,9 @@ with tempfile.TemporaryDirectory() as directory:
     result = run(config + "expect allocated 1\nexpect display 1\nexpect ready 1\nqueue 0 20 3 3\nstep\nexpect allocated 2\nexpect display 2\nexpect resource0 380\nexpect ready 1\nadvance 2\nexpect ready 2\n", ["--map", directory, "--level", "0"])
     assert result.returncode == 0, (result.stdout, result.stderr)
     assert "live=1 display-only=0" in result.stdout
+
+result = run(production_config + "queue 0 26 2 2\nstep\nexpect-factory-unit 0 40 2\nfactory 0 8\nexpect-factory-unit 0 44 6\nexpect allocated 1\nexpect unit-pending0 0\nexpect resource0 340\n")
+assert result.returncode == 0, result.stderr
+assert run(production_config + "expect-factory-unit 65535 40 2\n").returncode != 0
+
 print("headless construction scenarios passed")

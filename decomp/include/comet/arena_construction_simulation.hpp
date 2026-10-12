@@ -5,6 +5,7 @@
 #include "comet/arena_factory_control.hpp"
 #include "comet/arena_factory_production.hpp"
 #include "comet/arena_structure_entity.hpp"
+#include "comet/arena_unit_entity.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -73,6 +74,10 @@ public:
                                        std::uint8_t selector);
   ArenaTimedSubmit enqueue_event(std::size_t, ArenaEvent);
   ArenaConstructionTick advance(float);
+  // Inspection uses a copy of RNG; no quota claim, allocation or world
+  // mutation.
+  std::optional<ArenaEntitySlot>
+  factory_unit_template(std::uint16_t index) const;
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }

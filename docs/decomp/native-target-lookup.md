@@ -51,5 +51,6 @@ scenarios and the level-0 construction scenario, plus the affected state/storage
 simulation tests under ASan and UBSan.
 
 Factory timing and pending-unit reservations are now implemented; see
-[native-factory-production.md](native-factory-production.md). Live-unit allocation,
-initialization, movement and combat remain unimplemented.
+[native-factory-production.md](native-factory-production.md). The unit initializer
+prefix and quota claim are covered in [native-unit-templates.md](native-unit-templates.md).
+Live-unit allocation, binding, movement and combat remain unimplemented.

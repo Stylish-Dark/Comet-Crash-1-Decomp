@@ -2,8 +2,10 @@
 
 This milestone builds on `b3ffd74`. Native factories now run the recovered
 production timer and reserve pending units against player capacity. Reservations
-are orders, not live entity spawns: allocation and unit initialization belong to
-another original job and remain unrecovered.
+are orders, not live entity spawns. Allocation and unit initialization follow
+separate original paths. Their
+verified native boundaries and remaining work are recorded in
+[native-unit-templates.md](native-unit-templates.md).
 
 ## Recovered original boundary
 
@@ -93,8 +95,10 @@ Original binaries, disassembly, fixtures and private interpreters remain
 untracked. The interpreter is ps3recomp commit
 `5244db92669b54831c6d3ebb7a96d58c4dbfa6df`.
 
-Next: recover pending-order consumption, live-unit allocation and initialization.
+The unit initializer prefix and quota claim are now recovered; see
+[native-unit-templates.md](native-unit-templates.md). Next: recover the remaining
+binding/placement and allocation/failure path before connecting live spawns.
 Movement, targeting, weapons/damage, enemy behavior and mission completion still
-follow. The capability rubric in `native-construction.md` now estimates 33%
-toward a playable single-player mission; three additional points cover verified
-factory timing and reservations, not a completed unit loop.
+follow. This factory timing milestone moved the capability estimate to 33%;
+the subsequent unit-template milestone adds two points, for 35%. These remain
+planning estimates toward a playable mission, not a completed unit loop.

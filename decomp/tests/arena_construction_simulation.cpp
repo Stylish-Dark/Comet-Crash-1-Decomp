@@ -181,6 +181,13 @@ int main() {
     assert(false);
   } catch (const std::invalid_argument &) {
   }
+  assert(!scene.simulation().factory_unit_template(65535));
+  const auto inspected = scene.simulation().factory_unit_template(
+      *scene.arena().entities.back().live_entity_index);
+  assert(inspected && (*inspected)[15] == 43 && (*inspected)[0x6f] == 5);
+  assert(inspected == scene.simulation().factory_unit_template(
+                          *scene.arena().entities.back().live_entity_index));
+  assert(!scene.simulation().factory_unit_template(0));
   auto production_config = c;
   production_config.production_enabled = true;
   production_config.unit_quotas[0].capacity = 2;

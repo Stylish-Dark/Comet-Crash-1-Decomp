@@ -1,5 +1,6 @@
 #pragma once
 #include "comet/arena_entity_storage.hpp"
+#include <optional>
 namespace comet::decomp {
 struct ArenaUnitProductionQuota {
   std::int16_t active = 0;
@@ -7,6 +8,10 @@ struct ArenaUnitProductionQuota {
   std::uint32_t capacity = 0;
   std::array<std::uint16_t, 9> by_type{};
 };
+// BA08 quota claim core: promote one reserved kind to active, or return empty.
+// This is separate from live allocation and retains original halfword wrap.
+std::optional<std::uint8_t>
+claim_arena_unit_production(ArenaUnitProductionQuota &, std::uint8_t kind);
 enum class ArenaFactoryProduction {
   Blocked,
   Progress,

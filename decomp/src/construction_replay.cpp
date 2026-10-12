@@ -115,6 +115,16 @@ int main(int argc, char **argv) {
         if (result != ArenaFactorySelection::Changed &&
             result != ArenaFactorySelection::Unchanged)
           throw std::runtime_error("factory selection failed");
+      } else if (w[0] == "expect-factory-unit" && w.size() == 4) {
+        const auto index = number<unsigned>(w[1]),
+                   kind = number<unsigned>(w[2]),
+                   model = number<unsigned>(w[3]);
+        if (index > 65535 || kind < 40 || kind > 48 || model > 39)
+          throw std::invalid_argument("invalid factory unit expectation");
+        const auto unit = state().factory_unit_template(index);
+        if (!unit || (*unit)[15] != kind || (*unit)[0x6f] != model)
+          throw std::runtime_error("factory unit template expectation failed");
+        std::cout << "expect-factory-unit passed\n";
       } else if (w[0] == "expect-unit" && w.size() == 4) {
         const auto owner = number<unsigned>(w[1]),
                    kind = number<unsigned>(w[2]),
