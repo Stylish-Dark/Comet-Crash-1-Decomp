@@ -47,6 +47,7 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     if (q.active < 0 || q.capacity > 65535 || total != q.pending ||
         static_cast<std::uint32_t>(q.active) + q.pending > q.capacity)
       throw std::invalid_argument("invalid production quota");
+    store_arena_unit_production_quota(statistics_[owner], q);
   }
   if (!c.initial_players.empty()) {
     if (c.initial_players.size() != players_.size())
@@ -263,7 +264,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   if (elapsed > 0) {
     auto next = storage_.banks[storage_.read_bank];
     for (std::size_t i = 0; i < next.size(); ++i) {
-      if (!next[i][15])
+      if (!supported(next[i][15]))
         continue;
       if (advance_arena_structure_construction(next[i], elapsed) ==
           ArenaConstructionProgress::Ready)
@@ -282,6 +283,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         tick.production_reservations.push_back(static_cast<std::uint16_t>(i));
     }
     config_.unit_quotas = quotas;
+    for (unsigned owner = 0; owner < players_.size(); ++owner)
+      store_arena_unit_production_quota(statistics_[owner], quotas[owner]);
     storage_.banks[0] = next;
     storage_.banks[1] = std::move(next);
   }
@@ -352,5 +355,24 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   }
   tick.construction = step();
   return tick;
+}
+ArenaUnitSpawnResult ArenaConstructionSimulation::spawn_reserved_ground_unit(
+    std::uint8_t owner, std::uint8_t kind,
+    const std::array<float, 4> &position) {
+  if (owner >= players_.size() || !std::isfinite(position[0]) ||
+      !std::isfinite(position[2]) || position[0] < 0 || position[0] >= 24 ||
+      position[2] < 0 || position[2] >= 24)
+    return {};
+  std::array<ArenaUnitTargetPlayer, 4> targets{};
+  for (unsigned p = 0; p < players_.size(); ++p)
+    targets[p] = {static_cast<std::uint8_t>(config_.players[p].route.team),
+                  config_.unit_base_available[p],
+                  config_.unit_target_overrides[p]};
+  auto result = spawn_reserved_arena_ground_unit(
+      storage_, statistics_[owner], kind, owner, position,
+      std::span(targets).first(players_.size()), grid_, random_);
+  config_.unit_quotas[owner] =
+      read_arena_unit_production_quota(statistics_[owner]);
+  return result;
 }
 } // namespace comet::decomp

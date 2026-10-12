@@ -4,7 +4,9 @@ This milestone builds on `df118d8`. The native port now initializes the recovere
 core/template state for all nine produced unit kinds, and provides the original
 quota-claim operation for the future spawn consumer. Factory inspection uses the
 initializer without changing the simulation. These are verified prerequisites;
-there is still no live-unit spawn, movement or combat loop.
+this checkpoint has no live-unit spawn, movement or combat loop. Subsequent
+[live ground spawning](native-live-ground-spawn.md) connects the ground
+constructors to explicit allocation and display; movement/combat remain absent.
 
 ## Original initializer boundary
 
@@ -117,3 +119,6 @@ enemy behavior and mission rules remain absent. This template milestone advanced
 the planning estimate to 35% toward a playable single-player mission, with two
 additional points for initialization/claim primitives.
 This is not a claim that units now spawn or that the unit loop is complete.
+
+Live ground allocation and explicit deployment controls are now recorded in
+[native-live-ground-spawn.md](native-live-ground-spawn.md).

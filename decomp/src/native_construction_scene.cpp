@@ -1,5 +1,7 @@
 #include "comet/native_construction_scene.hpp"
+#include <algorithm>
 #include <bit>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 namespace comet::decomp {
@@ -91,6 +93,8 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
+    if (slot[15] >= 40 && slot[15] <= 48)
+      continue;
     std::uint32_t word = 0;
     for (unsigned i = 0; i < 4; ++i)
       word = (word << 8) | slot[0x78 + i];
@@ -172,5 +176,43 @@ ArenaConstructionTick NativeConstructionScene::advance(float t) {
   refresh_construction();
   arena_.players = simulation_.players();
   return tick;
+}
+ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(
+    std::uint8_t owner, std::uint8_t kind, ArenaGridPosition cell) {
+  if (cell.x >= arena_.extent || cell.z >= arena_.extent)
+    return {};
+  const auto result = simulation_.spawn_reserved_ground_unit(
+      owner, kind, {cell.x + .5f, 0, cell.z + .5f, 0});
+  if (!result.entity_index)
+    return result;
+  const auto &slot =
+      simulation_.storage()
+          .banks[simulation_.storage().read_bank][*result.entity_index];
+  auto scalar = [&](unsigned o) {
+    std::uint32_t bits = 0;
+    for (unsigned i = 0; i < 4; ++i)
+      bits = (bits << 8) | slot[o + i];
+    return std::bit_cast<float>(bits);
+  };
+  ArenaEntity e;
+  e.type = slot[15];
+  e.owner = slot[0x33] >> 5;
+  e.model_slot = slot[0x6f];
+  e.initial_upgrade = slot[0x6e];
+  e.position = {scalar(0), scalar(4), scalar(8)};
+  e.grid = {static_cast<std::uint8_t>(
+                std::clamp(std::trunc(e.position.x), 0.0f,
+                           static_cast<float>(arena_.extent - 1))),
+            static_cast<std::uint8_t>(
+                std::clamp(std::trunc(e.position.z), 0.0f,
+                           static_cast<float>(arena_.extent - 1)))};
+  for (unsigned i = 0; i < 4; ++i)
+    e.orientation[i] = scalar(0x20 + 4 * i);
+  e.live_entity_index = result.entity_index;
+  e.source_record = std::numeric_limits<std::size_t>::max();
+  // Cell.entity_index remains the structure lookup link; mobile records live
+  // in the simulation's ordered cell lists and may share a structure cell.
+  arena_.entities.push_back(e);
+  return result;
 }
 } // namespace comet::decomp

@@ -29,7 +29,8 @@ milestone is an executable, assertion-based scenario runner over actual maps.
 Newly constructed structures now advance through the recovered original core
 progress update and become ready. Units, weapons, combat, income and victory
 remain absent. Readiness means the original core flags/counters are settled;
-it does not imply weapon behavior or live-unit spawning. Factories now advance
+it does not imply weapon behavior. Explicit ground-unit spawning is now
+available; see [native-live-ground-spawn.md](native-live-ground-spawn.md). Factories now advance
 original production timers and reserve pending units when explicitly enabled. Map settlement
 still applies only to pre-existing structures at or below the initial level.
 
@@ -169,29 +170,31 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 38% toward a playable single-player mission**, using the
+**Rough estimate: 41% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
 construction progression/readiness contributes 5, and verified factory timing
 and quota reservations contribute 3; unit initializer/claim primitives add 2.
 Ground constructor binding/heading adds 2; verified statistics registration and
-its quota bridge add 1. Live units remain absent.
+its quota bridge add 1. Live ground allocation, failure accounting, owned-world
+integration and visible deployment add 3. Live units remain stationary.
 
 | Capability | Weight | Earned | Remaining |
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 8 | Allocate live units, aircraft binding, movement and targeting updates |
+| Unit production, movement and targeting | 20 | 11 | Original producer placement, aircraft binding, movement and targeting updates |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
-| **Total** | **100** | **38** | |
+| **Total** | **100** | **41** | |
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
-original spawn positions and allocation/failure path in this same
-simulation, using verified ground constructors, registration and the claim helper. Remaining
+original live ground-unit update path in this same simulation, including
+route following, cell migration and target updates. Producer placement remains
+unrecovered. Remaining
 event selectors and higher map upgrades also need recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.
 
@@ -206,3 +209,6 @@ are recorded in [native-ground-unit-binding.md](native-ground-unit-binding.md).
 
 Verified entity registration, capacity side effects and the quota bridge are
 recorded in [native-unit-registration.md](native-unit-registration.md).
+
+Live allocation, explicit spawn controls and remaining movement/producer
+boundaries are recorded in [native-live-ground-spawn.md](native-live-ground-spawn.md).

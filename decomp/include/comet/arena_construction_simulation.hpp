@@ -7,6 +7,7 @@
 #include "comet/arena_structure_entity.hpp"
 #include "comet/arena_unit_binding.hpp"
 #include "comet/arena_unit_entity.hpp"
+#include "comet/arena_unit_spawn.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -65,6 +66,7 @@ class ArenaConstructionSimulation {
   std::vector<ArenaPlayer> players_;
   ArenaRandom random_;
   float clock_ = 0;
+  std::array<std::array<std::uint8_t, 128>, 4> statistics_{};
   ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);
   ArenaConstructionContext context_for(ArenaConstructionRequest) const;
   std::optional<ArenaEntitySlot>
@@ -85,6 +87,10 @@ public:
   factory_unit_template(std::uint16_t index) const;
   std::optional<ArenaGroundUnitTemplate>
   factory_ground_unit_template(std::uint16_t index) const;
+  ArenaUnitSpawnResult
+  spawn_reserved_ground_unit(std::uint8_t owner, std::uint8_t kind,
+                             const std::array<float, 4> &position);
+  const auto &player_statistics() const { return statistics_; }
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }

@@ -131,3 +131,6 @@ mission, up from 35%. Two points cover completed ground constructor target/
 heading initialization; live allocation, movement and combat are still absent.
 Next: recover the allocation/failure path using verified statistics registration, followed
 by live-unit advancement. Aircraft binding and mission rules remain outstanding.
+
+Subsequent [live ground spawning](native-live-ground-spawn.md) now uses these
+constructors in explicit owned-world deployment. Movement remains unrecovered.

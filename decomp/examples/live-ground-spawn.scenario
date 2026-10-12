@@ -1,0 +1,26 @@
+# Synthetic configuration for the native single-spawn adapter.
+world 2 1
+player 0 0 0 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+unit-quota 0 0 2
+run
+queue 0 26 2 2
+step
+advance 2
+advance 4
+spawn 0 40 3 3
+expect live-units 1
+expect unit-active0 1
+expect unit-pending0 0
+expect allocated 2
+expect-live-unit 1 40 255
+advance 8
+advance 12
+expect unit-pending0 1
+spawn 0 40 3 3
+expect live-units 1
+expect unit-active0 1
+expect unit-pending0 0
+expect allocated 2
+expect resource0 340

@@ -100,6 +100,34 @@ int main(int argc, char **argv) {
                                          "insufficient-resources",
                                          "queue-full"};
         std::cout << "queue " << names[static_cast<unsigned>(result)] << '\n';
+      } else if (w[0] == "spawn" && w.size() == 5) {
+        const auto owner = byte(w[1]), kind = byte(w[2]), x = byte(w[3]),
+                   z = byte(w[4]);
+        if (owner >= state().accounts().size() || x >= 24 || z >= 24)
+          throw std::invalid_argument("invalid spawn request");
+        const auto result = scene ? scene->spawn_reserved_ground_unit(
+                                        owner, kind,
+                                        {static_cast<std::uint8_t>(x),
+                                         static_cast<std::uint8_t>(z)})
+                                  : simulation->spawn_reserved_ground_unit(
+                                        owner, kind, {x + .5f, 0, z + .5f, 0});
+        constexpr const char *names[] = {"spawned", "no-order", "invalid",
+                                         "capacity-rejected",
+                                         "allocation-failed"};
+        std::cout << "spawn " << names[static_cast<unsigned>(result.status)];
+        if (result.entity_index)
+          std::cout << " entity=" << *result.entity_index;
+        std::cout << '\n';
+        if (result.status == ArenaUnitSpawnStatus::Invalid)
+          throw std::invalid_argument("unsupported spawn request");
+      } else if (w[0] == "expect-live-unit" && w.size() == 4) {
+        const auto index = number<unsigned>(w[1]), kind = byte(w[2]),
+                   target = byte(w[3]);
+        const auto &bank = state().storage().banks[state().storage().read_bank];
+        if (index >= bank.size() || bank[index][15] != kind ||
+            ((bank[index][0x33] >> 2) & 7) != 5 || bank[index][0x7e] != target)
+          throw std::runtime_error("live unit expectation failed");
+        std::cout << "expect-live-unit passed\n";
       } else if (w[0] == "factory" && w.size() == 3) {
         const auto index = number<unsigned>(w[1]);
         if (index > 65535)
@@ -195,7 +223,17 @@ int main(int argc, char **argv) {
         std::size_t actual;
         if (w[1] == "allocated")
           actual = config.capacity - state().storage().free_indices.size();
-        else if (w[1] == "ready") {
+        else if (w[1] == "live-units") {
+          actual = 0;
+          for (const auto &slot :
+               state().storage().banks[state().storage().read_bank])
+            actual += slot[15] >= 40 && slot[15] <= 48;
+        } else if (w[1].starts_with("unit-active")) {
+          const auto owner = number<unsigned>(w[1].substr(11));
+          if (owner >= state().accounts().size())
+            throw std::invalid_argument("invalid unit expectation player");
+          actual = state().unit_quotas()[owner].active;
+        } else if (w[1] == "ready") {
           actual = 0;
           for (const auto &slot :
                state().storage().banks[state().storage().read_bank])

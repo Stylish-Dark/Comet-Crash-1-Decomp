@@ -19,6 +19,9 @@ public:
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
   ArenaConstructionTick advance(float);
+  ArenaUnitSpawnResult spawn_reserved_ground_unit(std::uint8_t owner,
+                                                  std::uint8_t kind,
+                                                  ArenaGridPosition);
   ArenaFactorySelection select_factory(std::uint16_t entity_index,
                                        std::uint8_t selector);
   ArenaFactorySelection select_factory(std::size_t player, ArenaGridPosition,

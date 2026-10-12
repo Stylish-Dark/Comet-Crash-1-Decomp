@@ -100,7 +100,9 @@ behavior remains unvalidated.
 Next is the complete spawn operation: recover jitter/position inputs, allocator
 `2058`, model-slot cell records, output-bank commits and producer failure
 handling. Registration is now available for that operation, but the construction
-simulation still stores typed quotas and does not spawn live units. Ground
+simulation at this checkpoint still stored typed quotas and did not spawn units.
+The subsequent [live ground spawning milestone](native-live-ground-spawn.md)
+now connects those quotas to owned statistics and explicit live allocation. Ground
 movement, aircraft binding, combat/AI and mission rules remain outstanding.
 
 The capability estimate is **38% toward a playable single-player mission**,

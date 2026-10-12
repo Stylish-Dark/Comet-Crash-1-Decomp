@@ -1,0 +1,66 @@
+# Synthetic tuning and funds for native integration tests, not title balance.
+world 512 1
+player 14 1 0 400 400 0
+player 0 0 1 400 400 1
+tuning 20 100 50 10 20 7.5
+tuning 21 100 50 10 20 7.5
+tuning 22 100 50 10 20 7.5
+tuning 23 100 50 10 20 7.5
+tuning 24 100 50 10 20 7.5
+tuning 25 100 50 10 20 7.5
+tuning 26 100 50 10 20 7.5
+tuning 28 100 50 10 20 7.5
+unit-base 0 1
+unit-base 1 1
+production 1
+unit-quota 0 0 5
+unit-quota 1 0 0
+run
+
+queue 0 26 14 2
+step
+event 0 1 8 26 14 2
+advance 1
+advance 2
+expect-mode 8 4
+expect-factory-unit 8 44 6
+expect ready 9
+expect allocated 9
+expect resource0 340
+advance 4
+expect unit-pending0 1
+expect-unit 0 40 1
+advance 20
+advance 22
+expect unit-pending0 4
+expect-unit 0 40 3
+expect-unit 0 44 1
+expect ready 10
+expect allocated 10
+expect resource0 280
+expect-factory-unit 1 40 2
+expect-factory-unit 9 40 2
+expect-factory-ground-unit 8 1 bound
+expect-factory-ground-unit 1 1 bound
+expect-factory-ground-unit 9 1 bound
+
+# Explicit native spawn positions; original producer placement is unrecovered.
+spawn 0 40 14 3
+spawn 0 40 14 3
+spawn 0 40 14 3
+spawn 0 44 15 3
+expect unit-active0 4
+expect unit-pending0 0
+expect live-units 4
+expect allocated 14
+expect display 151
+expect ready 10
+expect resource0 280
+expect-live-unit 10 40 1
+expect-live-unit 11 40 1
+expect-live-unit 12 40 1
+expect-live-unit 13 44 1
+advance 23
+expect live-units 4
+expect ready 10
+expect resource0 280

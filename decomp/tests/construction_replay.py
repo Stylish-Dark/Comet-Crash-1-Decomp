@@ -68,3 +68,14 @@ result = run(override_config + "queue 0 26 2 2\nstep\nexpect-factory-ground-unit
 assert result.returncode == 0, result.stderr
 assert run(override_config + "queue 0 26 2 2\nstep\nfactory 0 6\nexpect-factory-ground-unit 0 1 bound\n").returncode != 0
 print("headless construction scenarios passed")
+
+spawn_config = production_config
+result = run(spawn_config + "queue 0 26 2 2\nstep\nadvance 2\nadvance 4\nspawn 0 40 3 3\nexpect unit-active0 1\nexpect unit-pending0 0\nexpect live-units 1\nexpect allocated 2\nexpect-live-unit 1 40 255\nadvance 5\nexpect ready 1\nexpect resource0 340\n")
+assert result.returncode == 0, (result.stdout, result.stderr)
+assert "spawn spawned entity=1" in result.stdout
+full_config = spawn_config.replace("world 16", "world 1")
+result = run(full_config + "queue 0 26 2 2\nstep\nadvance 2\nadvance 4\nspawn 0 40 3 3\nexpect unit-active0 0\nexpect unit-pending0 0\nexpect live-units 0\nexpect allocated 1\n")
+assert result.returncode == 0 and "spawn allocation-failed" in result.stdout, (result.stdout, result.stderr)
+for command in ("spawn 0 40 24 0\n", "spawn 9 40 1 1\n", "spawn 0 42 1 1\n", "spawn 0 40 -1 1\n", "expect-live-unit 65535 40 255\n"):
+    result=run(spawn_config+command)
+    assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)

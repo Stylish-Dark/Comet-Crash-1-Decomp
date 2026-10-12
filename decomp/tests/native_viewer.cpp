@@ -38,6 +38,7 @@ int main() {
     ArenaConstructionSimulationConfig construction;construction.production_enabled=true;construction.unit_quotas[0].capacity=2;construction.capacity=4;construction.players={{{{0,0},0,false},400,400}};construction.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};
     ArenaState editable;editable.extent=4;editable.players.resize(1);editable.players[0].start_grid=ArenaGridPosition{0,0};editable.background_position={2,0,2};
     NativeConstructionScene editable_scene(editable,construction);auto structure=m;structure.spec.original_slot_index=*initial_model_slot_for_record(26);
+    auto spawned_model=m;spawned_model.spec.original_slot_index=2;
     config.arena=nullptr;config.construction=&editable_scene;config.frame_limit=0;config.screenshot.clear();
     std::atomic<bool> finished=false;
     std::thread controls([&]{
@@ -46,14 +47,16 @@ int main() {
         for(int i=0;i<5;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
         SDL_Delay(100);key.key.keysym.sym=SDLK_F9;SDL_PushEvent(&key);
         SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);
+        SDL_Delay(100);key.key.keysym.sym=SDLK_RIGHT;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_DOWN;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_u;SDL_PushEvent(&key);
         SDL_Delay(100);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
     });
-    auto built=run_native_viewer({structure,background},config);finished.store(true);controls.join();
+    auto built=run_native_viewer({structure,spawned_model,background},config);finished.store(true);controls.join();
     if(!built)throw std::runtime_error(built.detail);
-    if(editable_scene.arena().entities.size()!=1||editable_scene.simulation().accounts()[0].resource!=340)throw std::runtime_error("keyboard construction did not commit");
+    if(editable_scene.arena().entities.size()!=2||editable_scene.simulation().accounts()[0].resource!=340)throw std::runtime_error("keyboard construction did not commit");
     if(!editable_scene.arena().entities[0].construction_ready)throw std::runtime_error("keyboard ticks did not finish construction");
     if(editable_scene.arena().entities[0].production_mode!=4)throw std::runtime_error("keyboard factory selection did not commit");
-    if(editable_scene.simulation().unit_quotas()[0].pending!=1||editable_scene.arena().entities[0].production_period!=20.0f||editable_scene.arena().entities[0].production_elapsed!=1.0f)throw std::runtime_error("keyboard production did not reserve or refresh: clock="+std::to_string(editable_scene.simulation().clock())+" pending="+std::to_string(editable_scene.simulation().unit_quotas()[0].pending)+" period="+std::to_string(*editable_scene.arena().entities[0].production_period)+" elapsed="+std::to_string(*editable_scene.arena().entities[0].production_elapsed));
+    if(editable_scene.simulation().unit_quotas()[0].pending!=0||editable_scene.arena().entities[0].production_period!=20.0f||editable_scene.arena().entities[0].production_elapsed!=1.0f)throw std::runtime_error("keyboard production did not reserve or refresh: clock="+std::to_string(editable_scene.simulation().clock())+" pending="+std::to_string(editable_scene.simulation().unit_quotas()[0].pending)+" period="+std::to_string(*editable_scene.arena().entities[0].production_period)+" elapsed="+std::to_string(*editable_scene.arena().entities[0].production_elapsed));
+    if(editable_scene.simulation().unit_quotas()[0].active!=1||editable_scene.arena().entities[1].type!=40||editable_scene.arena().entities[1].grid!=ArenaGridPosition{1,1}||editable_scene.arena().entities[1].construction_progress)throw std::runtime_error("keyboard unit spawn did not project");
     const auto unit=editable_scene.simulation().factory_unit_template(*editable_scene.arena().entities[0].live_entity_index);
     if(!unit||(*unit)[15]!=44||(*unit)[0x6f]!=6)throw std::runtime_error("keyboard factory unit inspection failed");
     const auto ground=editable_scene.simulation().factory_ground_unit_template(*editable_scene.arena().entities[0].live_entity_index);
