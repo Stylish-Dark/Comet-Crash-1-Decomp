@@ -85,14 +85,14 @@ int main() {
         moved.cells[0][4 * 24 + 4][0][6] == 100);
   check(moved.summary_counts[12 * 24 + 8] == 1 &&
         moved.summary_counts[4 * 24 + 4] == 0);
-  check(resolve_arena_storage_target(moved, 0x1f, 0, {4, 4}).entity_index ==
-        -1);
-  moved.cells[1][4 * 24 + 4][0][7] = 0;
   auto target = resolve_arena_storage_target(moved, 0x1f, 0, {4, 4});
   check(target.entity_index == 0 && target.type == 21);
+  moved.cells[1][4 * 24 + 4][0][7] = 0;
+  check(resolve_arena_storage_target(moved, 0x1f, 0, {4, 4}).entity_index ==
+        -1);
+  moved.cells[1][4 * 24 + 4][0][7] = 0x10;
   check(resolve_arena_storage_target(moved, 0x1f, 1, {4, 4}).entity_index ==
         -1);
   moved.read_bank = 0;
-  check(resolve_arena_storage_target(moved, 0x1f, 0, {4, 4}).entity_index ==
-        -1);
+  check(resolve_arena_storage_target(moved, 0x1f, 0, {4, 4}).entity_index == 0);
 }

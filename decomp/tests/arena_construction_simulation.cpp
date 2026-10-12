@@ -140,14 +140,12 @@ int main() {
   assert(factory.enqueue_event(0, {1, 4, 4, 8, 26}) ==
          ArenaTimedSubmit::Scheduled);
   assert(factory.advance(1).players[0] == ArenaTimedStatus::Idle);
-  // CA2E0 still excludes the constructor's stage-4 packed record. Preserve
-  // its original retry instead of overriding the selector target gate.
-  assert(factory.advance(2).players[0] == ArenaTimedStatus::Retried);
-  assert(factory.storage().banks[0][0][0xaa] == 0);
-  assert(factory.select_factory(0, 8) == ArenaFactorySelection::Changed);
+  assert(factory.advance(2).players[0] == ArenaTimedStatus::Submitted);
+  assert(factory.storage().banks[0][0][0xaa] == 4);
+  assert(factory.select_factory(0, 8) == ArenaFactorySelection::Unchanged);
   assert(factory.storage().banks[0][0][0xaa] == 4);
   assert(factory.storage().banks[0][0] == factory.storage().banks[1][0]);
-  assert(factory.players()[0].events.size() == 1);
+  assert(factory.players()[0].events.empty());
   assert(factory.accounts()[0].resource == 340);
 
   auto pending_config = c;

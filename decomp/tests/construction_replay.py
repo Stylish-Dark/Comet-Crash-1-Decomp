@@ -23,6 +23,12 @@ factory_config = config.replace("tuning 20", "tuning 26")
 result = run(factory_config + "queue 0 26 2 2\nstep\nexpect-mode 0 0\nfactory 0 8\nexpect-mode 0 4\nfactory 0 8\nexpect resource0 340\nadvance 2\nexpect ready 1\n")
 assert result.returncode == 0, (result.stdout, result.stderr)
 assert "factory changed" in result.stdout and "factory unchanged" in result.stdout
+result = run(factory_config + "queue 0 26 2 2\nstep\nevent 0 1 8 26 2 2\nadvance 1\nexpect-mode 0 0\nadvance 2\nexpect-mode 0 4\nexpect events0 0\nexpect allocated 1\nexpect resource0 340\n")
+assert result.returncode == 0, (result.stdout, result.stderr)
+assert "clock 2 player0=submitted" in result.stdout
+result = run(factory_config + "event 0 1 8 26 2 2\nadvance 2\nexpect events0 1\nexpect allocated 0\n")
+assert result.returncode == 0 and "player0=retried" in result.stdout, (result.stdout, result.stderr)
+
 for command in ("factory 0 3\n", "factory 999 4\n", "expect-mode 0 4\n", "factory 65536 4\n"):
     result = run(factory_config + "queue 0 26 2 2\nstep\n" + command)
     assert result.returncode != 0, (command, result.stdout, result.stderr)

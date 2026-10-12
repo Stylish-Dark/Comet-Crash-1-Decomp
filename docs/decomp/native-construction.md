@@ -173,7 +173,7 @@ construction progression/readiness contributes the additional 5.
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
-original stage/cell refresh and unit production from ready structures in this
+factory timer and unit production from ready structures in this
 same simulation. Remaining event selectors and higher map upgrades also need
 recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.

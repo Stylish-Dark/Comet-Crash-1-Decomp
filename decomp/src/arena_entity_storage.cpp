@@ -105,7 +105,7 @@ ArenaEventTarget resolve_arena_storage_target(const ArenaEntityStorage &storage,
   for (const auto &entry :
        storage.cells[storage.read_bank][cell.z * 24 + cell.x]) {
     const auto kind = entry[7] & 0x1c;
-    if (kind == 0x0c || kind == 0x10 || ((mask >> (entry[7] >> 5)) & 1u))
+    if ((kind != 0x0c && kind != 0x10) || ((mask >> (entry[7] >> 5)) & 1u))
       continue;
     const auto index = (std::uint16_t(entry[0]) << 8) | entry[1];
     if (static_cast<std::size_t>(index) >=

@@ -46,10 +46,12 @@ the other bank receives the second entry.
 
 `resolve_arena_storage_target` applies recovered CA2E0 visibility, exclusion-mask
 and packed stage checks to the selected bank's ordered records, then reads type
-from that bank's entity slot. Newly constructed opcode-21 stage-4 entries remain
-excluded, matching the existing resolver. Core construction readiness is now
-implemented, but the original stage/cell-record refresh is still unrecovered;
-settling the core alone does not make this packed record eligible.
+from that bank's entity slot. Newly constructed opcode-21 stage-4 entries are eligible. CA2E0 accepts
+stage-3/4 records and skips other stages; the earlier native predicate inverted
+that branch. Both resolver implementations are now corrected and compared
+against the complete original function. Eligibility does not require the core
+ready bit: this preserves the original lookup boundary. See
+[native-target-lookup.md](native-target-lookup.md).
 
 The construction integration test now executes the real opcode-21 constructor
 and insertion boundary through route reservation/completion. It verifies both

@@ -73,13 +73,13 @@ Original binaries and private evaluators stay untracked.
 
 ## Remaining production blockers
 
-CA2E0 excludes stage-4 packed cell records. The recovered constructors create
-that stage, and the current native construction core settlement does not change
-it or refresh packed records. A due event targeting such a factory therefore
-retries, even when its core ready bit is set. The native implementation preserves
-that original lookup rule rather than declaring the target eligible early.
+CA2E0 accepts stage-3/4 packed records, including the factory constructors.
+The native resolver previously inverted that test. The corrected resolver now
+lets due selector-4..8 events select factories, with original ownership masks,
+ordered lookup and missing-target retries. No invented stage transition is
+needed. See [native-target-lookup.md](native-target-lookup.md) for validation.
 
-The next bounded recovery target is the original entity-stage/cell-record
-refresh, followed by the factory timer, unit allocation and unit initialization.
-Production-mode selection alone receives no extra completion credit: the rough
-playable-mission estimate remains 30% until the unit loop executes.
+The next bounded recovery target is the factory timer, unit allocation and unit
+initialization. Production-mode selection alone receives no extra completion
+credit: the rough playable-mission estimate remains 30% until the unit loop
+executes.

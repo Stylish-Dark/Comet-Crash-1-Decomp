@@ -12,7 +12,11 @@ factory 0 8
 expect resource0 340
 advance 2
 expect ready 1
-factory 0 6
+event 0 3 6 26 2 2
+advance 3
+expect-mode 0 4
+advance 4
 expect-mode 0 2
+expect events0 0
 expect allocated 1
 expect resource0 340

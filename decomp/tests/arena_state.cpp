@@ -38,13 +38,17 @@ LevelMapSecondaryRecord event(float time, std::uint8_t x, std::uint8_t z,
 }
 int main() {
   const std::array<ArenaCellEntry, 4> entries{
-      {{5, 0x0c}, {6, 0x10}, {7, 0x20}, {8, 0x40}}};
-  check(resolve_arena_cell_target(0x1f, 0, entries) == 7);
-  check(resolve_arena_cell_target(0x1f, 2, entries) == 8);
+      {{5, 0x2c}, {6, 0x50}, {7, 0x20}, {8, 0x40}}};
+  check(resolve_arena_cell_target(0x1f, 0, entries) == 5);
+  check(resolve_arena_cell_target(0x1f, 2, entries) == 6);
   check(resolve_arena_cell_target(0x1f, 1, entries) == -1);
   check(resolve_arena_cell_target(0x0f, 0, entries) == -1);
   check(resolve_arena_cell_target(0x9f, 0, entries) == -1);
   check(resolve_arena_cell_target(0x1f, 6, entries) == -1);
+  std::vector<ArenaCellEntry> long_entries(126, {22, 0});
+  check(resolve_arena_cell_target(0x1f, 0, long_entries) == -1);
+  long_entries.back() = {65535, 0x0c};
+  check(resolve_arena_cell_target(0x1f, 0, long_entries) == 65535);
   ArenaRandom random(1);
   constexpr std::array<std::uint32_t, 8> expected_random{
       330177771, 135115861, 3885783,   761386273,

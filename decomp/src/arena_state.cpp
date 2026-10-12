@@ -125,7 +125,7 @@ resolve_arena_cell_target(std::uint8_t visibility, std::uint32_t mask,
     return -1;
   for (const auto &entry : entries) {
     const auto kind = entry.flags & 0x1c;
-    if (kind != 0x0c && kind != 0x10 &&
+    if ((kind == 0x0c || kind == 0x10) &&
         ((mask >> (entry.flags >> 5)) & 1u) == 0)
       return entry.entity_index;
   }
