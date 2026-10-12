@@ -19,6 +19,14 @@ for commands in ("expect allocated 99\n", "queue -1 20 2 2\n", "advance nan\n", 
     result = run(config + commands)
     assert result.returncode != 0 and "line " in result.stderr, (commands, result.stdout, result.stderr)
 
+factory_config = config.replace("tuning 20", "tuning 26")
+result = run(factory_config + "queue 0 26 2 2\nstep\nexpect-mode 0 0\nfactory 0 8\nexpect-mode 0 4\nfactory 0 8\nexpect resource0 340\nadvance 2\nexpect ready 1\n")
+assert result.returncode == 0, (result.stdout, result.stderr)
+assert "factory changed" in result.stdout and "factory unchanged" in result.stdout
+for command in ("factory 0 3\n", "factory 999 4\n", "expect-mode 0 4\n", "factory 65536 4\n"):
+    result = run(factory_config + "queue 0 26 2 2\nstep\n" + command)
+    assert result.returncode != 0, (command, result.stdout, result.stderr)
+
 with tempfile.TemporaryDirectory() as directory:
     # Two source records: player start and already-settled structure.
     start = bytearray(56)

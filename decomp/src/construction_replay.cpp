@@ -100,6 +100,30 @@ int main(int argc, char **argv) {
                                          "insufficient-resources",
                                          "queue-full"};
         std::cout << "queue " << names[static_cast<unsigned>(result)] << '\n';
+      } else if (w[0] == "factory" && w.size() == 3) {
+        const auto index = number<unsigned>(w[1]);
+        if (index > 65535)
+          throw std::invalid_argument("factory index out of range");
+        auto result =
+            scene ? scene->select_factory(static_cast<std::uint16_t>(index),
+                                          byte(w[2]))
+                  : simulation->select_factory(
+                        static_cast<std::uint16_t>(index), byte(w[2]));
+        constexpr const char *names[] = {"changed", "unchanged", "unsupported",
+                                         "no-target", "invalid"};
+        std::cout << "factory " << names[static_cast<unsigned>(result)] << '\n';
+        if (result != ArenaFactorySelection::Changed &&
+            result != ArenaFactorySelection::Unchanged)
+          throw std::runtime_error("factory selection failed");
+      } else if (w[0] == "expect-mode" && w.size() == 3) {
+        const auto index = number<unsigned>(w[1]);
+        const auto mode = number<unsigned>(w[2]);
+        const auto &bank = state().storage().banks[state().storage().read_bank];
+        if (index >= bank.size() ||
+            (bank[index][15] != 26 && bank[index][15] != 28) ||
+            bank[index][0xaa] != mode)
+          throw std::runtime_error("factory mode expectation failed");
+        std::cout << "expect-mode passed\n";
       } else if (w[0] == "step" && w.size() == 1)
         completion(step());
       else if (w[0] == "drain" && w.size() == 1) {
@@ -130,6 +154,8 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for (auto index : tick.factory_selections)
+          std::cout << "factory selected entity=" << index << '\n';
         for (auto index : tick.ready_entities)
           std::cout << "ready entity=" << index << '\n';
       } else if (w[0] == "expect" && w.size() == 3) {

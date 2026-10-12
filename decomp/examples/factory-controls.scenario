@@ -1,0 +1,18 @@
+# Synthetic funds/tuning; production controls do not yet spawn units.
+world 16 1
+player 0 0 0 400 400 0
+tuning 26 100 50 10 20 7.5
+run
+queue 0 26 2 2
+step
+expect-mode 0 0
+factory 0 8
+expect-mode 0 4
+factory 0 8
+expect resource0 340
+advance 2
+expect ready 1
+factory 0 6
+expect-mode 0 2
+expect allocated 1
+expect resource0 340

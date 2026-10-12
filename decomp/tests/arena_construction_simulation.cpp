@@ -52,6 +52,7 @@ int main() {
   e.position = {2.5f, 0, 2.5f};
   a.entities.push_back(e);
   a.cells[50].visibility = 31;
+  a.cells[50].entity_index = 0;
   NativeConstructionScene scene(a, c);
   assert(scene.imports().live == 1 &&
          scene.arena().entities[0].live_entity_index == 0);
@@ -78,6 +79,7 @@ int main() {
   rock.type = 9;
   rock.construction_progress = 1;
   rock.construction_ready = true;
+  rock.production_mode = 4;
   rock.grid = {2, 2};
   rock.position = {2.5f, 0, 2.5f};
   shared.entities.insert(shared.entities.begin(), rock);
@@ -90,7 +92,8 @@ int main() {
   assert(shared_scene.imports().live == 1 &&
          shared_scene.imports().display_only == 1);
   assert(!shared_scene.arena().entities[0].construction_progress &&
-         !shared_scene.arena().entities[0].construction_ready);
+         !shared_scene.arena().entities[0].construction_ready &&
+         !shared_scene.arena().entities[0].production_mode);
   assert(shared_scene.arena().cells[50].visibility ==
          arena_gate_visibility(0, 0));
   assert(shared_scene.enqueue_event(0, {1, 8, 0, 0, 20}) ==
@@ -128,5 +131,56 @@ int main() {
       assert(false);
     } catch (const std::invalid_argument &) {
     }
+  }
+  // Factory commands preserve the original dispatch gates and mutate both
+  // banks.
+  ArenaConstructionSimulation factory(c);
+  assert(factory.enqueue({0, 26, 4, 4}) == ArenaConstructionSubmit::Queued);
+  assert(factory.step().status == ArenaConstructionStep::Constructed);
+  assert(factory.enqueue_event(0, {1, 4, 4, 8, 26}) ==
+         ArenaTimedSubmit::Scheduled);
+  assert(factory.advance(1).players[0] == ArenaTimedStatus::Idle);
+  // CA2E0 still excludes the constructor's stage-4 packed record. Preserve
+  // its original retry instead of overriding the selector target gate.
+  assert(factory.advance(2).players[0] == ArenaTimedStatus::Retried);
+  assert(factory.storage().banks[0][0][0xaa] == 0);
+  assert(factory.select_factory(0, 8) == ArenaFactorySelection::Changed);
+  assert(factory.storage().banks[0][0][0xaa] == 4);
+  assert(factory.storage().banks[0][0] == factory.storage().banks[1][0]);
+  assert(factory.players()[0].events.size() == 1);
+  assert(factory.accounts()[0].resource == 340);
+
+  auto pending_config = c;
+  pending_config.initial_players.resize(1);
+  pending_config.initial_players[0].command_mode = 6;
+  pending_config.initial_players[0].pending = {0, 6, 26, 4, 4, 1};
+  ArenaConstructionSimulation pending_factory(pending_config);
+  assert(pending_factory.enqueue({0, 26, 4, 4}) ==
+         ArenaConstructionSubmit::Queued);
+  pending_factory.step();
+  auto applied = pending_factory.advance(1);
+  assert(applied.players[0] == ArenaTimedStatus::Submitted);
+  assert(applied.factory_selections == std::vector<std::uint16_t>{0});
+  assert(pending_factory.storage().banks[0][0][0xaa] == 2);
+  assert(pending_factory.players()[0].command_mode == 11);
+  assert(scene.enqueue({0, 26, 5, 5}) == ArenaConstructionSubmit::Queued);
+  scene.step();
+  assert(scene.arena().entities.back().production_mode == 0);
+  assert(scene.select_factory(0, {5, 5}, 7) == ArenaFactorySelection::Changed);
+  assert(scene.arena().entities.back().production_mode == 3);
+  assert(scene.select_factory(0, {8, 5}, 4) ==
+         ArenaFactorySelection::InvalidRequest);
+  assert(scene.select_factory(1, {5, 5}, 4) ==
+         ArenaFactorySelection::InvalidRequest);
+  assert(scene.select_factory(0, {2, 2}, 4) ==
+         ArenaFactorySelection::Unsupported);
+  assert(scene.select_factory(0, {7, 7}, 4) == ArenaFactorySelection::NoTarget);
+
+  auto malformed = a;
+  malformed.cells[50].entity_index = 999;
+  try {
+    NativeConstructionScene invalid(malformed, c);
+    assert(false);
+  } catch (const std::invalid_argument &) {
   }
 }

@@ -32,6 +32,8 @@ NativeConstructionScene::bootstrap(const ArenaState &a,
   }
   for (unsigned i = 0; i < 576; ++i) {
     const auto &cell = a.cells[i];
+    if (cell.entity_index && *cell.entity_index >= a.entities.size())
+      throw std::invalid_argument("invalid map cell entity link");
     c.initial_visibility[i] = cell.visibility;
     if (!cell.visibility_recovered) {
       if (!cell.entity_index || *cell.entity_index >= a.entities.size())
@@ -61,6 +63,7 @@ NativeConstructionScene::NativeConstructionScene(
     e.live_entity_index.reset();
     e.construction_progress.reset();
     e.construction_ready = false;
+    e.production_mode.reset();
     if (native_map_structure_importable(e)) {
       e.live_entity_index = index++;
       ++imports_.live;
@@ -91,6 +94,8 @@ void NativeConstructionScene::refresh_construction() {
       word = (word << 8) | slot[0x78 + i];
     entity.construction_progress = std::bit_cast<float>(word);
     entity.construction_ready = arena_structure_ready(slot);
+    if (slot[15] == 26 || slot[15] == 28)
+      entity.production_mode = slot[0xaa];
   }
 }
 void NativeConstructionScene::project(
@@ -128,6 +133,27 @@ ArenaConstructionSimulationStep NativeConstructionScene::step() {
   refresh_construction();
   arena_.players = simulation_.players();
   return s;
+}
+ArenaFactorySelection
+NativeConstructionScene::select_factory(std::uint16_t index,
+                                        std::uint8_t selector) {
+  const auto result = simulation_.select_factory(index, selector);
+  refresh_construction();
+  return result;
+}
+ArenaFactorySelection NativeConstructionScene::select_factory(
+    std::size_t player, ArenaGridPosition cell, std::uint8_t selector) {
+  if (cell.x >= arena_.extent || cell.z >= arena_.extent)
+    return ArenaFactorySelection::InvalidRequest;
+  if (player >= simulation_.accounts().size())
+    return ArenaFactorySelection::InvalidRequest;
+  const auto *entry = arena_.cell(cell.x, cell.z);
+  if (!entry || !entry->entity_index)
+    return ArenaFactorySelection::NoTarget;
+  const auto &entity = arena_.entities[*entry->entity_index];
+  if (!entity.live_entity_index || entity.owner != player)
+    return ArenaFactorySelection::NoTarget;
+  return select_factory(*entity.live_entity_index, selector);
 }
 ArenaConstructionTick NativeConstructionScene::advance(float t) {
   auto tick = simulation_.advance(t);

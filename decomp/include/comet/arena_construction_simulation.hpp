@@ -2,6 +2,7 @@
 #include "comet/arena_construction_progress.hpp"
 #include "comet/arena_construction_runtime.hpp"
 #include "comet/arena_entity_storage.hpp"
+#include "comet/arena_factory_control.hpp"
 #include "comet/arena_structure_entity.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
@@ -45,6 +46,7 @@ struct ArenaConstructionTick {
   std::array<ArenaTimedStatus, 4> players{};
   ArenaConstructionSimulationStep construction;
   std::vector<std::uint16_t> ready_entities;
+  std::vector<std::uint16_t> factory_selections;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;
@@ -55,6 +57,7 @@ class ArenaConstructionSimulation {
   std::vector<ArenaPlayer> players_;
   ArenaRandom random_;
   float clock_ = 0;
+  ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);
   ArenaConstructionContext context_for(ArenaConstructionRequest) const;
 
 public:
@@ -62,6 +65,8 @@ public:
       const ArenaConstructionSimulationConfig &);
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
+  ArenaFactorySelection select_factory(std::uint16_t entity_index,
+                                       std::uint8_t selector);
   ArenaTimedSubmit enqueue_event(std::size_t, ArenaEvent);
   ArenaConstructionTick advance(float);
   const auto &accounts() const { return config_.players; }

@@ -19,6 +19,10 @@ public:
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
   ArenaConstructionTick advance(float);
+  ArenaFactorySelection select_factory(std::uint16_t entity_index,
+                                       std::uint8_t selector);
+  ArenaFactorySelection select_factory(std::size_t player, ArenaGridPosition,
+                                       std::uint8_t selector);
   ArenaTimedSubmit enqueue_event(std::size_t owner, ArenaEvent e) {
     if (e.selector < 9 &&
         (e.grid_x >= arena_.extent || e.grid_z >= arena_.extent))

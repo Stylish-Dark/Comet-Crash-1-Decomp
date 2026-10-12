@@ -47,13 +47,16 @@ the other bank receives the second entry.
 `resolve_arena_storage_target` applies recovered CA2E0 visibility, exclusion-mask
 and packed stage checks to the selected bank's ordered records, then reads type
 from that bank's entity slot. Newly constructed opcode-21 stage-4 entries remain
-excluded, matching the existing resolver. Simulation readiness transitions
-remain to be recovered; this boundary does not mark a construction ready early.
+excluded, matching the existing resolver. Core construction readiness is now
+implemented, but the original stage/cell-record refresh is still unrecovered;
+settling the core alone does not make this packed record eligible.
 
 The construction integration test now executes the real opcode-21 constructor
 and insertion boundary through route reservation/completion. It verifies both
 entity banks, both cell lists, the pool count, summary counter and resource debit.
-This is still a boundary test; it is not wired into interactive viewer gameplay.
+The owned simulation now uses this boundary in the interactive viewer; see
+[native-construction.md](native-construction.md) and
+[native-factory-controls.md](native-factory-controls.md).
 
 ## Verification
 

@@ -8,6 +8,9 @@ namespace {
 bool supported(unsigned type) {
   return (type >= 20 && type <= 26) || type == 28;
 }
+bool factory_command(unsigned selector, unsigned type) {
+  return selector >= 4 && selector <= 8 && (type == 26 || type == 28);
+}
 void scalar(ArenaEntitySlot &s, unsigned off, float f) {
   auto word = std::bit_cast<std::uint32_t>(f);
   for (unsigned i = 0; i < 4; ++i)
@@ -162,6 +165,25 @@ ArenaConstructionSimulationStep ArenaConstructionSimulation::step() {
   config_.players[s.request.player].resource = c.resource;
   return s;
 }
+ArenaFactorySelection
+ArenaConstructionSimulation::select_factory_index(std::int32_t index,
+                                                  std::uint8_t selector) {
+  if (index < 0 || static_cast<std::size_t>(index) >=
+                       storage_.banks[storage_.read_bank].size())
+    return ArenaFactorySelection::NoTarget;
+  auto slot = storage_.banks[storage_.read_bank][index];
+  auto result = select_arena_factory_production(slot, selector);
+  if (result == ArenaFactorySelection::Changed) {
+    storage_.banks[0][index] = slot;
+    storage_.banks[1][index] = slot;
+  }
+  return result;
+}
+ArenaFactorySelection
+ArenaConstructionSimulation::select_factory(std::uint16_t index,
+                                            std::uint8_t selector) {
+  return select_factory_index(index, selector);
+}
 ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
                                                             ArenaEvent e) {
   if (owner >= players_.size() || !std::isfinite(e.time) ||
@@ -200,8 +222,9 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       if (p.events.empty() || !(p.events.next().time < clock))
         continue;
       auto e = p.events.next();
-      if (e.selector != 0 || !supported(e.opcode) ||
-          !config_.tuning[e.opcode]) {
+      if (!(e.selector == 0 && supported(e.opcode) &&
+            config_.tuning[e.opcode]) &&
+          !factory_command(e.selector, e.opcode)) {
         status = ArenaTimedStatus::Unsupported;
         continue;
       }
@@ -219,6 +242,19 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         continue;
     }
     auto pending = p.pending;
+    if (factory_command(pending.selector, pending.opcode)) {
+      const auto result =
+          select_factory_index(pending.entity_index, pending.selector);
+      if (result == ArenaFactorySelection::Changed ||
+          result == ArenaFactorySelection::Unchanged) {
+        take_arena_pending_command(p);
+        status = ArenaTimedStatus::Submitted;
+        tick.factory_selections.push_back(
+            static_cast<std::uint16_t>(pending.entity_index));
+      } else
+        status = ArenaTimedStatus::Unsupported;
+      continue;
+    }
     if (pending.selector != 0 || !supported(pending.opcode) ||
         !config_.tuning[pending.opcode]) {
       status = ArenaTimedStatus::Unsupported;

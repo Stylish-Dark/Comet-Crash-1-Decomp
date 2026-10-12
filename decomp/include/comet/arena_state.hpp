@@ -73,6 +73,7 @@ struct ArenaEntity {
   // Present only for structures backed by native simulation state.
   std::optional<float> construction_progress;
   bool construction_ready = false;
+  std::optional<std::uint8_t> production_mode;
 };
 struct ArenaCell {
   std::optional<std::size_t> entity_index;

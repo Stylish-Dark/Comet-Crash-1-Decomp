@@ -16,6 +16,7 @@ add_library(comet_native_recovery STATIC
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
     src/arena_construction_runtime.cpp
+    src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
     src/arena_construction_config.cpp
@@ -81,6 +82,15 @@ if(MSVC)
     target_compile_options(comet_arena_construction_simulation_tests PRIVATE /UNDEBUG)
 else()
     target_compile_options(comet_arena_construction_simulation_tests PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_factory_control_tests tests/arena_factory_control.cpp)
+target_link_libraries(comet_arena_factory_control_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_factory_control_tests COMMAND comet_arena_factory_control_tests)
+if(MSVC)
+    target_compile_options(comet_arena_factory_control_tests PRIVATE /UNDEBUG)
+else()
+    target_compile_options(comet_arena_factory_control_tests PRIVATE -UNDEBUG)
 endif()
 
 add_executable(comet_arena_construction_progress_tests tests/arena_construction_progress.cpp)
