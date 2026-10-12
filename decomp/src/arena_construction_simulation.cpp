@@ -37,6 +37,9 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     players_.push_back(p);
   }
   for (unsigned owner = 0; owner < c.players.size(); ++owner) {
+    const auto forced = c.unit_target_overrides[owner];
+    if (forced != 255 && (forced >= c.players.size() || forced == owner))
+      throw std::invalid_argument("invalid unit target override");
     const auto &q = c.unit_quotas[owner];
     std::uint32_t total = 0;
     for (auto count : q.by_type)
@@ -195,6 +198,12 @@ ArenaConstructionSimulation::select_factory(std::uint16_t index,
 }
 std::optional<ArenaEntitySlot>
 ArenaConstructionSimulation::factory_unit_template(std::uint16_t index) const {
+  auto random = random_;
+  return initialize_factory_unit_template(index, random);
+}
+std::optional<ArenaEntitySlot>
+ArenaConstructionSimulation::initialize_factory_unit_template(
+    std::uint16_t index, ArenaRandom &random) const {
   const auto &bank = storage_.banks[storage_.read_bank];
   if (index >= bank.size())
     return {};
@@ -209,12 +218,31 @@ ArenaConstructionSimulation::factory_unit_template(std::uint16_t index) const {
     position[axis] = std::bit_cast<float>(bits);
   }
   ArenaEntitySlot unit{};
-  auto random = random_;
   const unsigned base = factory[15] == 26 ? 40 : 44;
   if (!initialize_arena_unit_template(unit, base + factory[0xaa],
                                       factory[0x33] >> 5, position, random))
     return {};
   return unit;
+}
+std::optional<ArenaGroundUnitTemplate>
+ArenaConstructionSimulation::factory_ground_unit_template(
+    std::uint16_t index) const {
+  auto random = random_;
+  auto unit = initialize_factory_unit_template(index, random);
+  if (!unit)
+    return {};
+  std::array<ArenaUnitTargetPlayer, 4> players{};
+  for (unsigned owner = 0; owner < config_.players.size(); ++owner)
+    players[owner] = {
+        static_cast<std::uint8_t>(config_.players[owner].route.team),
+        config_.unit_base_available[owner],
+        config_.unit_target_overrides[owner]};
+  const auto binding = bind_arena_ground_unit_template(
+      *unit, std::span(players).first(config_.players.size()), grid_, random);
+  if (binding == ArenaGroundUnitBinding::Unsupported)
+    return {};
+  return ArenaGroundUnitTemplate{*unit, binding,
+                                 *arena_unit_constructor_result((*unit)[15])};
 }
 ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
                                                             ArenaEvent e) {

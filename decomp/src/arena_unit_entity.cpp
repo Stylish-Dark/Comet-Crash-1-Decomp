@@ -59,6 +59,11 @@ struct Rounding {
   ~Rounding() { std::fesetround(previous); }
 };
 } // namespace
+std::optional<std::uint8_t> arena_unit_constructor_result(std::uint8_t kind) {
+  if (kind < 40 || kind > 48)
+    return {};
+  return static_cast<std::uint8_t>(kind == 48 ? 54 : kind + 7);
+}
 bool initialize_arena_unit_template(std::span<std::uint8_t, 256> slot,
                                     std::uint8_t kind, std::uint8_t owner,
                                     const std::array<float, 4> &position,

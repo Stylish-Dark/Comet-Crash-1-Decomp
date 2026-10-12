@@ -188,6 +188,12 @@ int main() {
   assert(inspected == scene.simulation().factory_unit_template(
                           *scene.arena().entities.back().live_entity_index));
   assert(!scene.simulation().factory_unit_template(0));
+  const auto ground = scene.simulation().factory_ground_unit_template(
+      *scene.arena().entities.back().live_entity_index);
+  assert(ground && ground->binding == ArenaGroundUnitBinding::NoTarget &&
+         ground->slot[0x7e] == 255);
+  assert(ground->slot == *inspected && ground->constructor_result == 50);
+  assert(!scene.simulation().factory_ground_unit_template(65535));
   auto production_config = c;
   production_config.production_enabled = true;
   production_config.unit_quotas[0].capacity = 2;

@@ -97,7 +97,9 @@ untracked. The interpreter is ps3recomp commit
 
 The unit initializer prefix and quota claim are now recovered; see
 [native-unit-templates.md](native-unit-templates.md). Next: recover the remaining
-binding/placement and allocation/failure path before connecting live spawns.
+statistics registration and the allocation/failure path before connecting live
+spawns. Ground binding is covered in
+[native-ground-unit-binding.md](native-ground-unit-binding.md).
 Movement, targeting, weapons/damage, enemy behavior and mission completion still
 follow. This factory timing milestone moved the capability estimate to 33%;
 the subsequent unit-template milestone adds two points, for 35%. These remain

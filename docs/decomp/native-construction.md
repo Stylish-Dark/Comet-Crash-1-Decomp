@@ -69,6 +69,8 @@ player base_x base_z team resource resource_max inactive
 tuning opcode scalar64 denominator first_byte second_byte scalar84
 production 0_or_1
 unit-quota owner active capacity
+unit-base owner 0_or_1
+unit-target owner target_or_255
 run
 ```
 
@@ -96,6 +98,7 @@ After `run`, the replay runner accepts:
 | `factory entity_index selector` | Select factory mode with selector 4..8 |
 | `expect-mode entity_index mode` | Check production mode |
 | `expect unit-pending0 N` | Check player 0 pending-unit total; suffix selects player |
+| `expect-factory-ground-unit index target status` | Check completed ground template binding: no-target, blocked or bound |
 | `expect-factory-unit index kind model` | Check original selected-unit template kind/model without mutation |
 | `expect-unit owner kind N` | Check pending count for unit kind 40..48 |
 | `expect events0 N` | Check player 0's heap size; suffix selects player |
@@ -166,29 +169,29 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 35% toward a playable single-player mission**, using the
+**Rough estimate: 37% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
 construction progression/readiness contributes 5, and verified factory timing
 and quota reservations contribute 3; unit initializer/claim primitives add 2.
-Live units remain absent.
+Ground constructor binding/heading adds 2. Live units remain absent.
 
 | Capability | Weight | Earned | Remaining |
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 5 | Complete unit binding/placement, allocate live units, movement and targeting |
+| Unit production, movement and targeting | 20 | 7 | Register/allocate live units, aircraft binding, movement and targeting updates |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
-| **Total** | **100** | **35** | |
+| **Total** | **100** | **37** | |
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
-the original binding/placement and live-allocation path in this same
-simulation, using the verified unit templates and claim helper. Remaining event selectors and higher map upgrades also need
-recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
+original statistics-registration and allocation/failure path in this same
+simulation, using verified ground constructors and the claim helper. Remaining
+event selectors and higher map upgrades also need recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.
 
 Factory timing/reservation validation and the level-0 production scenario are
@@ -196,3 +199,6 @@ recorded in [native-factory-production.md](native-factory-production.md).
 
 Unit initializer prefixes, quota claims and their remaining spawn boundaries are
 recorded in [native-unit-templates.md](native-unit-templates.md).
+
+Completed ground constructor binding/heading and remaining allocation boundaries
+are recorded in [native-ground-unit-binding.md](native-ground-unit-binding.md).

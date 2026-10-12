@@ -56,7 +56,7 @@ atomic DMA. This proves the state/return boundary, not thread contention behavio
 
 Tracing also establishes that quota claim and allocation helpers are in the
 same FE5D8 job: `DABC` calls `BA08`, `DB80` calls `C380`, and the latter uses
-`14B30`, placement validation `48C8` and allocator `2058`. The prior description
+`14B30`, player-statistics registration `48C8`/`BB30` and allocator `2058`. The prior description
 of allocation as belonging to another original job was too specific and has
 been corrected. The complete spawn caller and its failure handling still need
 recovery before these leaves can be assembled faithfully.
@@ -109,9 +109,11 @@ outputs remain untracked. Windows behavior has not been validated.
 
 ## Remaining and estimate
 
-Next bounded target: finish original unit binding/placement and the spawn caller's
-allocation/failure path, then connect verified templates and quota claims to live
-entities. Movement, targeting, damage/weapons, enemy behavior and mission rules
-remain absent. The weighted planning estimate is 35% toward a playable single-
-player mission, with two additional points for initialization/claim primitives.
+Ground constructor binding/heading is now complete for seven kinds; see
+[native-ground-unit-binding.md](native-ground-unit-binding.md). Next: recover the
+statistics-registration and allocation/failure path, then connect constructors
+and quota claims to live entities. Movement, targeting updates, damage/weapons,
+enemy behavior and mission rules remain absent. This template milestone advanced
+the planning estimate to 35% toward a playable single-player mission, with two
+additional points for initialization/claim primitives.
 This is not a claim that units now spawn or that the unit loop is complete.

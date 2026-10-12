@@ -56,6 +56,8 @@ int main() {
     if(editable_scene.simulation().unit_quotas()[0].pending!=1||editable_scene.arena().entities[0].production_period!=20.0f||editable_scene.arena().entities[0].production_elapsed!=1.0f)throw std::runtime_error("keyboard production did not reserve or refresh: clock="+std::to_string(editable_scene.simulation().clock())+" pending="+std::to_string(editable_scene.simulation().unit_quotas()[0].pending)+" period="+std::to_string(*editable_scene.arena().entities[0].production_period)+" elapsed="+std::to_string(*editable_scene.arena().entities[0].production_elapsed));
     const auto unit=editable_scene.simulation().factory_unit_template(*editable_scene.arena().entities[0].live_entity_index);
     if(!unit||(*unit)[15]!=44||(*unit)[0x6f]!=6)throw std::runtime_error("keyboard factory unit inspection failed");
+    const auto ground=editable_scene.simulation().factory_ground_unit_template(*editable_scene.arena().entities[0].live_entity_index);
+    if(!ground||ground->binding!=ArenaGroundUnitBinding::NoTarget||ground->slot[0x7e]!=255)throw std::runtime_error("keyboard ground unit inspection failed");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }

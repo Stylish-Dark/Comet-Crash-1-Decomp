@@ -29,7 +29,7 @@ ArenaConstructionSimulationConfig
 read_arena_construction_config(std::istream &in, std::size_t &line) {
   ArenaConstructionSimulationConfig c;
   bool world = false, production_seen = false;
-  std::array<bool, 4> quota_seen{};
+  std::array<bool, 4> quota_seen{}, unit_base_seen{}, unit_target_seen{};
   std::string text;
   while (std::getline(in, text)) {
     ++line;
@@ -68,6 +68,19 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
         throw std::invalid_argument("duplicate production flag");
       production_seen = true;
       c.production_enabled = bounded(w[1], 1);
+    } else if (w[0] == "unit-base" && w.size() == 3 && world) {
+      const auto owner = bounded(w[1], 3);
+      if (owner >= c.players.size() || unit_base_seen[owner])
+        throw std::invalid_argument("invalid or duplicate unit base");
+      unit_base_seen[owner] = true;
+      c.unit_base_available[owner] = bounded(w[2], 1);
+    } else if (w[0] == "unit-target" && w.size() == 3 && world) {
+      const auto owner = bounded(w[1], 3), target = bounded(w[2], 255);
+      if (owner >= c.players.size() || unit_target_seen[owner] ||
+          (target != 255 && (target >= c.players.size() || target == owner)))
+        throw std::invalid_argument("invalid or duplicate unit target");
+      unit_target_seen[owner] = true;
+      c.unit_target_overrides[owner] = target;
     } else if (w[0] == "unit-quota" && w.size() == 4 && world) {
       const auto owner = bounded(w[1], 3);
       if (owner >= c.players.size())

@@ -81,7 +81,8 @@ needed. See [native-target-lookup.md](native-target-lookup.md) for validation.
 
 The factory timer and pending-unit capacity reservations are now implemented;
 see [native-factory-production.md](native-factory-production.md). The next
-bounded recovery target is completing the original binding/placement and
-allocation/failure path. Unit initializer and claim boundaries are covered in
+bounded recovery target is completing statistics registration and the
+allocation/failure path. Ground binding is covered in
+[native-ground-unit-binding.md](native-ground-unit-binding.md). Unit initializer and claim boundaries are covered in
 [native-unit-templates.md](native-unit-templates.md). Production-mode selection by itself received no
 additional completion credit.

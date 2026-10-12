@@ -5,6 +5,7 @@
 #include "comet/arena_factory_control.hpp"
 #include "comet/arena_factory_production.hpp"
 #include "comet/arena_structure_entity.hpp"
+#include "comet/arena_unit_binding.hpp"
 #include "comet/arena_unit_entity.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
@@ -19,6 +20,8 @@ struct ArenaConstructionSimulationConfig {
   std::vector<ArenaEntity> initial_structures;
   std::vector<ArenaPlayer> initial_players;
   std::array<std::uint32_t, 4> event_exclusion_masks{};
+  std::array<bool, 4> unit_base_available{};
+  std::array<std::uint8_t, 4> unit_target_overrides{255, 255, 255, 255};
   bool production_enabled = false;
   std::array<ArenaUnitProductionQuota, 4> unit_quotas{};
 };
@@ -64,6 +67,8 @@ class ArenaConstructionSimulation {
   float clock_ = 0;
   ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);
   ArenaConstructionContext context_for(ArenaConstructionRequest) const;
+  std::optional<ArenaEntitySlot>
+  initialize_factory_unit_template(std::uint16_t, ArenaRandom &) const;
 
 public:
   explicit ArenaConstructionSimulation(
@@ -78,6 +83,8 @@ public:
   // mutation.
   std::optional<ArenaEntitySlot>
   factory_unit_template(std::uint16_t index) const;
+  std::optional<ArenaGroundUnitTemplate>
+  factory_ground_unit_template(std::uint16_t index) const;
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }

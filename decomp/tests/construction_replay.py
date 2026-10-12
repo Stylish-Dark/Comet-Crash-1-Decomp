@@ -55,4 +55,16 @@ result = run(production_config + "queue 0 26 2 2\nstep\nexpect-factory-unit 0 40
 assert result.returncode == 0, result.stderr
 assert run(production_config + "expect-factory-unit 65535 40 2\n").returncode != 0
 
+result = run(production_config + "queue 0 26 2 2\nstep\nexpect-factory-ground-unit 0 255 no-target\nexpect allocated 1\nexpect unit-pending0 0\nexpect resource0 340\n")
+assert result.returncode == 0, result.stderr
+assert run(production_config + "expect-factory-ground-unit 65535 255 no-target\n").returncode != 0
+binding_config = factory_config.replace("tuning 26", "player 23 23 1 400 400 0\nunit-base 0 1\nunit-base 1 1\ntuning 26")
+result = run(binding_config + "queue 0 26 2 2\nstep\nexpect-factory-ground-unit 0 1 blocked\nexpect allocated 1\nexpect resource0 340\n")
+assert result.returncode == 0, result.stderr
+for setting in ("unit-base 0 2\n", "unit-base 1 1\n", "unit-base 0 1\nunit-base 0 1\n", "unit-target 0 0\n", "unit-target 0 1\n"):
+    assert run(factory_config.replace("run\n", setting + "run\n")).returncode != 0
+override_config = binding_config.replace("player 23 23 1", "player 23 23 0").replace("run\n", "unit-target 0 1\nrun\n")
+result = run(override_config + "queue 0 26 2 2\nstep\nexpect-factory-ground-unit 0 1 bound\nexpect resource0 340\n")
+assert result.returncode == 0, result.stderr
+assert run(override_config + "queue 0 26 2 2\nstep\nfactory 0 6\nexpect-factory-ground-unit 0 1 bound\n").returncode != 0
 print("headless construction scenarios passed")

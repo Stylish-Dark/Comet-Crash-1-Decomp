@@ -11,6 +11,10 @@ std::uint32_t word(const ArenaEntitySlot &s, unsigned off) {
   return v;
 }
 int main() {
+  assert(arena_unit_constructor_result(40) == 47);
+  assert(arena_unit_constructor_result(48) == 54);
+  assert(!arena_unit_constructor_result(39));
+  assert(!arena_unit_constructor_result(49));
   ArenaEntitySlot s;
   s.fill(0xa5);
   ArenaRandom rng(1), reference(1);

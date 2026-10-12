@@ -115,6 +115,17 @@ int main(int argc, char **argv) {
         if (result != ArenaFactorySelection::Changed &&
             result != ArenaFactorySelection::Unchanged)
           throw std::runtime_error("factory selection failed");
+      } else if (w[0] == "expect-factory-ground-unit" && w.size() == 4) {
+        const auto index = number<unsigned>(w[1]), target = byte(w[2]);
+        if (index > 65535)
+          throw std::invalid_argument("invalid factory index");
+        constexpr const char *names[] = {"unsupported", "no-target", "blocked",
+                                         "bound"};
+        const auto unit = state().factory_ground_unit_template(index);
+        if (!unit || unit->slot[0x7e] != target ||
+            w[3] != names[static_cast<unsigned>(unit->binding)])
+          throw std::runtime_error("ground unit expectation failed");
+        std::cout << "expect-factory-ground-unit passed\n";
       } else if (w[0] == "expect-factory-unit" && w.size() == 4) {
         const auto index = number<unsigned>(w[1]),
                    kind = number<unsigned>(w[2]),

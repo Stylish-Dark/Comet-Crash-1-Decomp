@@ -53,4 +53,6 @@ simulation tests under ASan and UBSan.
 Factory timing and pending-unit reservations are now implemented; see
 [native-factory-production.md](native-factory-production.md). The unit initializer
 prefix and quota claim are covered in [native-unit-templates.md](native-unit-templates.md).
-Live-unit allocation, binding, movement and combat remain unimplemented.
+Ground constructor binding/heading is covered in
+[native-ground-unit-binding.md](native-ground-unit-binding.md). Live-unit allocation,
+aircraft binding, movement updates and combat remain unimplemented.
