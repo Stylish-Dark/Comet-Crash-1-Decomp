@@ -36,6 +36,15 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     p.start_grid = a.route.base;
     players_.push_back(p);
   }
+  for (unsigned owner = 0; owner < c.players.size(); ++owner) {
+    const auto &q = c.unit_quotas[owner];
+    std::uint32_t total = 0;
+    for (auto count : q.by_type)
+      total += count;
+    if (q.active < 0 || q.capacity > 65535 || total != q.pending ||
+        static_cast<std::uint32_t>(q.active) + q.pending > q.capacity)
+      throw std::invalid_argument("invalid production quota");
+  }
   if (!c.initial_players.empty()) {
     if (c.initial_players.size() != players_.size())
       throw std::invalid_argument("event player count mismatch");
@@ -209,6 +218,19 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           ArenaConstructionProgress::Ready)
         tick.ready_entities.push_back(static_cast<std::uint16_t>(i));
     }
+    auto quotas = config_.unit_quotas;
+    for (std::size_t i = 0; i < next.size(); ++i) {
+      if (next[i][15] != 26 && next[i][15] != 28)
+        continue;
+      const auto owner = static_cast<std::size_t>(next[i][0x33] >> 5);
+      if (owner >= players_.size())
+        throw std::invalid_argument("invalid factory owner");
+      if (advance_arena_factory_production(
+              next[i], elapsed, config_.production_enabled, quotas[owner]) ==
+          ArenaFactoryProduction::Reserved)
+        tick.production_reservations.push_back(static_cast<std::uint16_t>(i));
+    }
+    config_.unit_quotas = quotas;
     storage_.banks[0] = next;
     storage_.banks[1] = std::move(next);
   }

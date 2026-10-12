@@ -50,5 +50,6 @@ Release validation passed all 20 CPU/CLI checks, 233 Python tests, both factory
 scenarios and the level-0 construction scenario, plus the affected state/storage/
 simulation tests under ASan and UBSan.
 
-Unit production timing, allocation, initialization, movement and combat remain
-unimplemented. This fixes a prerequisite; it does not claim factories spawn units.
+Factory timing and pending-unit reservations are now implemented; see
+[native-factory-production.md](native-factory-production.md). Live-unit allocation,
+initialization, movement and combat remain unimplemented.

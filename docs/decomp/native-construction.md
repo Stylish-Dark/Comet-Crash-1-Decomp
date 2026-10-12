@@ -29,7 +29,8 @@ milestone is an executable, assertion-based scenario runner over actual maps.
 Newly constructed structures now advance through the recovered original core
 progress update and become ready. Units, weapons, combat, income and victory
 remain absent. Readiness means the original core flags/counters are settled;
-it does not imply that weapon or production behavior exists. Map settlement
+it does not imply weapon behavior or live-unit spawning. Factories now advance
+original production timers and reserve pending units when explicitly enabled. Map settlement
 still applies only to pre-existing structures at or below the initial level.
 
 ## Build and run
@@ -66,12 +67,17 @@ world capacity seed
 player base_x base_z team resource resource_max inactive
 # One player line for each of 1..4 map players.
 tuning opcode scalar64 denominator first_byte second_byte scalar84
+production 0_or_1
+unit-quota owner active capacity
 run
 ```
 
 Capacity is at most 65536; teams are 0..3; denominator must be positive.
 Tuning is supplied explicitly because the title's mutable initialization tables
 are not recovered here. Do not describe the example as authentic game balance.
+
+Production defaults to disabled and quota capacity to zero. Quotas are explicit
+test inputs; authentic capacity initialization remains unrecovered.
 
 After `run`, the replay runner accepts:
 
@@ -87,6 +93,10 @@ After `run`, the replay runner accepts:
 | `expect pending N` | Check pending ring entries |
 | `expect display N` | Check rendered entity count when using a map |
 | `expect resource0 N` | Check player 0's whole-unit balance; suffix selects player |
+| `factory entity_index selector` | Select factory mode with selector 4..8 |
+| `expect-mode entity_index mode` | Check production mode |
+| `expect unit-pending0 N` | Check player 0 pending-unit total; suffix selects player |
+| `expect-unit owner kind N` | Check pending count for unit kind 40..48 |
 | `expect events0 N` | Check player 0's heap size; suffix selects player |
 
 Viewer configuration uses the same header through `run`, with no scenario
@@ -155,25 +165,29 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 30% toward a playable single-player mission**, using the
+**Rough estimate: 33% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
-construction progression/readiness contributes the additional 5.
+construction progression/readiness contributes 5, and verified factory timing
+and quota reservations contribute 3. Live units remain absent.
 
 | Capability | Weight | Earned | Remaining |
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 0 | Execute the original unit loop |
+| Unit production, movement and targeting | 20 | 3 | Consume production orders, allocate/initialize units, movement and targeting |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
-| **Total** | **100** | **30** | |
+| **Total** | **100** | **33** | |
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
-factory timer and unit production from ready structures in this
+pending-order consumption, live-unit allocation and initialization in this
 same simulation. Remaining event selectors and higher map upgrades also need
 recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.
+
+Factory timing/reservation validation and the level-0 production scenario are
+recorded in [native-factory-production.md](native-factory-production.md).

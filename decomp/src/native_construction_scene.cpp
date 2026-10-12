@@ -64,6 +64,8 @@ NativeConstructionScene::NativeConstructionScene(
     e.construction_progress.reset();
     e.construction_ready = false;
     e.production_mode.reset();
+    e.production_elapsed.reset();
+    e.production_period.reset();
     if (native_map_structure_importable(e)) {
       e.live_entity_index = index++;
       ++imports_.live;
@@ -94,8 +96,17 @@ void NativeConstructionScene::refresh_construction() {
       word = (word << 8) | slot[0x78 + i];
     entity.construction_progress = std::bit_cast<float>(word);
     entity.construction_ready = arena_structure_ready(slot);
-    if (slot[15] == 26 || slot[15] == 28)
+    if (slot[15] == 26 || slot[15] == 28) {
       entity.production_mode = slot[0xaa];
+      auto scalar = [&](unsigned offset) {
+        std::uint32_t bits = 0;
+        for (unsigned i = 0; i < 4; ++i)
+          bits = (bits << 8) | slot[offset + i];
+        return std::bit_cast<float>(bits);
+      };
+      entity.production_elapsed = scalar(0x80);
+      entity.production_period = scalar(0x84);
+    }
   }
 }
 void NativeConstructionScene::project(

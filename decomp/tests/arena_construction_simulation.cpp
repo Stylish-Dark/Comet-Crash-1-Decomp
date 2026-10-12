@@ -181,4 +181,18 @@ int main() {
     assert(false);
   } catch (const std::invalid_argument &) {
   }
+  auto production_config = c;
+  production_config.production_enabled = true;
+  production_config.unit_quotas[0].capacity = 2;
+  ArenaConstructionSimulation producing(production_config);
+  assert(producing.enqueue({0, 26, 4, 4}) == ArenaConstructionSubmit::Queued);
+  producing.step();
+  assert(producing.advance(2).production_reservations.empty());
+  assert(producing.advance(4).production_reservations ==
+         std::vector<std::uint16_t>{0});
+  assert(producing.unit_quotas()[0].pending == 1 &&
+         producing.unit_quotas()[0].by_type[0] == 1);
+  assert(producing.accounts()[0].resource == 340 &&
+         producing.storage().free_indices.size() == 15);
+  assert(producing.storage().banks[0][0] == producing.storage().banks[1][0]);
 }

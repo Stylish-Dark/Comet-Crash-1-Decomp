@@ -74,6 +74,7 @@ struct ArenaEntity {
   std::optional<float> construction_progress;
   bool construction_ready = false;
   std::optional<std::uint8_t> production_mode;
+  std::optional<float> production_elapsed, production_period;
 };
 struct ArenaCell {
   std::optional<std::size_t> entity_index;

@@ -33,6 +33,12 @@ for command in ("factory 0 3\n", "factory 999 4\n", "expect-mode 0 4\n", "factor
     result = run(factory_config + "queue 0 26 2 2\nstep\n" + command)
     assert result.returncode != 0, (command, result.stdout, result.stderr)
 
+production_config = factory_config.replace("run\n", "production 1\nunit-quota 0 0 1\nrun\n")
+result = run(production_config + "queue 0 26 2 2\nstep\nadvance 2\nexpect unit-pending0 0\nadvance 4\nexpect unit-pending0 1\nexpect-unit 0 40 1\nexpect allocated 1\nexpect resource0 340\nadvance 8\nadvance 12\nexpect unit-pending0 1\n")
+assert result.returncode == 0, (result.stdout, result.stderr)
+for setting in ("unit-quota 0 2 1\n", "production 2\n", "unit-quota 1 0 1\n", "unit-quota 0 0 1\nunit-quota 0 0 2\n"):
+    assert run(factory_config.replace("run\n", setting + "run\n")).returncode != 0
+
 with tempfile.TemporaryDirectory() as directory:
     # Two source records: player start and already-settled structure.
     start = bytearray(56)

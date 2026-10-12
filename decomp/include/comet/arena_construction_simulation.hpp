@@ -3,6 +3,7 @@
 #include "comet/arena_construction_runtime.hpp"
 #include "comet/arena_entity_storage.hpp"
 #include "comet/arena_factory_control.hpp"
+#include "comet/arena_factory_production.hpp"
 #include "comet/arena_structure_entity.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
@@ -17,6 +18,8 @@ struct ArenaConstructionSimulationConfig {
   std::vector<ArenaEntity> initial_structures;
   std::vector<ArenaPlayer> initial_players;
   std::array<std::uint32_t, 4> event_exclusion_masks{};
+  bool production_enabled = false;
+  std::array<ArenaUnitProductionQuota, 4> unit_quotas{};
 };
 bool native_map_structure_importable(const ArenaEntity &);
 enum class ArenaConstructionSubmit {
@@ -47,6 +50,7 @@ struct ArenaConstructionTick {
   ArenaConstructionSimulationStep construction;
   std::vector<std::uint16_t> ready_entities;
   std::vector<std::uint16_t> factory_selections;
+  std::vector<std::uint16_t> production_reservations;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;
@@ -69,6 +73,7 @@ public:
                                        std::uint8_t selector);
   ArenaTimedSubmit enqueue_event(std::size_t, ArenaEvent);
   ArenaConstructionTick advance(float);
+  const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }
   const auto &grid() const { return grid_; }

@@ -79,7 +79,8 @@ lets due selector-4..8 events select factories, with original ownership masks,
 ordered lookup and missing-target retries. No invented stage transition is
 needed. See [native-target-lookup.md](native-target-lookup.md) for validation.
 
-The next bounded recovery target is the factory timer, unit allocation and unit
-initialization. Production-mode selection alone receives no extra completion
-credit: the rough playable-mission estimate remains 30% until the unit loop
-executes.
+The factory timer and pending-unit capacity reservations are now implemented;
+see [native-factory-production.md](native-factory-production.md). The next
+bounded recovery target is consuming these orders through original live-unit
+allocation and initialization. Production-mode selection by itself received no
+additional completion credit.

@@ -115,6 +115,15 @@ int main(int argc, char **argv) {
         if (result != ArenaFactorySelection::Changed &&
             result != ArenaFactorySelection::Unchanged)
           throw std::runtime_error("factory selection failed");
+      } else if (w[0] == "expect-unit" && w.size() == 4) {
+        const auto owner = number<unsigned>(w[1]),
+                   kind = number<unsigned>(w[2]),
+                   expected = number<unsigned>(w[3]);
+        if (owner >= state().accounts().size() || kind < 40 || kind > 48)
+          throw std::invalid_argument("invalid unit expectation");
+        if (state().unit_quotas()[owner].by_type[kind - 40] != expected)
+          throw std::runtime_error("unit reservation expectation failed");
+        std::cout << "expect-unit passed\n";
       } else if (w[0] == "expect-mode" && w.size() == 3) {
         const auto index = number<unsigned>(w[1]);
         const auto mode = number<unsigned>(w[2]);
@@ -154,6 +163,8 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for (auto index : tick.production_reservations)
+          std::cout << "unit-production reserved factory=" << index << '\n';
         for (auto index : tick.factory_selections)
           std::cout << "factory selected entity=" << index << '\n';
         for (auto index : tick.ready_entities)
@@ -172,7 +183,12 @@ int main(int argc, char **argv) {
           actual = state().pending();
         else if (w[1] == "display" && scene)
           actual = scene->arena().entities.size();
-        else if (w[1].starts_with("events")) {
+        else if (w[1].starts_with("unit-pending")) {
+          const auto owner = number<unsigned>(w[1].substr(12));
+          if (owner >= state().accounts().size())
+            throw std::invalid_argument("invalid unit expectation player");
+          actual = state().unit_quotas()[owner].pending;
+        } else if (w[1].starts_with("events")) {
           auto owner = number<unsigned>(w[1].substr(6));
           if (owner >= state().players().size())
             throw std::invalid_argument("invalid expectation player");

@@ -28,7 +28,8 @@ float finite(const std::string &s) {
 ArenaConstructionSimulationConfig
 read_arena_construction_config(std::istream &in, std::size_t &line) {
   ArenaConstructionSimulationConfig c;
-  bool world = false;
+  bool world = false, production_seen = false;
+  std::array<bool, 4> quota_seen{};
   std::string text;
   while (std::getline(in, text)) {
     ++line;
@@ -62,6 +63,23 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
       if (a.resource < 0 || a.resource > a.resource_max)
         throw std::invalid_argument("invalid balance");
       c.players.push_back(a);
+    } else if (w[0] == "production" && w.size() == 2 && world) {
+      if (production_seen)
+        throw std::invalid_argument("duplicate production flag");
+      production_seen = true;
+      c.production_enabled = bounded(w[1], 1);
+    } else if (w[0] == "unit-quota" && w.size() == 4 && world) {
+      const auto owner = bounded(w[1], 3);
+      if (owner >= c.players.size())
+        throw std::invalid_argument("quota player missing");
+      if (quota_seen[owner])
+        throw std::invalid_argument("duplicate production quota");
+      quota_seen[owner] = true;
+      c.unit_quotas[owner].active = bounded(w[2], 32767);
+      c.unit_quotas[owner].capacity = bounded(w[3], 65535);
+      if (static_cast<std::uint32_t>(c.unit_quotas[owner].active) >
+          c.unit_quotas[owner].capacity)
+        throw std::invalid_argument("invalid production quota");
     } else if (w[0] == "tuning" && w.size() == 7 && world) {
       auto op = bounded(w[1], 31);
       if (!arena_structure_initial_level(op) || c.tuning[op])

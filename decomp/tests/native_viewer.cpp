@@ -16,7 +16,7 @@ int main() {
     m.model.indices={0,1,2};NativeSubmesh mesh;mesh.range={0,3,0,2};mesh.material.properties.diffuse={0.9f,0.3f,0.1f,0};m.model.submeshes={mesh};m.model.bounds_min={-1,-1,0};m.model.bounds_max={1,1,0};
     // A green texture over a red material proves the graphics path samples DDS.
     auto texture=config.screenshot;texture.replace_extension(".dds");
-    std::array<unsigned char,132> dds{};auto put=[&](int offset,unsigned value){for(int i=0;i<4;++i)dds[offset+i]=value>>(i*8);};
+    std::array<unsigned char,132> dds{};auto put=[&](int offset,unsigned value){for(int i=0;i<5;++i)dds[offset+i]=value>>(i*8);};
     put(0,0x20534444);put(4,124);put(12,1);put(16,1);put(76,32);put(80,0x41);put(88,32);put(92,0xff);put(96,0xff00);put(100,0xff0000);put(104,0xff000000);dds[129]=255;dds[131]=255;
     {std::ofstream out(texture,std::ios::binary);out.write(reinterpret_cast<char*>(dds.data()),dds.size());}
     m.model.submeshes[0].material.diffuse_texture=texture;
@@ -35,7 +35,7 @@ int main() {
     if(!scene)throw std::runtime_error(scene.detail);
     const auto missing=run_native_viewer({m},config);
     if(missing||missing.detail.find("slot missing: 37")==std::string::npos)throw std::runtime_error("missing arena model was not rejected");
-    ArenaConstructionSimulationConfig construction;construction.capacity=4;construction.players={{{{0,0},0,false},400,400}};construction.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};
+    ArenaConstructionSimulationConfig construction;construction.production_enabled=true;construction.unit_quotas[0].capacity=2;construction.capacity=4;construction.players={{{{0,0},0,false},400,400}};construction.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};
     ArenaState editable;editable.extent=4;editable.players.resize(1);editable.players[0].start_grid=ArenaGridPosition{0,0};editable.background_position={2,0,2};
     NativeConstructionScene editable_scene(editable,construction);auto structure=m;structure.spec.original_slot_index=*initial_model_slot_for_record(26);
     config.arena=nullptr;config.construction=&editable_scene;config.frame_limit=0;config.screenshot.clear();
@@ -43,8 +43,9 @@ int main() {
     std::thread controls([&]{
         while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
         SDL_Delay(100);SDL_Event key{};key.type=SDL_KEYDOWN;key.key.keysym.sym=SDLK_7;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_b;SDL_PushEvent(&key);
-        for(int i=0;i<2;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
+        for(int i=0;i<5;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
         SDL_Delay(100);key.key.keysym.sym=SDLK_F9;SDL_PushEvent(&key);
+        SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);
         SDL_Delay(100);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
     });
     auto built=run_native_viewer({structure,background},config);finished.store(true);controls.join();
@@ -52,6 +53,7 @@ int main() {
     if(editable_scene.arena().entities.size()!=1||editable_scene.simulation().accounts()[0].resource!=340)throw std::runtime_error("keyboard construction did not commit");
     if(!editable_scene.arena().entities[0].construction_ready)throw std::runtime_error("keyboard ticks did not finish construction");
     if(editable_scene.arena().entities[0].production_mode!=4)throw std::runtime_error("keyboard factory selection did not commit");
+    if(editable_scene.simulation().unit_quotas()[0].pending!=1||editable_scene.arena().entities[0].production_period!=20.0f||editable_scene.arena().entities[0].production_elapsed!=1.0f)throw std::runtime_error("keyboard production did not reserve or refresh: clock="+std::to_string(editable_scene.simulation().clock())+" pending="+std::to_string(editable_scene.simulation().unit_quotas()[0].pending)+" period="+std::to_string(*editable_scene.arena().entities[0].production_period)+" elapsed="+std::to_string(*editable_scene.arena().entities[0].production_elapsed));
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }
