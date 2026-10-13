@@ -22,6 +22,7 @@ add_library(comet_native_recovery STATIC
     src/arena_player_statistics.cpp
     src/arena_unit_spawn.cpp
     src/arena_ground_transport.cpp
+    src/arena_ground_steering.cpp
     src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
@@ -239,4 +240,15 @@ if(MSVC)
     target_compile_options(comet_arena_unit_spawn_tests PRIVATE /UNDEBUG)
 else()
     target_compile_options(comet_arena_unit_spawn_tests PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_ground_steering_tests tests/arena_ground_steering.cpp)
+target_link_libraries(comet_arena_ground_steering_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_ground_steering_tests COMMAND comet_arena_ground_steering_tests)
+if(MSVC)
+  target_compile_options(comet_arena_ground_steering_tests PRIVATE /UNDEBUG)
+  set_source_files_properties(src/arena_ground_steering.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+  target_compile_options(comet_arena_ground_steering_tests PRIVATE -UNDEBUG)
+  set_source_files_properties(src/arena_ground_steering.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

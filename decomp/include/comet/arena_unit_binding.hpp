@@ -16,6 +16,9 @@ ArenaGroundUnitBinding
 bind_arena_ground_unit_template(std::span<std::uint8_t, 256>,
                                 std::span<const ArenaUnitTargetPlayer>,
                                 const ArenaRoutingGrid &, ArenaRandom &);
+// Exact original fixed direction/heading rows, shared by live steering.
+std::optional<std::array<float,3>> arena_ground_route_vector(std::uint8_t);
+std::optional<std::array<float,4>> arena_ground_route_heading(std::uint8_t);
 struct ArenaGroundUnitTemplate {
   ArenaEntitySlot slot{};
   ArenaGroundUnitBinding binding = ArenaGroundUnitBinding::Unsupported;

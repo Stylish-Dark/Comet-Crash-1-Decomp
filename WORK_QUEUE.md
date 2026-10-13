@@ -1,10 +1,10 @@
 # Active gameplay continuation
 
-- FDE54 grid transaction and funded completion boundary are recovered. Recover entity allocation/cell insertion at CA514, remaining constructors, insufficient-funds notifications and completion retries.
-- Recover per-player resource initialization and exclusion-mask state; wire event resolver to ordered native cell lists.
-- Recover unit movement, pathfinding, combat, barracks production and win/loss progression.
-- Recover composite base/weapon parts and original HUD/input/camera.
-- Arena preview, event boundaries and construction eligibility are implemented; none establishes a playable game.
+- Recover surrounding ground physics at `14060`/`158B8`: acceleration, damping, collision, crowds, height and target transitions. Original route steering and native bank/cell migration are integrated.
+- Recover automatic producer placement and aircraft binding; explicit ground deployment and factory reservations already work.
+- Recover weapons/damage, enemy behavior and mission win/loss/restart.
+- Recover authentic income/balance, composite base/weapon parts and gameplay HUD/input/audio.
+- Construction and live movement are usable development controls; no complete playable mission yet.
 
 # WORK QUEUE
 
@@ -132,3 +132,18 @@ and both-bank consistency; scene refresh; replay and M/T/P controls.
 [ ] Recover complete original 14060/13998 steering and 158B8 auxiliary unit update;
 native transport does not claim their behavior. Combat/base damage and mission
 progression remain the next playability blockers. See native-ground-transport.md.
+
+## 2026-10-13 — original ground steering and base arrival
+
+Recovered complete SPU leaf `13998..1405C` and integrated it with opt-in live
+ground transport. Private execution of untouched original instructions matches
+5,000 randomized complete direction/blocked outputs; eight numeric references
+and branch checks are public. The replay verifies movement, pause, base arrival
+near (10.5,10.5), both-bank membership and unchanged resources/allocations.
+Team visibility defaults were corrected after independent review.
+
+Validation: 28 native/CLI/graphics CTests, 233 Python regressions and focused
+ASan/UBSan steering/transport checks pass. Original instructions/assets remain
+private. Capability estimate: 46%, up from 43%, toward a playable single-player
+mission. Full dynamics/collision, automatic placement, aircraft, combat/AI, HUD
+and mission rules remain. See docs/decomp/native-ground-steering.md.

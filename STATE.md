@@ -6,7 +6,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current phase
 
-**Native source recovery now includes an initial-state arena renderer. All 29 built-in maps construct native terrain/structure state. Themed environment slots 34/37/38, player starts, event heaps, shuffled RNG, pending-command/retry boundaries and construction validation are recovered. Original maps from all four environment themes render with original assets. This remains an arena preview: construction commits, movement, combat, HUD and progression are not wired into a playable loop.**
+**Native source recovery includes all 29 map initial states, original assets, construction commits/readiness, factory reservations, explicit live ground deployment and opt-in movement with recovered original route steering and base centering. The native scene projects moving units. Combat, full unit physics, automatic deployment, HUD and mission progression remain incomplete.**
 
 ## Exact-title baseline retained
 
@@ -38,7 +38,7 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current target
 
-**Arena render-target setup and the arena model bootstrap are now represented as native data. Current work advances into the model-object initializer at `0x00105308` to type the recovered 0x90-byte model slots.**
+**Next gameplay target: recover the surrounding ground dynamics at `14060`/`158B8`, then weapon/base interaction. Route steering is recovered; acceleration, damping, collision and auxiliary behavior remain. Model initializer details below are an outstanding rendering track.**
 
 Recovered from `arenaGraphics.cpp`:
 
@@ -184,3 +184,18 @@ acceleration, collision, crowds or auxiliary unit state. The recovered original
 43% toward a playable single-player mission, up from 41%. No combat/mission credit.
 Next original recovery boundary is 14060/13998 route steering and 158B8 unit
 auxiliary-state update, followed by weapons/base interaction and mission rules.
+
+## 2026-10-13 — original ground steering and base arrival
+
+Recovered complete SPU leaf `13998..1405C` and integrated it with opt-in live
+ground transport. Private execution of untouched original instructions matches
+5,000 randomized complete direction/blocked outputs; eight numeric references
+and branch checks are public. The replay verifies movement, pause, base arrival
+near (10.5,10.5), both-bank membership and unchanged resources/allocations.
+Team visibility defaults were corrected after independent review.
+
+Validation: 28 native/CLI/graphics CTests, 233 Python regressions and focused
+ASan/UBSan steering/transport checks pass. Original instructions/assets remain
+private. Capability estimate: 46%, up from 43%, toward a playable single-player
+mission. Full dynamics/collision, automatic placement, aircraft, combat/AI, HUD
+and mission rules remain. See docs/decomp/native-ground-steering.md.

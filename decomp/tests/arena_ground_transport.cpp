@@ -105,6 +105,31 @@ int main() {
       if(i>=12 && !(i>=0x20&&i<0x30) && !(i>=0x40&&i<0x50) && i!=0x7e && !(i>=0xc8&&i<0xcc))
         assert(s[i]==before[i]);
   }
+  {
+    Fixture f;const std::array<ArenaGridPosition,2> bases{{{0,0},{3,3}}};
+    const std::array<std::uint8_t,2> bits{0,1};
+    for(auto &s:f.storage.banks){put(s[0],0,std::bit_cast<unsigned>(2.9f));put(s[0],8,std::bit_cast<unsigned>(3.2f));}
+    auto result=transport_arena_ground_unit(f.storage,0,.25f,f.players,f.grid,f.random,bases,bits);
+    assert(result==ArenaGroundTransport::Moved);
+    assert(f.storage.banks[0][0][0xc9]==3 && f.storage.banks[0][0][0xcb]==3);
+    const auto before=scalar(f.storage.banks[0][0],8);
+    result=transport_arena_ground_unit(f.storage,0,.25f,f.players,f.grid,f.random,bases,bits);
+    assert(result==ArenaGroundTransport::Moved && scalar(f.storage.banks[0][0],8)>before);
+  }
+  {
+    Fixture implicit;implicit.players[0].team=2;
+    for(auto &c:implicit.grid.cells)c.routes.fill(0);
+    for(auto &b:implicit.storage.banks){put(b[0],0,std::bit_cast<unsigned>(2.9f));put(b[0],8,std::bit_cast<unsigned>(3.2f));}
+    implicit.grid.cells[3*24+3].routes[0]=12;
+    implicit.grid.cells[3*24+3].visibility=4;
+    auto explicit_bits=implicit;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    const std::array<std::uint8_t,2> bits{2,1};
+    assert(transport_arena_ground_unit(implicit.storage,0,.25f,implicit.players,implicit.grid,implicit.random,bases)==ArenaGroundTransport::Moved);
+    assert(transport_arena_ground_unit(explicit_bits.storage,0,.25f,explicit_bits.players,explicit_bits.grid,explicit_bits.random,bases,bits)==ArenaGroundTransport::Moved);
+    assert(implicit.storage.banks==explicit_bits.storage.banks);
+    assert(implicit.storage.cells==explicit_bits.storage.cells);
+  }
   Fixture blocked; for(auto &c:blocked.grid.cells)c.routes.fill(1);
   const auto bank=blocked.storage.banks;
   const auto lists=blocked.storage.cells;
