@@ -33,11 +33,15 @@ bool matches(const ArenaPackedCellEntry &e,std::uint16_t index) {
 ArenaGroundTransport transport_arena_ground_unit(
     ArenaEntityStorage &storage, std::uint16_t index, float elapsed,
     std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
-    ArenaRandom &random) {
+    ArenaRandom &random, std::span<const ArenaGridPosition> bases,
+    std::span<const std::uint8_t> visibility_bits) {
   if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
      storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
      index>=storage.banks[0].size()||index>=storage.banks[1].size() ||
      players.empty()||players.size()>4) return ArenaGroundTransport::Invalid;
+  if((!bases.empty() && bases.size()!=players.size()) ||
+     (!visibility_bits.empty() && (visibility_bits.size()!=players.size() || bases.empty())))
+    return ArenaGroundTransport::Invalid;
   auto slot=storage.banks[storage.read_bank][index];
   const unsigned kind=slot[15],owner=slot[0x33]>>5;
   if(owner>=players.size() || !(kind==40||kind==41||(kind>=43&&kind<=47)) ||
@@ -72,12 +76,36 @@ ArenaGroundTransport transport_arena_ground_unit(
   const auto binding=bind_arena_ground_unit_template(slot,
     std::span(target_players.data(),players.size()),grid,next_random);
   if(binding==ArenaGroundUnitBinding::NoTarget)return ArenaGroundTransport::NoTarget;
-  if(binding==ArenaGroundUnitBinding::Blocked)return ArenaGroundTransport::Blocked;
-  if(binding!=ArenaGroundUnitBinding::Bound)return ArenaGroundTransport::Invalid;
+  if(binding!=ArenaGroundUnitBinding::Bound && binding!=ArenaGroundUnitBinding::Blocked)
+    return ArenaGroundTransport::Invalid;
   Rounding rounding;
+  if(!bases.empty()) {
+    ArenaGroundSteeringQuery query;
+    for(unsigned axis=0;axis<4;++axis) {
+      query.position[axis]=scalar(slot,4*axis);
+      query.orientation[axis]=scalar(storage.banks[storage.read_bank][index],0x20+4*axis);
+    }
+    query.owner=static_cast<std::uint8_t>(owner);query.target=slot[0x7e];
+    query.extent=static_cast<std::uint8_t>(storage.width);
+    if(storage.width!=storage.height)return ArenaGroundTransport::Invalid;
+    query.target_available=players[query.target].base_available;
+    query.target_base=bases[query.target];
+    query.visibility_bit=visibility_bits.empty()?players[owner].team:visibility_bits[owner];
+    const auto steering=steer_arena_ground_unit(query,grid);
+    if(!steering)return ArenaGroundTransport::Invalid;
+    if(steering->blocked)return ArenaGroundTransport::Blocked;
+    for(unsigned axis=0;axis<4;++axis) {
+      volatile float velocity=(axis==0 || axis==2)?steering->direction[axis]*speed:0.f;
+      put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(float(velocity)));
+    }
+    auto heading=steering->route_direction?arena_ground_route_heading(*steering->route_direction):
+        std::optional<std::array<float,4>>(query.orientation);
+    for(unsigned axis=0;axis<4;++axis)
+      put(slot,0x20+4*axis,std::bit_cast<std::uint32_t>((*heading)[axis]));
+  } else if(binding==ArenaGroundUnitBinding::Blocked)return ArenaGroundTransport::Blocked;
   // The original 141BC..141EC position update uses fused velocity*delta+position.
   // Keeping altitude fixed and applying that update only to x/z is the explicit
-  // native transport policy; original steering/acceleration/collision is absent.
+  // native transport policy; full acceleration/collision/auxiliary physics remains absent.
   for(unsigned axis:{0u,2u}) {
     const float value=std::fma(scalar(slot,0x40+4*axis),elapsed,scalar(slot,4*axis));
     if(!std::isfinite(value))return ArenaGroundTransport::Invalid;

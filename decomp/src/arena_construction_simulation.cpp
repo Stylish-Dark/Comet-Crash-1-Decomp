@@ -291,10 +291,15 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       transported.banks[1] = std::move(next);
       auto next_random = random_;
       std::array<ArenaUnitTargetPlayer, 4> targets{};
-      for (unsigned p = 0; p < players_.size(); ++p)
+      std::array<ArenaGridPosition,4> bases{};
+      std::array<std::uint8_t,4> visibility_bits{};
+      for (unsigned p = 0; p < players_.size(); ++p) {
         targets[p] = {static_cast<std::uint8_t>(routes_[p].team),
                       config_.unit_base_available[p],
                       config_.unit_target_overrides[p]};
+        bases[p]=routes_[p].base;
+        visibility_bits[p]=static_cast<std::uint8_t>(routes_[p].team);
+      }
       for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
         const auto &unit = transported.banks[0][i];
         if (!(unit[15] == 40 || unit[15] == 41 ||
@@ -312,7 +317,9 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         for (unsigned n = 0; n < count; ++n) {
           const auto result = transport_arena_ground_unit(
               transported, static_cast<std::uint16_t>(i), delta,
-              std::span(targets.data(), players_.size()), grid_, next_random);
+              std::span(targets.data(), players_.size()), grid_, next_random,
+              std::span(bases.data(),players_.size()),
+              std::span(visibility_bits.data(),players_.size()));
           if (result != ArenaGroundTransport::Moved) break;
           moved = true;
         }

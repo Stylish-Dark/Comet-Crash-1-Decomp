@@ -89,3 +89,10 @@ for command in ("transport 2\n", "advance 20\n", "expect-unit-cell 65535 0 0\n")
     assert result.returncode != 0 and "line " in result.stderr
 for setting in ("transport 2\n", "transport 1\ntransport 1\n"):
     assert run(config.replace("run\n", setting + "run\n")).returncode != 0
+
+steering_scenario = Path(__file__).resolve().parent.parent / "examples/ground-steering.scenario"
+result = run(steering_scenario.read_text())
+assert result.returncode == 0, (result.stdout, result.stderr)
+
+for command in ("expect-unit-near 1 0 0 0.01\n", "expect-unit-near 1 nan 0 1\n", "expect-unit-near 1 10.5 10.5 -1\n", "expect-unit-near 65535 0 0 1\n"):
+    assert run(steering_scenario.read_text()+command).returncode != 0

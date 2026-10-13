@@ -1,5 +1,10 @@
 # Native ground transport preview
 
+Current continuation: [original ground steering](native-ground-steering.md)
+replaces the route-vector policy when target bases are supplied, adds base
+centering and raises the capability estimate to 46%. The evidence and 43%
+checkpoint below describe the preceding transport milestone.
+
 Continues `f5a8538`. Previously deployed ground units remained stationary.
 The native world can now advance seven ground kinds (40, 41, 43–47), migrate
 records between cells and render their updated positions and headings.

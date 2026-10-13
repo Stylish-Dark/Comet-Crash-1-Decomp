@@ -45,6 +45,18 @@ struct Rounding {
   ~Rounding() { std::fesetround(previous); }
 };
 } // namespace
+std::optional<std::array<float,3>> arena_ground_route_vector(std::uint8_t direction) {
+  if(direction>=directions.size())return {};
+  std::array<float,3> result{};
+  for(unsigned i=0;i<3;++i)result[i]=std::bit_cast<float>(directions[direction][i]);
+  return result;
+}
+std::optional<std::array<float,4>> arena_ground_route_heading(std::uint8_t direction) {
+  if(direction>=headings.size())return {};
+  std::array<float,4> result{};
+  for(unsigned i=0;i<4;++i)result[i]=std::bit_cast<float>(headings[direction][i]);
+  return result;
+}
 ArenaGroundUnitBinding
 bind_arena_ground_unit_template(std::span<std::uint8_t, 256> slot,
                                 std::span<const ArenaUnitTargetPlayer> players,

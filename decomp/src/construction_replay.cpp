@@ -2,6 +2,7 @@
 #include "comet/native_construction_scene.hpp"
 #include "comet/native_session.hpp"
 #include <charconv>
+#include <bit>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -126,6 +127,20 @@ int main(int argc, char **argv) {
         if (scene) scene->set_ground_transport(flag != 0);
         else simulation->set_ground_transport(flag != 0);
         std::cout << "transport " << flag << '\n';
+      } else if (w[0] == "expect-unit-near" && w.size() == 5) {
+        const auto index=number<unsigned>(w[1]);
+        const float x=number<float>(w[2]),z=number<float>(w[3]),tolerance=number<float>(w[4]);
+        const auto &storage=state().storage();
+        if(index>=storage.banks[storage.read_bank].size() || !std::isfinite(x) ||
+           !std::isfinite(z) || !std::isfinite(tolerance) || tolerance<0)
+          throw std::invalid_argument("invalid unit position expectation");
+        const auto &slot=storage.banks[storage.read_bank][index];
+        auto scalar=[&](unsigned off){unsigned word=0;for(unsigned i=0;i<4;++i)word=(word<<8)|slot[off+i];return std::bit_cast<float>(word);};
+        const float actual_x=scalar(0),actual_z=scalar(8);
+        if(slot[15]<40 || slot[15]>48 || !std::isfinite(actual_x) || !std::isfinite(actual_z) ||
+           std::abs(actual_x-x)>tolerance || std::abs(actual_z-z)>tolerance)
+          throw std::runtime_error("unit position expectation failed");
+        std::cout << "expect-unit-near passed x=" << actual_x << " z=" << actual_z << '\n';
       } else if (w[0] == "expect-unit-cell" && w.size() == 4) {
         const auto index = number<unsigned>(w[1]), x = number<unsigned>(w[2]), z = number<unsigned>(w[3]);
         const auto &storage = state().storage();

@@ -170,7 +170,7 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 43% toward a playable single-player mission**, using the
+**Rough estimate: 46% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
@@ -178,24 +178,26 @@ construction progression/readiness contributes 5, and verified factory timing
 and quota reservations contribute 3; unit initializer/claim primitives add 2.
 Ground constructor binding/heading adds 2; verified statistics registration and
 its quota bridge add 1. Live ground allocation, failure accounting, owned-world
-integration and visible deployment add 3. Live units remain stationary.
+integration and visible deployment add 3. Native transport and cell migration add 2;
+verified original steering and live base arrival add 3.
 
 | Capability | Weight | Earned | Remaining |
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 13 | Original producer placement, aircraft binding, full steering/collision and target transitions |
+| Unit production, movement and targeting | 20 | 16 | Original producer placement, aircraft binding, full dynamics/collision and target transitions |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
-| **Total** | **100** | **41** | |
+| **Total** | **100** | **46** | |
 
 Factory production selection is now implemented; see
 [native-factory-controls.md](native-factory-controls.md). Next: recover the
 original live ground-unit update path in this same simulation, including
-route following, cell migration and target updates. Producer placement remains
+acceleration, damping, collision and target transitions. Original route steering
+and native cell migration are integrated; see [native-ground-steering.md](native-ground-steering.md). Producer placement remains
 unrecovered. Remaining
-event selectors and higher map upgrades also need recovery. Windows builds/graphics remain unvalidated. Synthetic example tuning
+event selectors and higher map upgrades also need recovery. Local offscreen graphics pass; Windows runtime execution remains unvalidated. Synthetic example tuning
 is explicit test configuration, not recovered title balance.
 
 Factory timing/reservation validation and the level-0 production scenario are

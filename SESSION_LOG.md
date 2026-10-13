@@ -573,3 +573,18 @@ regression exercises M/T and live projection. Windows execution awaits CI.
 Capability estimate 43%, up from 41%, for transport/migration and its visible
 integration only. Full original steering/collision/auxiliary state, automatic
 producer placement, aircraft, combat/AI, HUD and mission rules remain open.
+
+## 2026-10-13 — original ground steering and base arrival
+
+Recovered complete SPU leaf `13998..1405C` and integrated it with opt-in live
+ground transport. Private execution of untouched original instructions matches
+5,000 randomized complete direction/blocked outputs; eight numeric references
+and branch checks are public. The replay verifies movement, pause, base arrival
+near (10.5,10.5), both-bank membership and unchanged resources/allocations.
+Team visibility defaults were corrected after independent review.
+
+Validation: 28 native/CLI/graphics CTests, 233 Python regressions and focused
+ASan/UBSan steering/transport checks pass. Original instructions/assets remain
+private. Capability estimate: 46%, up from 43%, toward a playable single-player
+mission. Full dynamics/collision, automatic placement, aircraft, combat/AI, HUD
+and mission rules remain. See docs/decomp/native-ground-steering.md.
