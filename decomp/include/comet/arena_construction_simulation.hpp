@@ -26,6 +26,7 @@ struct ArenaConstructionSimulationConfig {
   std::array<std::uint8_t, 4> unit_target_overrides{255, 255, 255, 255};
   bool production_enabled = false;
   bool ground_transport_enabled = false;
+  bool ground_dynamics_enabled = false;
   std::uint8_t native_extent = 24;
   std::array<ArenaUnitProductionQuota, 4> unit_quotas{};
 };
@@ -104,5 +105,7 @@ public:
   float clock() const { return clock_; }
   void set_ground_transport(bool enabled) { config_.ground_transport_enabled = enabled; }
   bool ground_transport_enabled() const { return config_.ground_transport_enabled; }
+  void set_ground_dynamics(bool enabled) { config_.ground_dynamics_enabled = enabled; }
+  bool ground_dynamics_enabled() const { return config_.ground_dynamics_enabled; }
 };
 } // namespace comet::decomp

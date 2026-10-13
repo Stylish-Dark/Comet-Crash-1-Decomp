@@ -7,5 +7,6 @@ ArenaGroundTransport transport_arena_ground_unit(
     ArenaEntityStorage &, std::uint16_t index, float elapsed,
     std::span<const ArenaUnitTargetPlayer>, const ArenaRoutingGrid &,
     ArenaRandom &, std::span<const ArenaGridPosition> target_bases = {},
-    std::span<const std::uint8_t> visibility_bits = {});
+    std::span<const std::uint8_t> visibility_bits = {},
+    bool original_velocity_dynamics = false);
 } // namespace comet::decomp

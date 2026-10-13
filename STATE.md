@@ -199,3 +199,25 @@ ASan/UBSan steering/transport checks pass. Original instructions/assets remain
 private. Capability estimate: 46%, up from 43%, toward a playable single-player
 mission. Full dynamics/collision, automatic placement, aircraft, combat/AI, HUD
 and mission rules remain. See docs/decomp/native-ground-steering.md.
+
+
+## 2026-10-14 — original ground velocity dynamics
+
+Continued `e959110` from the latest work branch (main remains behind).
+Recovered steering acceleration/drag/external-force gating at 15998..159DC and
+FMA velocity integration/horizontal cap at 15C38..15C80/162B0..162FC. Entity +80
+is steering acceleration; +84 is horizontal speed limit. Untouched original
+instruction comparisons match 10,000 randomized queries / 90,000 float lanes.
+
+Selectable dynamics is wired through simulation/config/replay and viewer N.
+The adapter retains live velocity and advances position before computing next
+velocity; both-bank migration/accounting remain transactional. Caller collision,
+crowds, fixed-altitude policy, immediate orientation and special unit/base state
+are not claimed recovered. See docs/decomp/native-ground-dynamics.md.
+
+Validation: 29 native/CLI/graphics CTests, 233 Python regressions, focused
+ASan/UBSan checks (host leak inspection unavailable), and actual-level-0
+movement/rendering pass. Independent review found no blocking issues.
+Estimate: 48% toward a playable single-player mission (previous 46%).
+Next: original 7E40 collision/crowd preparation and remaining 158B8 base/height/
+special-kind state, then weapons/damage/mission rules. No combat credit.

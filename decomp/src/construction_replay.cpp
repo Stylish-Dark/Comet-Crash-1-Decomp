@@ -121,6 +121,12 @@ int main(int argc, char **argv) {
         std::cout << '\n';
         if (result.status == ArenaUnitSpawnStatus::Invalid)
           throw std::invalid_argument("unsupported spawn request");
+      } else if (w[0] == "dynamics" && w.size() == 2) {
+        const auto flag = number<unsigned>(w[1]);
+        if (flag > 1) throw std::invalid_argument("invalid dynamics flag");
+        if (scene) scene->set_ground_dynamics(flag != 0);
+        else simulation->set_ground_dynamics(flag != 0);
+        std::cout << "dynamics " << flag << '\n';
       } else if (w[0] == "transport" && w.size() == 2) {
         const auto flag = number<unsigned>(w[1]);
         if (flag > 1) throw std::invalid_argument("invalid transport flag");

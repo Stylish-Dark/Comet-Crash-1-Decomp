@@ -319,7 +319,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               transported, static_cast<std::uint16_t>(i), delta,
               std::span(targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
-              std::span(visibility_bits.data(),players_.size()));
+              std::span(visibility_bits.data(),players_.size()),
+              config_.ground_dynamics_enabled);
           if (result != ArenaGroundTransport::Moved) break;
           moved = true;
         }

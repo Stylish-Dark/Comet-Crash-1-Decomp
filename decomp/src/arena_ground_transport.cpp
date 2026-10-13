@@ -1,4 +1,5 @@
 #include "comet/arena_ground_transport.hpp"
+#include "comet/arena_ground_dynamics.hpp"
 #include <algorithm>
 #include <bit>
 #include <cfenv>
@@ -34,7 +35,7 @@ ArenaGroundTransport transport_arena_ground_unit(
     ArenaEntityStorage &storage, std::uint16_t index, float elapsed,
     std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
     ArenaRandom &random, std::span<const ArenaGridPosition> bases,
-    std::span<const std::uint8_t> visibility_bits) {
+    std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics) {
   if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
      storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
      index>=storage.banks[0].size()||index>=storage.banks[1].size() ||
@@ -79,6 +80,22 @@ ArenaGroundTransport transport_arena_ground_unit(
   if(binding!=ArenaGroundUnitBinding::Bound && binding!=ArenaGroundUnitBinding::Blocked)
     return ArenaGroundTransport::Invalid;
   Rounding rounding;
+  if(original_velocity_dynamics) {
+    if(bases.empty())return ArenaGroundTransport::Invalid;
+    // Binding selects target but must not replace accumulated live velocity.
+    for(unsigned axis=0;axis<4;++axis) {
+      const float previous=scalar(storage.banks[storage.read_bank][index],0x40+4*axis);
+      if(!std::isfinite(previous))return ArenaGroundTransport::Invalid;
+      put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(previous));
+    }
+    // Original 14060 prepares position BEFORE 158B8 updates velocity.
+    for(unsigned axis:{0u,2u}) {
+      const float value=std::fma(scalar(slot,0x40+4*axis),elapsed,scalar(slot,4*axis));
+      if(!std::isfinite(value))return ArenaGroundTransport::Invalid;
+      const float limit=std::nextafter(float(axis==0?storage.width:storage.height),0.f);
+      put(slot,4*axis,std::bit_cast<std::uint32_t>(std::clamp(value,0.f,limit)));
+    }
+  }
   if(!bases.empty()) {
     ArenaGroundSteeringQuery query;
     for(unsigned axis=0;axis<4;++axis) {
@@ -94,9 +111,25 @@ ArenaGroundTransport transport_arena_ground_unit(
     const auto steering=steer_arena_ground_unit(query,grid);
     if(!steering)return ArenaGroundTransport::Invalid;
     if(steering->blocked)return ArenaGroundTransport::Blocked;
-    for(unsigned axis=0;axis<4;++axis) {
-      volatile float velocity=(axis==0 || axis==2)?steering->direction[axis]*speed:0.f;
-      put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(float(velocity)));
+    if(original_velocity_dynamics) {
+      ArenaGroundDynamicsQuery dynamics;
+      for(unsigned axis=0;axis<4;++axis)dynamics.velocity[axis]=scalar(slot,0x40+4*axis);
+      dynamics.steering=steering->direction;
+      dynamics.steering_acceleration=scalar(slot,0x80);
+      dynamics.speed_limit=speed;dynamics.elapsed=elapsed;
+      dynamics.kind=static_cast<std::uint8_t>(kind);
+      // 9C98/9D44 derive this context mask from the entity's stage bits.
+      dynamics.context_flags=1u<<((slot[0x33]>>2)&7);
+      // World/crowd acceleration input is intentionally zero in this preview.
+      const auto result=advance_arena_ground_velocity(dynamics);
+      if(!result)return ArenaGroundTransport::Invalid;
+      for(unsigned axis=0;axis<4;++axis)
+        put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(result->velocity[axis]));
+    } else {
+      for(unsigned axis=0;axis<4;++axis) {
+        volatile float velocity=(axis==0 || axis==2)?steering->direction[axis]*speed:0.f;
+        put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(float(velocity)));
+      }
     }
     auto heading=steering->route_direction?arena_ground_route_heading(*steering->route_direction):
         std::optional<std::array<float,4>>(query.orientation);
@@ -105,8 +138,8 @@ ArenaGroundTransport transport_arena_ground_unit(
   } else if(binding==ArenaGroundUnitBinding::Blocked)return ArenaGroundTransport::Blocked;
   // The original 141BC..141EC position update uses fused velocity*delta+position.
   // Keeping altitude fixed and applying that update only to x/z is the explicit
-  // native transport policy; full acceleration/collision/auxiliary physics remains absent.
-  for(unsigned axis:{0u,2u}) {
+  // native transport policy; collision and auxiliary state remain unrecovered.
+  if(!original_velocity_dynamics) for(unsigned axis:{0u,2u}) {
     const float value=std::fma(scalar(slot,0x40+4*axis),elapsed,scalar(slot,4*axis));
     if(!std::isfinite(value))return ArenaGroundTransport::Invalid;
     const float limit=std::nextafter(float(axis==0?storage.width:storage.height),0.f);
