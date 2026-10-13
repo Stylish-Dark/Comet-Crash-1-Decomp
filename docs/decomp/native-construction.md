@@ -170,7 +170,7 @@ arithmetic/threshold vectors, rounding restoration and unsupported-state checks.
 
 ## Remaining playable-port milestones and estimate
 
-**Rough estimate: 41% toward a playable single-player mission**, using the
+**Rough estimate: 43% toward a playable single-player mission**, using the
 weighted capability checklist below. This is a planning estimate, not a
 measured fraction of all original code or a full-release completion claim.
 The prior capability checkpoint scores 25 under this same rubric; verified
@@ -184,7 +184,7 @@ integration and visible deployment add 3. Live units remain stationary.
 | --- | ---: | ---: | --- |
 | Asset decoding, map import and native scene rendering | 15 | 15 | Improve original visual fidelity |
 | Construction and economy | 20 | 15 | Authentic tuning/income, base builds and upgrade transitions |
-| Unit production, movement and targeting | 20 | 11 | Original producer placement, aircraft binding, movement and targeting updates |
+| Unit production, movement and targeting | 20 | 13 | Original producer placement, aircraft binding, full steering/collision and target transitions |
 | Weapons, damage and enemy behavior | 20 | 0 | Combat and AI |
 | Mission rules and win/loss/restart | 15 | 0 | Complete a mission loop |
 | Gameplay UI, audio and distribution | 10 | 0 | Normal controls, feedback, save and release validation |
@@ -212,3 +212,7 @@ recorded in [native-unit-registration.md](native-unit-registration.md).
 
 Live allocation, explicit spawn controls and remaining movement/producer
 boundaries are recorded in [native-live-ground-spawn.md](native-live-ground-spawn.md).
+
+Native ground units now have an opt-in transport preview with route travel and
+both-bank cell migration. See [native-ground-transport.md](native-ground-transport.md)
+for the precise recovered arithmetic and native-policy boundaries.

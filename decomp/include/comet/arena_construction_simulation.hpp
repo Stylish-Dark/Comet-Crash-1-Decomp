@@ -8,6 +8,7 @@
 #include "comet/arena_unit_binding.hpp"
 #include "comet/arena_unit_entity.hpp"
 #include "comet/arena_unit_spawn.hpp"
+#include "comet/arena_ground_transport.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -24,6 +25,8 @@ struct ArenaConstructionSimulationConfig {
   std::array<bool, 4> unit_base_available{};
   std::array<std::uint8_t, 4> unit_target_overrides{255, 255, 255, 255};
   bool production_enabled = false;
+  bool ground_transport_enabled = false;
+  std::uint8_t native_extent = 24;
   std::array<ArenaUnitProductionQuota, 4> unit_quotas{};
 };
 bool native_map_structure_importable(const ArenaEntity &);
@@ -56,6 +59,7 @@ struct ArenaConstructionTick {
   std::vector<std::uint16_t> ready_entities;
   std::vector<std::uint16_t> factory_selections;
   std::vector<std::uint16_t> production_reservations;
+  std::vector<std::uint16_t> transported_units;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;
@@ -98,5 +102,7 @@ public:
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }
   float clock() const { return clock_; }
+  void set_ground_transport(bool enabled) { config_.ground_transport_enabled = enabled; }
+  bool ground_transport_enabled() const { return config_.ground_transport_enabled; }
 };
 } // namespace comet::decomp

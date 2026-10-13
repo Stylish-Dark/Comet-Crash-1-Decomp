@@ -79,3 +79,13 @@ assert result.returncode == 0 and "spawn allocation-failed" in result.stdout, (r
 for command in ("spawn 0 40 24 0\n", "spawn 9 40 1 1\n", "spawn 0 42 1 1\n", "spawn 0 40 -1 1\n", "expect-live-unit 65535 40 255\n"):
     result=run(spawn_config+command)
     assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)
+
+transport_scenario = Path(__file__).resolve().parent.parent / "examples/ground-transport.scenario"
+result = run(transport_scenario.read_text())
+assert result.returncode == 0, (result.stdout, result.stderr)
+assert result.stdout.count("unit-transport entity=1") == 2
+for command in ("transport 2\n", "advance 20\n", "expect-unit-cell 65535 0 0\n"):
+    result = run(transport_scenario.read_text() + "transport 1\n" + command)
+    assert result.returncode != 0 and "line " in result.stderr
+for setting in ("transport 2\n", "transport 1\ntransport 1\n"):
+    assert run(config.replace("run\n", setting + "run\n")).returncode != 0

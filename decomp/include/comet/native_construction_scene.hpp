@@ -19,6 +19,7 @@ public:
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
   ArenaConstructionTick advance(float);
+  void set_ground_transport(bool enabled) { simulation_.set_ground_transport(enabled); }
   ArenaUnitSpawnResult spawn_reserved_ground_unit(std::uint8_t owner,
                                                   std::uint8_t kind,
                                                   ArenaGridPosition);

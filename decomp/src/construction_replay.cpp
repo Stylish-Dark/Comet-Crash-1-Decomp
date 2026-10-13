@@ -120,6 +120,27 @@ int main(int argc, char **argv) {
         std::cout << '\n';
         if (result.status == ArenaUnitSpawnStatus::Invalid)
           throw std::invalid_argument("unsupported spawn request");
+      } else if (w[0] == "transport" && w.size() == 2) {
+        const auto flag = number<unsigned>(w[1]);
+        if (flag > 1) throw std::invalid_argument("invalid transport flag");
+        if (scene) scene->set_ground_transport(flag != 0);
+        else simulation->set_ground_transport(flag != 0);
+        std::cout << "transport " << flag << '\n';
+      } else if (w[0] == "expect-unit-cell" && w.size() == 4) {
+        const auto index = number<unsigned>(w[1]), x = number<unsigned>(w[2]), z = number<unsigned>(w[3]);
+        const auto &storage = state().storage();
+        if (index >= storage.banks[0].size() || x >= storage.width || z >= storage.height)
+          throw std::invalid_argument("invalid unit cell expectation");
+        const auto &slot = storage.banks[storage.read_bank][index];
+        if ((slot[0xc8]*256u+slot[0xc9])!=x || (slot[0xca]*256u+slot[0xcb])!=z || slot[15]<40 || slot[15]>48)
+          throw std::runtime_error("unit cell expectation failed");
+        for (const auto &bank : storage.cells) {
+          unsigned count=0;
+          for (const auto &entry : bank[z*24+x])
+            count += ((unsigned(entry[0])<<8)|entry[1])==index;
+          if (count!=1) throw std::runtime_error("unit cell membership failed");
+        }
+        std::cout << "expect-unit-cell passed\n";
       } else if (w[0] == "expect-live-unit" && w.size() == 4) {
         const auto index = number<unsigned>(w[1]), kind = byte(w[2]),
                    target = byte(w[3]);
@@ -212,6 +233,8 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for (auto index : tick.transported_units)
+          std::cout << "unit-transport entity=" << index << '\n';
         for (auto index : tick.production_reservations)
           std::cout << "unit-production reserved factory=" << index << '\n';
         for (auto index : tick.factory_selections)
