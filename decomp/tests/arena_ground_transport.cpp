@@ -32,6 +32,20 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
 }
 int main() {
   {
+    Fixture f;const auto before=f.storage.banks[0][0];
+    for(auto &c:f.grid.cells)c.routes.fill(2); // turn south from initial east
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true)==ArenaGroundTransport::Moved);
+    const auto &unit=f.storage.banks[0][0];
+    // Recovered order: position advances with previous east velocity, then
+    // south acceleration changes velocity for the following step.
+    assert(scalar(unit,0)>scalar(before,0));
+    assert(scalar(unit,8)==scalar(before,8));
+    assert(scalar(unit,0x40)>1.f && scalar(unit,0x48)>0.f);
+    assert(f.storage.banks[0]==f.storage.banks[1] && f.storage.cells[0]==f.storage.cells[1]);
+  }
+
+  {
     ArenaConstructionSimulationConfig c;c.capacity=2;c.native_extent=8;
     c.players={{{{0,0},0,false},400,400}};
     c.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};
@@ -91,6 +105,25 @@ int main() {
     assert(scene.arena().cells[2*24+2].entity_index==0);
   }
   for(unsigned kind:{40u,41u,43u,44u,45u,46u,47u}) {
+    Fixture f(kind);const auto before=f.storage.banks;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true)==ArenaGroundTransport::Moved);
+    assert(f.storage.banks[0]==f.storage.banks[1]);
+    assert(scalar(f.storage.banks[0][0],0)>scalar(before[0][0],0));
+    const auto moved=f.storage.banks;
+    for(auto &c:f.grid.cells)c.routes.fill(1);
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true)==ArenaGroundTransport::Blocked);
+    assert(f.storage.banks==moved);
+  }
+  {
+    Fixture f;const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    for(auto &b:f.storage.banks)put(b[0],0x80,std::bit_cast<unsigned>(std::numeric_limits<float>::quiet_NaN()));
+    const auto before=f.storage.banks;
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true)==ArenaGroundTransport::Invalid);
+    assert(f.storage.banks==before);
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,{}, {},true)==ArenaGroundTransport::Invalid);
+  }
+  for(unsigned kind:{40u,41u,43u,44u,45u,46u,47u}) {
     Fixture f(kind); const auto before=f.storage.banks[0][0]; auto rng=f.random;
     const float x=scalar(before,0), y=scalar(before,4);
     assert(transport_arena_ground_unit(f.storage,0,.25f,f.players,f.grid,f.random)
@@ -141,6 +174,15 @@ int main() {
   }
   Fixture no_target; no_target.players[1].base_available=false;
   assert(transport_arena_ground_unit(no_target.storage,0,.1f,no_target.players,no_target.grid,no_target.random)==ArenaGroundTransport::NoTarget);
+  {
+    Fixture full;const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    for(auto &b:full.storage.cells)b[3*24+3].resize(126);
+    const auto before=full.storage.banks;const auto cells=full.storage.cells;
+    const auto counts=full.storage.summary_counts;auto rng=full.random;
+    assert(transport_arena_ground_unit(full.storage,0,.1f,full.players,full.grid,full.random,bases,{},true)==ArenaGroundTransport::CellFull);
+    assert(full.storage.banks==before && full.storage.cells==cells && full.storage.summary_counts==counts);
+    assert(full.random.next()==rng.next());
+  }
   Fixture full;
   for(auto &b:full.storage.cells)b[3*24+3].resize(126);
   const auto full_before=full.storage.banks;

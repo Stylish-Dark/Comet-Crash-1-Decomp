@@ -1,0 +1,41 @@
+# Recovered acceleration/drag/horizontal cap; caller collision/altitude remain preview policies.
+# Tuning/resources are synthetic.
+world 8 1
+player 0 0 0 400 400 0
+player 10 10 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 0 0 2
+unit-quota 1 0 0
+run
+queue 0 26 2 2
+step
+advance 2
+advance 4
+spawn 0 40 3 3
+expect-unit-cell 1 3 3
+dynamics 1
+transport 1
+advance 5
+expect-unit-cell 1 4 4
+advance 6
+expect-unit-cell 1 5 5
+transport 0
+advance 7
+expect-unit-cell 1 5 5
+expect-live-unit 1 40 1
+expect allocated 2
+expect unit-active0 1
+expect resource0 340
+
+# Resume with dynamics selected; both-bank movement preserves world accounting.
+transport 1
+advance 8
+expect-unit-cell 1 6 6
+expect allocated 2
+expect unit-active0 1
+expect resource0 340
+# Switch the selectable velocity slice off without reallocating the unit.
+dynamics 0

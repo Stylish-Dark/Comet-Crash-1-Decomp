@@ -96,3 +96,15 @@ assert result.returncode == 0, (result.stdout, result.stderr)
 
 for command in ("expect-unit-near 1 0 0 0.01\n", "expect-unit-near 1 nan 0 1\n", "expect-unit-near 1 10.5 10.5 -1\n", "expect-unit-near 65535 0 0 1\n"):
     assert run(steering_scenario.read_text()+command).returncode != 0
+# Dynamics is independently selectable before/after run; malformed flags fail.
+result = run(production_config.replace('run\n', 'dynamics 1\nrun\n') + 'dynamics 0\ndynamics 1\n')
+assert result.returncode == 0, result.stderr
+assert 'dynamics 1' in result.stdout
+for setting in ('dynamics 2\n','dynamics -1\n','dynamics 1\ndynamics 1\n'):
+    assert run(production_config.replace('run\n', setting+'run\n')).returncode != 0
+assert run(production_config+'dynamics 2\n').returncode != 0
+
+dynamics_scenario = Path(__file__).resolve().parent.parent / "examples/ground-dynamics.scenario"
+result = run(dynamics_scenario.read_text())
+assert result.returncode == 0, (result.stdout,result.stderr)
+assert result.stdout.count("unit-transport entity=1") == 3

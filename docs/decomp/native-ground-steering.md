@@ -68,3 +68,8 @@ Automatic producer placement, aircraft, weapons/damage/enemy behavior, mission
 win/loss, HUD/input feedback, income/balance and audio/save remain incomplete.
 The capability estimate is 46% toward a playable single-player mission, up from
 43%; three points credit verified original steering and live base arrival.
+
+
+Current continuation: [original velocity dynamics](native-ground-dynamics.md)
+adds selectable acceleration, drag and horizontal speed limiting. The 46%
+checkpoint above remains the steering milestone's estimate; current is 48%.

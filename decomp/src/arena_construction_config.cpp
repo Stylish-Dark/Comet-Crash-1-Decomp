@@ -28,7 +28,7 @@ float finite(const std::string &s) {
 ArenaConstructionSimulationConfig
 read_arena_construction_config(std::istream &in, std::size_t &line) {
   ArenaConstructionSimulationConfig c;
-  bool world = false, production_seen = false, transport_seen = false;
+  bool world = false, production_seen = false, transport_seen = false, dynamics_seen = false;
   std::array<bool, 4> quota_seen{}, unit_base_seen{}, unit_target_seen{};
   std::string text;
   while (std::getline(in, text)) {
@@ -63,6 +63,10 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
       if (a.resource < 0 || a.resource > a.resource_max)
         throw std::invalid_argument("invalid balance");
       c.players.push_back(a);
+    } else if (w[0] == "dynamics" && w.size() == 2 && world) {
+      if (dynamics_seen) throw std::invalid_argument("duplicate dynamics flag");
+      dynamics_seen = true;
+      c.ground_dynamics_enabled = bounded(w[1], 1);
     } else if (w[0] == "transport" && w.size() == 2 && world) {
       if (transport_seen) throw std::invalid_argument("duplicate transport flag");
       transport_seen = true;
