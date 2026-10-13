@@ -543,3 +543,33 @@ CAF20 initializes root+AB00 from capacity root+2D44F0: ascending indices, head z
 ### Opcode-20 constructor
 
 Recovered complete D7090..D7134 slot initialization with mutable-table tuning inputs. Five hundred original-instruction fixtures matched all 256 bytes. Entity fixture total is now 3,000. Commit a5f4550 passed Python, Linux graphics and Windows native CI. The remaining constructor types, other world bootstrap/reset fields, recycling and simulation/gameplay remain unfinished.
+
+## 2026-10-13 — opt-in native ground transport and cell migration
+
+Continued latest branch head f5a8538, rather than stale main. Revalidated the
+original decrypted ELF and inspected FE5D8 live-unit update/dispatch boundaries.
+Recovered the 141A0..141EC position FMA window; 1,000 private untouched-instruction
+fixtures matched 4,000 finite output lanes. This is a window comparison, not full
+original steering or hardware SPU parity.
+
+Implemented explicit native transport for seven ground kinds using recovered
+binding, speed and FMA arithmetic; consistent both-bank migration, intermediate
+route/corner obstruction, counters/cache refresh, preserved pool/statistics and
+valid-target RNG. Scene updates mobile positions/headings, viewer M toggles the
+mode and T/P advance it; replay has transport and both-bank cell expectations.
+Movement is disabled by default and remains an incomplete native preview policy.
+
+Independent review found an extent-validation inconsistency; fixed constructor
+and build/event/spawn entrypoints and added its failing regression. Added
+intermediate/corner and FMA-sensitive tests. The new synthetic replay proves
+cells 3,3 -> 4,4 -> 5,5 and stationary pause with unchanged active/resource counts.
+Original level 0 live unit 10 moved from (14.4615,3.40072) to (15.5929,4.53209)
+and rendered under llvmpipe with all 40 model slots and 10 complete FBOs.
+
+Validation: warnings-as-errors Release passes all 27 native/CLI/graphics CTests,
+233 Python regressions and repository safety. Focused transport and spawn tests
+pass ASan/UBSan with leak detection disabled for this environment. Viewer input
+regression exercises M/T and live projection. Windows execution awaits CI.
+Capability estimate 43%, up from 41%, for transport/migration and its visible
+integration only. Full original steering/collision/auxiliary state, automatic
+producer placement, aircraft, combat/AI, HUD and mission rules remain open.

@@ -24,10 +24,10 @@ bool native_map_structure_importable(const ArenaEntity &e) {
 ArenaConstructionSimulation::ArenaConstructionSimulation(
     const ArenaConstructionSimulationConfig &c)
     : config_(c), random_(c.seed) {
-  if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536)
+  if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536 || !c.native_extent || c.native_extent > 24)
     throw std::invalid_argument("invalid simulation dimensions");
   for (const auto &a : c.players) {
-    if (a.route.base.x >= 24 || a.route.base.z >= 24 || a.route.team > 3 ||
+    if (a.route.base.x >= c.native_extent || a.route.base.z >= c.native_extent || a.route.team > 3 ||
         !std::isfinite(a.resource) || !std::isfinite(a.resource_max) ||
         a.resource < 0 || a.resource_max < a.resource)
       throw std::invalid_argument("invalid player account");
@@ -60,13 +60,13 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
       while (!events.empty()) {
         auto e = events.pop();
         if (!std::isfinite(e.time) ||
-            (e.selector < 9 && (e.grid_x >= 24 || e.grid_z >= 24)))
+            (e.selector < 9 && (e.grid_x >= c.native_extent || e.grid_z >= c.native_extent)))
           throw std::invalid_argument("invalid event cell");
       }
       if (p.command_mode != 11 &&
           (p.pending.selector != p.command_mode ||
            (p.pending.selector < 9 &&
-            (p.pending.grid_x >= 24 || p.pending.grid_z >= 24))))
+            (p.pending.grid_x >= c.native_extent || p.pending.grid_z >= c.native_extent))))
         throw std::invalid_argument("invalid pending command");
     }
   }
@@ -82,7 +82,7 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
   auto visibility = c.initial_visibility;
   for (const auto &e : c.initial_structures) {
     if (!native_map_structure_importable(e) || e.owner >= players_.size() ||
-        e.grid.x >= 24 || e.grid.z >= 24 || !c.tuning[e.type] ||
+        e.grid.x >= c.native_extent || e.grid.z >= c.native_extent || !c.tuning[e.type] ||
         e.model_slot != *initial_model_slot_for_record(e.type) ||
         e.position.x != e.grid.x + .5f || e.position.y != 0 ||
         e.position.z != e.grid.z + .5f ||
@@ -102,6 +102,7 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
   }
   if (!initialize_arena_routing_grid(visibility, routes_, grid_))
     throw std::invalid_argument("initial grid blocks routes");
+  storage_.width = storage_.height = c.native_extent;
   for (auto &bank : storage_.banks)
     bank.resize(c.capacity);
   reset_arena_entity_index_pool(storage_, c.capacity);
@@ -131,7 +132,7 @@ ArenaConstructionSimulation::context_for(ArenaConstructionRequest r) const {
 }
 ArenaConstructionSubmit
 ArenaConstructionSimulation::enqueue(ArenaConstructionRequest r) {
-  if (r.player >= players_.size() || r.grid_x >= 24 || r.grid_z >= 24 ||
+  if (r.player >= players_.size() || r.grid_x >= config_.native_extent || r.grid_z >= config_.native_extent ||
       !supported(r.opcode) || !config_.tuning[r.opcode])
     return ArenaConstructionSubmit::InvalidRequest;
   switch (validate_arena_construction(r, context_for(r), queue_)) {
@@ -248,7 +249,7 @@ ArenaConstructionSimulation::factory_ground_unit_template(
 ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
                                                             ArenaEvent e) {
   if (owner >= players_.size() || !std::isfinite(e.time) ||
-      (e.selector < 9 && (e.grid_x >= 24 || e.grid_z >= 24)))
+      (e.selector < 9 && (e.grid_x >= config_.native_extent || e.grid_z >= config_.native_extent)))
     return ArenaTimedSubmit::Invalid;
   auto &p = players_[owner];
   if (p.events.size() >= p.event_capacity)
@@ -261,6 +262,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
     throw std::invalid_argument("clock must be finite and monotonic");
   ArenaConstructionTick tick;
   const float elapsed = clock - clock_;
+  if (config_.ground_transport_enabled && elapsed > 10)
+    throw std::invalid_argument("transport tick is limited to ten seconds");
   if (elapsed > 0) {
     auto next = storage_.banks[storage_.read_bank];
     for (std::size_t i = 0; i < next.size(); ++i) {
@@ -282,11 +285,48 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           ArenaFactoryProduction::Reserved)
         tick.production_reservations.push_back(static_cast<std::uint16_t>(i));
     }
+    if (config_.ground_transport_enabled) {
+      auto transported = storage_;
+      transported.banks[0] = next;
+      transported.banks[1] = std::move(next);
+      auto next_random = random_;
+      std::array<ArenaUnitTargetPlayer, 4> targets{};
+      for (unsigned p = 0; p < players_.size(); ++p)
+        targets[p] = {static_cast<std::uint8_t>(routes_[p].team),
+                      config_.unit_base_available[p],
+                      config_.unit_target_overrides[p]};
+      for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
+        const auto &unit = transported.banks[0][i];
+        if (!(unit[15] == 40 || unit[15] == 41 ||
+              (unit[15] >= 43 && unit[15] <= 47))) continue;
+        const auto bits = (std::uint32_t(unit[0x84]) << 24) |
+                          (std::uint32_t(unit[0x85]) << 16) |
+                          (std::uint32_t(unit[0x86]) << 8) | unit[0x87];
+        const float speed = std::bit_cast<float>(bits);
+        if (!std::isnormal(speed) || speed <= 0 || speed > 64) continue;
+        // Bound both time and distance: no step travels over a quarter cell.
+        const float step = std::min(.05f, .25f / speed);
+        const unsigned count = static_cast<unsigned>(std::ceil(elapsed / step));
+        const float delta = elapsed / static_cast<float>(count);
+        bool moved = false;
+        for (unsigned n = 0; n < count; ++n) {
+          const auto result = transport_arena_ground_unit(
+              transported, static_cast<std::uint16_t>(i), delta,
+              std::span(targets.data(), players_.size()), grid_, next_random);
+          if (result != ArenaGroundTransport::Moved) break;
+          moved = true;
+        }
+        if (moved) tick.transported_units.push_back(static_cast<std::uint16_t>(i));
+      }
+      storage_ = std::move(transported);
+      random_ = next_random;
+    } else {
+      storage_.banks[0] = next;
+      storage_.banks[1] = std::move(next);
+    }
     config_.unit_quotas = quotas;
     for (unsigned owner = 0; owner < players_.size(); ++owner)
       store_arena_unit_production_quota(statistics_[owner], quotas[owner]);
-    storage_.banks[0] = next;
-    storage_.banks[1] = std::move(next);
   }
   clock_ = clock;
   for (std::size_t owner = 0; owner < players_.size(); ++owner) {
@@ -360,8 +400,8 @@ ArenaUnitSpawnResult ArenaConstructionSimulation::spawn_reserved_ground_unit(
     std::uint8_t owner, std::uint8_t kind,
     const std::array<float, 4> &position) {
   if (owner >= players_.size() || !std::isfinite(position[0]) ||
-      !std::isfinite(position[2]) || position[0] < 0 || position[0] >= 24 ||
-      position[2] < 0 || position[2] >= 24)
+      !std::isfinite(position[2]) || position[0] < 0 || position[0] >= config_.native_extent ||
+      position[2] < 0 || position[2] >= config_.native_extent)
     return {};
   std::array<ArenaUnitTargetPlayer, 4> targets{};
   for (unsigned p = 0; p < players_.size(); ++p)

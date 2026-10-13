@@ -61,6 +61,32 @@ int main() {
     if(!unit||(*unit)[15]!=44||(*unit)[0x6f]!=6)throw std::runtime_error("keyboard factory unit inspection failed");
     const auto ground=editable_scene.simulation().factory_ground_unit_template(*editable_scene.arena().entities[0].live_entity_index);
     if(!ground||ground->binding!=ArenaGroundUnitBinding::NoTarget||ground->slot[0x7e]!=255)throw std::runtime_error("keyboard ground unit inspection failed");
+    // A separate two-player scene exercises the actual M/T input path.
+    auto transport_config=construction;
+    transport_config.players.push_back({{{3,3},1,false},400,400});
+    transport_config.unit_base_available={true,true,false,false};
+    ArenaState transport_arena;transport_arena.extent=4;transport_arena.players.resize(2);
+    transport_arena.players[0].start_grid=ArenaGridPosition{0,0};
+    transport_arena.players[1].start_grid=ArenaGridPosition{3,3};
+    NativeConstructionScene transport_scene(transport_arena,transport_config);
+    if(transport_scene.enqueue({0,26,2,2})!=ArenaConstructionSubmit::Queued)throw std::runtime_error("transport setup failed");
+    transport_scene.step();transport_scene.advance(2);transport_scene.advance(4);
+    if(!transport_scene.spawn_reserved_ground_unit(0,40,{1,1}).entity_index)throw std::runtime_error("transport spawn failed");
+    const auto before_position=transport_scene.arena().entities[1].position;
+    config.construction=&transport_scene;finished.store(false);
+    std::thread motion_controls([&]{
+        while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
+        SDL_Delay(100);SDL_Event key{};key.type=SDL_KEYDOWN;key.key.keysym.sym=SDLK_m;SDL_PushEvent(&key);
+        for(int i=0;i<2;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
+        SDL_Delay(100);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
+    });
+    const auto motion=run_native_viewer({structure,spawned_model,background},config);
+    finished.store(true);motion_controls.join();
+    if(!motion)throw std::runtime_error(motion.detail);
+    const auto after_position=transport_scene.arena().entities[1].position;
+    if(!transport_scene.simulation().ground_transport_enabled() ||
+       (before_position.x==after_position.x && before_position.z==after_position.z))
+        throw std::runtime_error("keyboard transport did not move/project unit");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }

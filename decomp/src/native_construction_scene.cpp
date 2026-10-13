@@ -11,6 +11,7 @@ NativeConstructionScene::bootstrap(const ArenaState &a,
   if (!a.extent || a.extent > 24 || a.players.size() != c.players.size() ||
       !a.unsupported_records.empty())
     throw std::invalid_argument("unsupported construction arena");
+  c.native_extent = a.extent;
   c.initial_structures.clear();
   c.initial_players = a.players;
   for (std::size_t i = 0; i < c.players.size(); ++i) {
@@ -93,8 +94,18 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
-    if (slot[15] >= 40 && slot[15] <= 48)
+    if (slot[15] >= 40 && slot[15] <= 48) {
+      auto scalar = [&](unsigned o) {
+        std::uint32_t bits=0;
+        for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
+        return std::bit_cast<float>(bits);
+      };
+      entity.position = {scalar(0), scalar(4), scalar(8)};
+      entity.grid = {static_cast<std::uint8_t>(std::clamp(std::trunc(entity.position.x),0.f,float(arena_.extent-1))),
+                     static_cast<std::uint8_t>(std::clamp(std::trunc(entity.position.z),0.f,float(arena_.extent-1)))};
+      for (unsigned i=0;i<4;++i) entity.orientation[i]=scalar(0x20+4*i);
       continue;
+    }
     std::uint32_t word = 0;
     for (unsigned i = 0; i < 4; ++i)
       word = (word << 8) | slot[0x78 + i];

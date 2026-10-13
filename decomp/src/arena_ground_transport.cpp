@@ -1,0 +1,140 @@
+#include "comet/arena_ground_transport.hpp"
+#include <algorithm>
+#include <bit>
+#include <cfenv>
+#include <cmath>
+#include <stdexcept>
+#include <limits>
+namespace comet::decomp {
+namespace {
+std::uint32_t word(const ArenaEntitySlot &s, unsigned o) {
+  std::uint32_t v=0; for(unsigned i=0;i<4;++i)v=(v<<8)|s[o+i]; return v;
+}
+float scalar(const ArenaEntitySlot &s,unsigned o) { return std::bit_cast<float>(word(s,o)); }
+void put(ArenaEntitySlot &s,unsigned o,std::uint32_t v) {
+  for(unsigned i=0;i<4;++i)s[o+i]=static_cast<std::uint8_t>(v>>(24-8*i));
+}
+struct Rounding {
+  int previous=std::fegetround();
+  Rounding() {
+    if(previous<0 || std::fesetround(FE_TOWARDZERO)!=0)
+      throw std::runtime_error("transport rounding unavailable");
+  }
+  ~Rounding() { std::fesetround(previous); }
+};
+ArenaGridPosition cell_for(const ArenaEntitySlot &s,unsigned width,unsigned height) {
+  return {static_cast<std::uint8_t>(std::clamp(std::trunc(scalar(s,0)),0.f,float(width-1))),
+          static_cast<std::uint8_t>(std::clamp(std::trunc(scalar(s,8)),0.f,float(height-1)))};
+}
+bool matches(const ArenaPackedCellEntry &e,std::uint16_t index) {
+  return ((unsigned(e[0])<<8)|e[1])==index;
+}
+}
+ArenaGroundTransport transport_arena_ground_unit(
+    ArenaEntityStorage &storage, std::uint16_t index, float elapsed,
+    std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
+    ArenaRandom &random) {
+  if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
+     storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
+     index>=storage.banks[0].size()||index>=storage.banks[1].size() ||
+     players.empty()||players.size()>4) return ArenaGroundTransport::Invalid;
+  auto slot=storage.banks[storage.read_bank][index];
+  const unsigned kind=slot[15],owner=slot[0x33]>>5;
+  if(owner>=players.size() || !(kind==40||kind==41||(kind>=43&&kind<=47)) ||
+     (slot[0x33]&28)!=20 || ((unsigned(slot[12])<<8)|slot[13])!=index)
+    return ArenaGroundTransport::Invalid;
+  for(unsigned o:{0u,4u,8u,0x84u})
+    if(!std::isfinite(scalar(slot,o)))return ArenaGroundTransport::Invalid;
+  if(storage.banks[0][index]!=storage.banks[1][index])return ArenaGroundTransport::Invalid;
+  const float speed=scalar(slot,0x84);
+  if(!std::isnormal(speed)||speed<=0)return ArenaGroundTransport::Invalid;
+  const auto old_cell=cell_for(slot,storage.width,storage.height);
+  const unsigned old_flat=old_cell.z*24+old_cell.x;
+  std::array<std::size_t,2> offsets{};
+  for(unsigned bank=0;bank<2;++bank) {
+    const auto &list=storage.cells[bank][old_flat];
+    auto it=std::find_if(list.begin(),list.end(),[&](const auto&e){return matches(e,index);});
+    if(it==list.end()||std::count_if(list.begin(),list.end(),[&](const auto&e){return matches(e,index);})!=1)
+      return ArenaGroundTransport::Invalid;
+    offsets[bank]=static_cast<std::size_t>(it-list.begin());
+  }
+  if(!storage.summary_counts[old_flat])return ArenaGroundTransport::Invalid;
+  auto next_random=random;
+  std::array<ArenaUnitTargetPlayer,4> target_players{};
+  std::copy(players.begin(),players.end(),target_players.begin());
+  // Retain an existing live enemy target. The original binding helper's forced
+  // path samples its directed route without consuming another selection draw.
+  const unsigned target=slot[0x7e];
+  if(players[owner].override_target==255 && target<players.size() && target!=owner &&
+     players[target].base_available && players[target].team!=players[owner].team)
+    target_players[owner].override_target=static_cast<std::uint8_t>(target);
+  slot[0xc8]=slot[0xca]=0;slot[0xc9]=old_cell.x;slot[0xcb]=old_cell.z;
+  const auto binding=bind_arena_ground_unit_template(slot,
+    std::span(target_players.data(),players.size()),grid,next_random);
+  if(binding==ArenaGroundUnitBinding::NoTarget)return ArenaGroundTransport::NoTarget;
+  if(binding==ArenaGroundUnitBinding::Blocked)return ArenaGroundTransport::Blocked;
+  if(binding!=ArenaGroundUnitBinding::Bound)return ArenaGroundTransport::Invalid;
+  Rounding rounding;
+  // The original 141BC..141EC position update uses fused velocity*delta+position.
+  // Keeping altitude fixed and applying that update only to x/z is the explicit
+  // native transport policy; original steering/acceleration/collision is absent.
+  for(unsigned axis:{0u,2u}) {
+    const float value=std::fma(scalar(slot,0x40+4*axis),elapsed,scalar(slot,4*axis));
+    if(!std::isfinite(value))return ArenaGroundTransport::Invalid;
+    const float limit=std::nextafter(float(axis==0?storage.width:storage.height),0.f);
+    put(slot,4*axis,std::bit_cast<std::uint32_t>(std::clamp(value,0.f,limit)));
+  }
+  const auto cell=cell_for(slot,storage.width,storage.height);
+  const unsigned flat=cell.z*24+cell.x;
+  if(flat!=old_flat) {
+    const unsigned chosen=slot[0x7e];
+    const unsigned pair=3*owner+chosen-(chosen>owner?1:0);
+    // Walk every crossed grid boundary. Endpoint-only checks could jump over a
+    // blocked intermediate cell at a high speed or long caller delta.
+    int x=old_cell.x,z=old_cell.z;
+    const double start_x=scalar(storage.banks[storage.read_bank][index],0);
+    const double start_z=scalar(storage.banks[storage.read_bank][index],8);
+    const double dx=scalar(slot,0)-start_x,dz=scalar(slot,8)-start_z;
+    const int sx=dx>0?1:-1,sz=dz>0?1:-1;
+    auto blocked=[&](int bx,int bz) {
+      return bx<0||bz<0||bx>=int(storage.width)||bz>=int(storage.height)||
+             (grid.cells[bz*24+bx].routes[pair]&1);
+    };
+    while(x!=cell.x||z!=cell.z) {
+      const double tx=x==cell.x?std::numeric_limits<double>::infinity():
+          ((sx>0?x+1:x)-start_x)/dx;
+      const double tz=z==cell.z?std::numeric_limits<double>::infinity():
+          ((sz>0?z+1:z)-start_z)/dz;
+      if(tx==tz) {
+        if(blocked(x+sx,z)||blocked(x,z+sz))return ArenaGroundTransport::Blocked;
+        x+=sx;z+=sz;
+      } else if(tx<tz)x+=sx;
+      else z+=sz;
+      if(blocked(x,z))return ArenaGroundTransport::Blocked;
+    }
+    if(storage.cells[0][flat].size()>=126||storage.cells[1][flat].size()>=126)
+      return ArenaGroundTransport::CellFull;
+  }
+  slot[0xc8]=slot[0xca]=0;slot[0xc9]=cell.x;slot[0xcb]=cell.z;
+  ArenaPackedCellEntry packed{slot[12],slot[13],slot[14],slot[0x6f],0,0,0,slot[0x33]};
+  const std::array<float,3> origin{float(cell.x)-.5f,-.5f,float(cell.z)-.5f};
+  for(unsigned axis=0;axis<3;++axis) {
+    volatile float local=scalar(slot,4*axis)-origin[axis];
+    volatile float scaled=std::clamp(float(local),0.f,2.f)*100.f;
+    packed[4+axis]=static_cast<std::uint8_t>(scaled);
+  }
+  // All allocations precede visible writes. A blocked/full destination leaves
+  // both banks, lists, counters, pool and RNG unchanged.
+  if(flat!=old_flat)
+    for(auto &bank:storage.cells)bank[flat].reserve(bank[flat].size()+1);
+  for(unsigned bank=0;bank<2;++bank) {
+    auto &list=storage.cells[bank][old_flat];
+    if(flat==old_flat)list[offsets[bank]]=packed;
+    else {list.erase(list.begin()+offsets[bank]);storage.cells[bank][flat].push_back(packed);}
+    storage.banks[bank][index]=slot;
+  }
+  if(flat!=old_flat){--storage.summary_counts[old_flat];++storage.summary_counts[flat];}
+  random=next_random;
+  return ArenaGroundTransport::Moved;
+}
+} // namespace comet::decomp

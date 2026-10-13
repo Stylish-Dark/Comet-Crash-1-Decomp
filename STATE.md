@@ -168,3 +168,19 @@ CAF20 initializes root+AB00 from capacity root+2D44F0: ascending indices, head z
 ### Opcode-20 constructor
 
 Recovered complete D7090..D7134 slot initialization with mutable-table tuning inputs. Five hundred original-instruction fixtures matched all 256 bytes. Entity fixture total is now 3,000. Commit a5f4550 passed Python, Linux graphics and Windows native CI. The remaining constructor types, other world bootstrap/reset fields, recycling and simulation/gameplay remain unfinished.
+
+## 2026-10-13 continuation: explicit native ground transport
+
+Continued f5a8538 with opt-in transport for seven deployed ground kinds. Original
+bound directions/headings and the original FMA position-update arithmetic feed
+native x/z travel, both-bank record migration, cached cells and summary counts.
+The scene refreshes position/quaternion; M toggles viewer transport and replay
+has transport/expect-unit-cell. Extent validation is consistent across simulation
+entrypoints. See docs/decomp/native-ground-transport.md.
+
+This is a native preview policy, not an exact port of original steering,
+acceleration, collision, crowds or auxiliary unit state. The recovered original
+141A0..141EC window matched 4,000 finite numeric output lanes. Capability estimate:
+43% toward a playable single-player mission, up from 41%. No combat/mission credit.
+Next original recovery boundary is 14060/13998 route steering and 158B8 unit
+auxiliary-state update, followed by weapons/base interaction and mission rules.
