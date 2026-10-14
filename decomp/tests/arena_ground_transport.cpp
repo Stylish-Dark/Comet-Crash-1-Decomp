@@ -6,17 +6,22 @@
 #include <cfenv>
 #include <cmath>
 #include <limits>
+#include <memory>
 using namespace comet::decomp;
 float scalar(const ArenaEntitySlot &s, unsigned o) {
   unsigned v=0; for(unsigned i=0;i<4;++i) v=(v<<8)|s[o+i];
   return std::bit_cast<float>(v);
 }
 struct Fixture {
-  ArenaEntityStorage storage;
+  // Keep the large bank/cell fixture off the Windows test thread stack.
+  std::unique_ptr<ArenaEntityStorage> storage_owner=std::make_unique<ArenaEntityStorage>();
+  ArenaEntityStorage &storage=*storage_owner;
   ArenaRoutingGrid grid;
   std::array<ArenaUnitTargetPlayer,2> players{{{0,true,255},{1,true,255}}};
   ArenaRandom random{1};
   std::array<std::uint8_t,128> stats{};
+  Fixture(const Fixture &other):storage_owner(std::make_unique<ArenaEntityStorage>(other.storage)),
+    grid(other.grid),players(other.players),random(other.random),stats(other.stats){}
   Fixture(unsigned kind=40,std::array<float,4> position={2.95f,0,3.5f,0},unsigned capacity=1) {
     for(auto &b:storage.banks)b.resize(capacity);
     reset_arena_entity_index_pool(storage,capacity);

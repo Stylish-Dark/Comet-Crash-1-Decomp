@@ -49,6 +49,10 @@ turning and synchronized banks.
 
 Validation also covers all 34 native/CLI/graphics CTests, 233 Python tests,
 ASan/UBSan (host leak inspection disabled), and original level-0 movement/rendering.
+Windows CI exposed excess stack use in the accumulated transport test fixtures.
+Their cell/bank storage now lives on the heap with deep-copy semantics. A native
+160 KiB stack check fails with the previous fixture and passes with the revised
+one; GCC reports main stack usage reduced from 200,400 to 113,600 bytes.
 
 ## Remaining scope and progress
 
