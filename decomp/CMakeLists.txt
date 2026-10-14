@@ -29,6 +29,7 @@ add_library(comet_native_recovery STATIC
     src/arena_ground_terrain.cpp
     src/arena_ground_height.cpp
     src/arena_ground_orientation.cpp
+    src/arena_ground_capture.cpp
     src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
@@ -323,4 +324,13 @@ if(MSVC)
 else()
   target_compile_options(comet_arena_ground_orientation_tests PRIVATE -UNDEBUG)
   set_source_files_properties(src/arena_ground_orientation.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_ground_capture_tests tests/arena_ground_capture.cpp)
+target_link_libraries(comet_arena_ground_capture_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_ground_capture_tests COMMAND comet_arena_ground_capture_tests)
+if(MSVC)
+  target_compile_options(comet_arena_ground_capture_tests PRIVATE /UNDEBUG)
+else()
+  target_compile_options(comet_arena_ground_capture_tests PRIVATE -UNDEBUG)
 endif()

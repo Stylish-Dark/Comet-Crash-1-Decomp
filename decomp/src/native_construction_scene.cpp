@@ -100,6 +100,7 @@ void NativeConstructionScene::refresh_construction() {
         for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
         return std::bit_cast<float>(bits);
       };
+      entity.owner=slot[0x33]>>5;
       entity.position = {scalar(0), scalar(4), scalar(8)};
       entity.grid = {static_cast<std::uint8_t>(std::clamp(std::trunc(entity.position.x),0.f,float(arena_.extent-1))),
                      static_cast<std::uint8_t>(std::clamp(std::trunc(entity.position.z),0.f,float(arena_.extent-1)))};

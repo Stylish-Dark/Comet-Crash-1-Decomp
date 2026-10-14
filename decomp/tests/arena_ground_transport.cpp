@@ -36,6 +36,44 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
   for(unsigned i=0;i<4;++i)s[o+i]=bits>>(24-8*i);
 }
 int main() {
+  {
+    Fixture f(40,{3.5f,.2f,3.5f,0},2);
+    ArenaUnitProductionQuota q;q.capacity=8;q.pending=1;q.by_type[5]=1;
+    std::array<ArenaPlayerStatisticsBlock,2> stats{};
+    store_arena_unit_production_quota(stats[1],q);
+    const auto peer=spawn_reserved_arena_ground_unit(f.storage,stats[1],45,1,{3.55f,.2f,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
+    q={};q.capacity=8;q.active=1;store_arena_unit_production_quota(stats[0],q);
+    for(auto &bank:f.storage.banks){
+      put(bank[0],0,std::bit_cast<unsigned>(3.5f));put(bank[0],4,std::bit_cast<unsigned>(.2f));put(bank[0],8,std::bit_cast<unsigned>(3.5f));
+      put(bank[*peer.entity_index],0,std::bit_cast<unsigned>(3.55f));put(bank[*peer.entity_index],4,std::bit_cast<unsigned>(.2f));put(bank[*peer.entity_index],8,std::bit_cast<unsigned>(3.5f));
+      bank[*peer.entity_index][0x7e]=0;bank[*peer.entity_index][0xbb]=1;
+    }
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    const auto banks=f.storage.banks;const auto cells=f.storage.cells;const auto old_stats=stats;auto random=f.random;
+    f.grid.cells[3*24+3].routes[3]=1; // new owner's route blocks after capture
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true,stats)==ArenaGroundTransport::Blocked);
+    assert(f.storage.banks==banks && f.storage.cells==cells && stats==old_stats);
+    auto after_random=f.random;assert(after_random.next()==random.next());
+    f.grid.cells[3*24+3].routes[3]=14;
+    for(unsigned bad_target:{255u,1u}){
+    for(auto &bank:f.storage.banks)bank[*peer.entity_index][0x7e]=bad_target;
+    const auto invalid_banks=f.storage.banks;
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true,stats)==ArenaGroundTransport::Invalid);
+    assert(f.storage.banks==invalid_banks && f.storage.cells==cells && stats==old_stats);
+    }
+    for(auto &bank:f.storage.banks)bank[*peer.entity_index][0x7e]=0;
+
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true,stats)==ArenaGroundTransport::Moved);
+    assert(f.storage.banks[0][0][0x33]>>5==1);
+    assert(read_arena_unit_production_quota(stats[0]).active==0 && read_arena_unit_production_quota(stats[1]).active==2);
+    assert(f.storage.banks[0]==f.storage.banks[1] && f.storage.cells[0][3*24+3][0][7]==f.storage.banks[0][0][0x33]);
+  }
+  {
+    Fixture f;
+    const std::array<ArenaUnitTargetPlayer,5> too_many{};
+    std::array<ArenaPlayerStatisticsBlock,5> stats{};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,too_many,f.grid,f.random,{}, {},true,true,stats)==ArenaGroundTransport::Invalid);
+  }
   // Live dynamics interpolate from the prior quaternion instead of snapping
   // immediately to the route heading; transaction writes both banks equally.
   {

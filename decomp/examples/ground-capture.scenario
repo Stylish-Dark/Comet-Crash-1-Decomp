@@ -1,0 +1,30 @@
+# Original capture transaction; synthetic resources/tuning and explicit readiness.
+world 8 4
+player 0 0 0 400 400 0
+player 10 10 1 400 400 0
+tuning 26 100 50 10 20 7.5
+tuning 28 100 50 10 20 7.5
+production 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 0 0 2
+unit-quota 1 0 4
+contacts 1
+run
+queue 0 26 2 2
+step
+queue 1 28 8 8
+step
+factory 1 5
+advance 26
+spawn 0 40 3 3
+spawn 1 45 3 3
+capture-ready 3 1
+transport 1
+advance 26.01
+expect-unit-owner 2 1
+expect unit-active0 0
+expect unit-active1 2
+expect allocated 4
+advance 26.02
+expect unit-active1 2

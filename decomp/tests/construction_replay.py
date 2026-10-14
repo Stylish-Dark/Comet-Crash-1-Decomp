@@ -123,3 +123,13 @@ for command in ("expect-unit-separated 1 1 .1\n","expect-unit-separated 1 999 .1
 # The same scene without contacts retains overlap; this distinguishes the feature.
 result=run(contact_scenario.read_text().replace("contacts 1","dynamics 1\ncontacts 0"))
 assert result.returncode!=0 and "unit separation expectation failed" in result.stderr
+
+# Explicit readiness seed; original capture transaction changes counts/owner.
+capture_config = "world 8 4\nplayer 0 0 0 400 400 0\nplayer 10 10 1 400 400 0\ntuning 26 100 50 10 20 7.5\ntuning 28 100 50 10 20 7.5\nproduction 1\nunit-base 0 1\nunit-base 1 1\nunit-quota 0 0 2\nunit-quota 1 0 4\ncontacts 1\nrun\n"
+capture_commands = "queue 0 26 2 2\nstep\nqueue 1 28 8 8\nstep\nfactory 1 5\nadvance 26\nspawn 0 40 3 3\nspawn 1 45 3 3\ncapture-ready 3 1\ntransport 1\nadvance 26.01\nexpect-unit-owner 2 1\nexpect unit-active0 0\nexpect unit-active1 2\nexpect allocated 4\n"
+result=run(capture_config+capture_commands)
+assert result.returncode==0,(result.stdout,result.stderr)
+
+for command in ("capture-ready 2 1\n", "capture-ready 3 2\n", "capture-ready 65536 1\n", "expect-unit-owner 2 7\n", "expect-unit-owner 999 0\n"):
+ result=run(capture_config+capture_commands.split("capture-ready 3 1")[0]+command)
+ assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)

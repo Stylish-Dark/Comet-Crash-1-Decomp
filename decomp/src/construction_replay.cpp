@@ -121,6 +121,20 @@ int main(int argc, char **argv) {
         std::cout << '\n';
         if (result.status == ArenaUnitSpawnStatus::Invalid)
           throw std::invalid_argument("unsupported spawn request");
+      } else if (w[0] == "capture-ready" && w.size()==3) {
+        const auto index=number<unsigned>(w[1]),ready=number<unsigned>(w[2]);
+        if(index>65535||ready>1)throw std::invalid_argument("invalid capture readiness");
+        const bool changed=scene?scene->set_ground_capture_ready(static_cast<std::uint16_t>(index),ready!=0):
+            simulation->set_ground_capture_ready(static_cast<std::uint16_t>(index),ready!=0);
+        if(!changed)throw std::invalid_argument("readiness requires a live kind-45 unit");
+        std::cout<<"capture-ready "<<index<<' '<<ready<<'\n';
+      } else if (w[0] == "expect-unit-owner" && w.size()==3) {
+        const auto index=number<unsigned>(w[1]),owner=number<unsigned>(w[2]);
+        const auto &bank=state().storage().banks[state().storage().read_bank];
+        if(index>=bank.size()||owner>=state().accounts().size()||bank[index][15]<40||bank[index][15]>48)
+          throw std::invalid_argument("invalid unit owner expectation");
+        if((bank[index][0x33]>>5)!=owner)throw std::runtime_error("unit owner expectation failed");
+        std::cout<<"expect-unit-owner passed\n";
       } else if (w[0] == "contacts" && w.size()==2) {
         const auto flag=number<unsigned>(w[1]);
         if(flag>1)throw std::invalid_argument("invalid contacts flag");

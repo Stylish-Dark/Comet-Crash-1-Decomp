@@ -291,6 +291,9 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       transported.banks[0] = next;
       transported.banks[1] = std::move(next);
       auto next_random = random_;
+      auto next_statistics=statistics_;
+      for(unsigned owner=0;owner<players_.size();++owner)
+        store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
       std::array<ArenaUnitTargetPlayer, 4> targets{};
       std::array<ArenaGridPosition,4> bases{};
       std::array<std::uint8_t,4> visibility_bits{};
@@ -321,7 +324,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               std::span(targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
               std::span(visibility_bits.data(),players_.size()),
-              config_.ground_dynamics_enabled, config_.ground_contacts_enabled);
+              config_.ground_dynamics_enabled, config_.ground_contacts_enabled,
+              std::span(next_statistics.data(),players_.size()));
           if (result != ArenaGroundTransport::Moved) break;
           moved = true;
         }
@@ -329,6 +333,9 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       }
       storage_ = std::move(transported);
       random_ = next_random;
+      statistics_=next_statistics;
+      for(unsigned owner=0;owner<players_.size();++owner)
+        quotas[owner]=read_arena_unit_production_quota(statistics_[owner]);
     } else {
       storage_.banks[0] = next;
       storage_.banks[1] = std::move(next);
@@ -404,6 +411,13 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   }
   tick.construction = step();
   return tick;
+}
+bool ArenaConstructionSimulation::set_ground_capture_ready(std::uint16_t index,bool ready){
+  if(index>=storage_.banks[0].size() || index>=storage_.banks[1].size() ||
+     storage_.banks[0][index]!=storage_.banks[1][index] ||
+     storage_.banks[0][index][15]!=45 || (storage_.banks[0][index][0x33]&28)!=20)return false;
+  for(auto &bank:storage_.banks)bank[index][0xbb]=ready?1:0;
+  return true;
 }
 ArenaUnitSpawnResult ArenaConstructionSimulation::spawn_reserved_ground_unit(
     std::uint8_t owner, std::uint8_t kind,
