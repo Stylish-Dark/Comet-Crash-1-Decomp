@@ -32,6 +32,35 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
 }
 int main() {
   {
+    Fixture f(40,{3.95f,0,3.95f,0});
+    for(auto &bank:f.storage.banks){put(bank[0],0,std::bit_cast<unsigned>(3.95f));put(bank[0],8,std::bit_cast<unsigned>(3.95f));put(bank[0],0x48,std::bit_cast<unsigned>(1.6f));}
+    f.grid.cells[4*24+4].visibility=1;f.grid.cells[4*24+4].routes[0]=1;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(scalar(f.storage.banks[0][0],0)<3.95f && scalar(f.storage.banks[0][0],8)<3.95f);
+    assert(f.storage.banks[0]==f.storage.banks[1] && f.storage.summary_counts[3*24+3]==1);
+  }
+  {
+    Fixture f(40,{4.5f,0,4.5f,0});
+    for(auto &bank:f.storage.banks){put(bank[0],0,std::bit_cast<unsigned>(4.f));put(bank[0],8,std::bit_cast<unsigned>(4.f));}
+    f.grid.cells[3*24+3].visibility=1;
+    const auto banks=f.storage.banks;const auto cells=f.storage.cells;const auto counts=f.storage.summary_counts;auto rng=f.random;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Invalid);
+    assert(f.storage.banks==banks && f.storage.cells==cells && f.storage.summary_counts==counts && f.random.next()==rng.next());
+  }
+  {
+    Fixture f(40,{3.95f,0,3.5f,0});
+    for(auto &bank:f.storage.banks){put(bank[0],0,std::bit_cast<unsigned>(3.95f));put(bank[0],8,std::bit_cast<unsigned>(3.5f));put(bank[0],0x48,std::bit_cast<unsigned>(.5f));}
+    f.grid.cells[3*24+4].visibility=1;f.grid.cells[3*24+4].routes[0]=1;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};auto rng=f.random;
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(scalar(f.storage.banks[0][0],0)<3.88f && scalar(f.storage.banks[0][0],8)>3.5f);
+    assert(scalar(f.storage.banks[0][0],0x40)<0 && f.storage.banks[0]==f.storage.banks[1]);
+    assert(f.storage.summary_counts[3*24+3]==1 && f.random.next()==rng.next());
+  }
+
+  {
     Fixture f(40,{3.5f,0,3.5f,0},2);
     auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{4.5f,0,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
     const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
