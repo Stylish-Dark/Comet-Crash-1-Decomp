@@ -1,6 +1,7 @@
 #include "comet/arena_ground_transport.hpp"
 #include "comet/arena_ground_dynamics.hpp"
 #include "comet/arena_ground_contact.hpp"
+#include "comet/arena_ground_pair.hpp"
 #include <algorithm>
 #include <bitset>
 #include <bit>
@@ -93,8 +94,8 @@ ArenaGroundTransport transport_arena_ground_unit(
     }
     if(motion_contacts) {
       // Native broad phase: ordered nearby bank records, friendly ground units.
-      // Original SPU gather order, random normal perturbation and enemy capture
-      // branches remain separate; only the recovered motion response is used.
+      // Original gather order and enemy capture remain separate. Pair geometry,
+      // normal jitter and motion response use recovered arithmetic.
       const int reach=static_cast<int>(std::ceil(float(slot[14])*.01f+2.55f));
       std::bitset<65536> visited;
       for(int z=std::max(0,int(old_cell.z)-reach);z<=std::min(int(storage.height)-1,int(old_cell.z)+reach);++z)
@@ -110,33 +111,22 @@ ArenaGroundTransport transport_arena_ground_unit(
             if(peer_owner>=players.size())return ArenaGroundTransport::Invalid;
             if(players[peer_owner].team!=players[owner].team)continue;
             if(peer!=storage.banks[1-storage.read_bank][other] || ((unsigned(peer[12])<<8)|peer[13])!=other)return ArenaGroundTransport::Invalid;
+            ArenaGroundPairQuery pair;
             ArenaGroundContactQuery c;
             for(unsigned axis=0;axis<3;++axis) {
-              c.position[axis]=scalar(slot,4*axis);c.velocity[axis]=scalar(slot,0x40+4*axis);
-              c.peer_velocity[axis]=scalar(peer,0x40+4*axis);
-              c.normal[axis]=scalar(peer,4*axis)-c.position[axis];
-              if(!std::isfinite(c.normal[axis])||!std::isfinite(c.peer_velocity[axis]))return ArenaGroundTransport::Invalid;
+              pair.position[axis]=scalar(slot,4*axis);pair.peer_position[axis]=scalar(peer,4*axis);
+              c.velocity[axis]=scalar(slot,0x40+4*axis);c.peer_velocity[axis]=scalar(peer,0x40+4*axis);
             }
-            auto squared=[&]{return std::fma(c.normal[2],c.normal[2],std::fma(c.normal[1],c.normal[1],c.normal[0]*c.normal[0]));};
-            float distance=std::sqrt(squared());
-            if(distance<std::bit_cast<float>(0x38d1b717u)) {
-              // Original 81C8..824C resolves coincidence with an index-ordered
-              // Z nudge; normal jitter/RNG preparation is still native policy.
-              volatile float nudged=c.position[2]+(other>index?-.01f:.01f);
-              c.position[2]=nudged;c.normal[2]=scalar(peer,8)-c.position[2];distance=std::sqrt(squared());
-            }
-            volatile float peer_radius=float(peer[14])*std::bit_cast<float>(0x3c23d70au);
             volatile float own_radius=float(slot[14])*std::bit_cast<float>(0x3c23d70au);
-            volatile float gap=(distance-peer_radius)-own_radius;
-            if(gap>=std::bit_cast<float>(0xb727c5acu))continue;
-            if(!std::isnormal(distance))return ArenaGroundTransport::Invalid;
-            for(unsigned axis=0;axis<3;++axis)c.normal[axis]/=distance;
-            const float own_mass=scalar(slot,0x58),peer_mass=scalar(peer,0x58);
-            if(!std::isfinite(own_mass)||!std::isfinite(peer_mass)||own_mass<0||peer_mass<0)return ArenaGroundTransport::Invalid;
-            volatile float total=own_mass+peer_mass;
-            if(!std::isfinite(total))return ArenaGroundTransport::Invalid;
-            c.response_share=total>std::bit_cast<float>(0x38d1b717u)?peer_mass/total:0.f;
-            c.penetration=-gap;c.restitution_percent=slot[0x7d];c.movable=(word(slot,0x60)&0x4000)!=0;
+            pair.radius=own_radius;pair.peer_radius=peer[14];pair.own_mass=scalar(slot,0x58);pair.peer_mass=scalar(peer,0x58);
+            pair.index=index;pair.peer_index=static_cast<std::uint16_t>(other);
+            pair.jitter=arena_ground_random_direction(next_random);
+            const auto prepared=prepare_arena_ground_pair(pair);if(!prepared)return ArenaGroundTransport::Invalid;
+            // Original coincidence correction writes position even without overlap.
+            for(unsigned axis=0;axis<3;++axis)put(slot,4*axis,std::bit_cast<std::uint32_t>(prepared->position[axis]));
+            if(!prepared->overlapping)continue;
+            c.position=prepared->position;c.normal=prepared->normal;c.response_share=prepared->response_share;
+            c.penetration=-prepared->gap;c.restitution_percent=slot[0x7d];c.movable=(word(slot,0x60)&0x4000)!=0;
             const auto response=resolve_arena_ground_contact(c);if(!response)return ArenaGroundTransport::Invalid;
             for(unsigned axis=0;axis<3;++axis) {
               put(slot,4*axis,std::bit_cast<std::uint32_t>(response->position[axis]));

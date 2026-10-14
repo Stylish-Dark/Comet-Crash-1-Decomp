@@ -631,3 +631,24 @@ See docs/decomp/native-ground-contact.md. Original assets/harnesses stay private
 Estimate: 50% toward a playable single-player mission (previous 48%).
 Next original neighbor gathering/jitter and terrain collision, then base/special
 state, enemy capture/weapons/damage and mission rules. No combat credit.
+
+
+## 2026-10-14 — original pair geometry and random contact normals
+
+Continued `9974004` / PR #37. Recovered complete `1F030` random-direction leaf,
+`7E40` pair distance/normal/jitter/gap arithmetic and refined mass share. Live
+contacts now use the original arithmetic and consume two shuffled-LCG draws for
+each eligible native-gather peer, including non-overlaps; failed transactions
+preserve RNG, banks and cells. Native gather/scheduling and terrain remain excluded.
+
+Private comparisons match 10,000 random-direction and 15,000 pair queries:
+190,000 float lanes and 25,000 next-RNG values, with 1,500 near-coincident cases.
+W-zero arithmetic inputs and the exact-zero native guard are explicitly scoped.
+Validation: 31 native/CLI/graphics CTests, 233 Python tests (after restoring missing
+Capstone), focused ASan/UBSan without host leak inspection, original level-0
+movement/rendering, and independent review. No actionable review finding remains.
+See docs/decomp/native-ground-pair-preparation.md; original inputs remain private.
+
+Estimate: 52% toward a playable single-player mission (previous 50%).
+Next original neighbor gather/scheduling and terrain/corner collision, then
+base/special state, hostile capture/weapons/damage and mission rules. No combat credit.

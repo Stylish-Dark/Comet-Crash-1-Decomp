@@ -31,6 +31,25 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
   for(unsigned i=0;i<4;++i)s[o+i]=bits>>(24-8*i);
 }
 int main() {
+  {
+    Fixture f(40,{3.5f,0,3.5f,0},2);
+    auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{4.5f,0,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    auto expected=f.random;expected.next();expected.next();
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(f.random.next()==expected.next()); // original consumes jitter for non-overlaps too
+  }
+
+  {
+    Fixture f(40,{3.5f,0,3.5f,0},2);
+    auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{3.55f,0,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
+    for(auto &bank:f.storage.banks)put(bank[*peer.entity_index],0x58,std::bit_cast<unsigned>(-1.f));
+    const auto banks=f.storage.banks;const auto cells=f.storage.cells;auto expected=f.random;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Invalid);
+    assert(f.storage.banks==banks && f.storage.cells==cells && f.random.next()==expected.next());
+  }
+
   for(unsigned actor:{0u,1u}) {
     Fixture f(40,{3.5f,0,3.5f,0},2);
     auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{3.5f,0,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
