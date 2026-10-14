@@ -24,6 +24,7 @@ bool native_map_structure_importable(const ArenaEntity &e) {
 ArenaConstructionSimulation::ArenaConstructionSimulation(
     const ArenaConstructionSimulationConfig &c)
     : config_(c), random_(c.seed) {
+  if(config_.ground_contacts_enabled)config_.ground_dynamics_enabled=true;
   if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536 || !c.native_extent || c.native_extent > 24)
     throw std::invalid_argument("invalid simulation dimensions");
   for (const auto &a : c.players) {
@@ -320,7 +321,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               std::span(targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
               std::span(visibility_bits.data(),players_.size()),
-              config_.ground_dynamics_enabled);
+              config_.ground_dynamics_enabled, config_.ground_contacts_enabled);
           if (result != ArenaGroundTransport::Moved) break;
           moved = true;
         }

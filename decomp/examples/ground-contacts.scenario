@@ -1,0 +1,36 @@
+# Synthetic factory tuning/resources, original contact-response arithmetic.
+world 8 1
+player 0 0 0 400 400 0
+player 10 10 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 0 0 2
+unit-quota 1 0 0
+contacts 1
+run
+queue 0 26 2 2
+step
+advance 2
+advance 4
+advance 6
+advance 8
+spawn 0 40 3 3
+spawn 0 40 3 3
+expect-live-unit 1 40 1
+expect-live-unit 2 40 1
+expect unit-active0 2
+expect allocated 3
+transport 1
+advance 9
+expect-unit-cell 1 4 4
+expect-unit-cell 2 4 4
+expect-unit-separated 1 2 0.18
+transport 0
+advance 10
+expect-unit-cell 1 4 4
+expect-unit-cell 2 4 4
+expect resource0 340
+expect unit-active0 2
+expect allocated 3

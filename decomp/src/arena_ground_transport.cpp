@@ -1,6 +1,8 @@
 #include "comet/arena_ground_transport.hpp"
 #include "comet/arena_ground_dynamics.hpp"
+#include "comet/arena_ground_contact.hpp"
 #include <algorithm>
+#include <bitset>
 #include <bit>
 #include <cfenv>
 #include <cmath>
@@ -35,7 +37,7 @@ ArenaGroundTransport transport_arena_ground_unit(
     ArenaEntityStorage &storage, std::uint16_t index, float elapsed,
     std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
     ArenaRandom &random, std::span<const ArenaGridPosition> bases,
-    std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics) {
+    std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics, bool motion_contacts) {
   if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
      storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
      index>=storage.banks[0].size()||index>=storage.banks[1].size() ||
@@ -80,6 +82,7 @@ ArenaGroundTransport transport_arena_ground_unit(
   if(binding!=ArenaGroundUnitBinding::Bound && binding!=ArenaGroundUnitBinding::Blocked)
     return ArenaGroundTransport::Invalid;
   Rounding rounding;
+  if(motion_contacts && !original_velocity_dynamics)return ArenaGroundTransport::Invalid;
   if(original_velocity_dynamics) {
     if(bases.empty())return ArenaGroundTransport::Invalid;
     // Binding selects target but must not replace accumulated live velocity.
@@ -88,12 +91,81 @@ ArenaGroundTransport transport_arena_ground_unit(
       if(!std::isfinite(previous))return ArenaGroundTransport::Invalid;
       put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(previous));
     }
+    if(motion_contacts) {
+      // Native broad phase: ordered nearby bank records, friendly ground units.
+      // Original SPU gather order, random normal perturbation and enemy capture
+      // branches remain separate; only the recovered motion response is used.
+      const int reach=static_cast<int>(std::ceil(float(slot[14])*.01f+2.55f));
+      std::bitset<65536> visited;
+      for(int z=std::max(0,int(old_cell.z)-reach);z<=std::min(int(storage.height)-1,int(old_cell.z)+reach);++z)
+        for(int x=std::max(0,int(old_cell.x)-reach);x<=std::min(int(storage.width)-1,int(old_cell.x)+reach);++x)
+          for(const auto &entry:storage.cells[storage.read_bank][z*24+x]) {
+            const unsigned other=(unsigned(entry[0])<<8)|entry[1];
+            if(other==index || visited.test(other))continue;
+            visited.set(other);
+            if(other>=storage.banks[0].size()||other>=storage.banks[1].size())return ArenaGroundTransport::Invalid;
+            const auto &peer=storage.banks[storage.read_bank][other];
+            const unsigned peer_kind=peer[15],peer_owner=peer[0x33]>>5;
+            if(!(peer_kind==40||peer_kind==41||(peer_kind>=43&&peer_kind<=47))||(peer[0x33]&28)!=20)continue;
+            if(peer_owner>=players.size())return ArenaGroundTransport::Invalid;
+            if(players[peer_owner].team!=players[owner].team)continue;
+            if(peer!=storage.banks[1-storage.read_bank][other] || ((unsigned(peer[12])<<8)|peer[13])!=other)return ArenaGroundTransport::Invalid;
+            ArenaGroundContactQuery c;
+            for(unsigned axis=0;axis<3;++axis) {
+              c.position[axis]=scalar(slot,4*axis);c.velocity[axis]=scalar(slot,0x40+4*axis);
+              c.peer_velocity[axis]=scalar(peer,0x40+4*axis);
+              c.normal[axis]=scalar(peer,4*axis)-c.position[axis];
+              if(!std::isfinite(c.normal[axis])||!std::isfinite(c.peer_velocity[axis]))return ArenaGroundTransport::Invalid;
+            }
+            auto squared=[&]{return std::fma(c.normal[2],c.normal[2],std::fma(c.normal[1],c.normal[1],c.normal[0]*c.normal[0]));};
+            float distance=std::sqrt(squared());
+            if(distance<std::bit_cast<float>(0x38d1b717u)) {
+              // Original 81C8..824C resolves coincidence with an index-ordered
+              // Z nudge; normal jitter/RNG preparation is still native policy.
+              volatile float nudged=c.position[2]+(other>index?-.01f:.01f);
+              c.position[2]=nudged;c.normal[2]=scalar(peer,8)-c.position[2];distance=std::sqrt(squared());
+            }
+            volatile float peer_radius=float(peer[14])*std::bit_cast<float>(0x3c23d70au);
+            volatile float own_radius=float(slot[14])*std::bit_cast<float>(0x3c23d70au);
+            volatile float gap=(distance-peer_radius)-own_radius;
+            if(gap>=std::bit_cast<float>(0xb727c5acu))continue;
+            if(!std::isnormal(distance))return ArenaGroundTransport::Invalid;
+            for(unsigned axis=0;axis<3;++axis)c.normal[axis]/=distance;
+            const float own_mass=scalar(slot,0x58),peer_mass=scalar(peer,0x58);
+            if(!std::isfinite(own_mass)||!std::isfinite(peer_mass)||own_mass<0||peer_mass<0)return ArenaGroundTransport::Invalid;
+            volatile float total=own_mass+peer_mass;
+            if(!std::isfinite(total))return ArenaGroundTransport::Invalid;
+            c.response_share=total>std::bit_cast<float>(0x38d1b717u)?peer_mass/total:0.f;
+            c.penetration=-gap;c.restitution_percent=slot[0x7d];c.movable=(word(slot,0x60)&0x4000)!=0;
+            const auto response=resolve_arena_ground_contact(c);if(!response)return ArenaGroundTransport::Invalid;
+            for(unsigned axis=0;axis<3;++axis) {
+              put(slot,4*axis,std::bit_cast<std::uint32_t>(response->position[axis]));
+              put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(response->velocity[axis]));
+            }
+          }
+    }
     // Original 14060 prepares position BEFORE 158B8 updates velocity.
-    for(unsigned axis:{0u,2u}) {
+    for(unsigned axis=0;axis<3;++axis) {
+      if(axis==1 && !motion_contacts)continue;
       const float value=std::fma(scalar(slot,0x40+4*axis),elapsed,scalar(slot,4*axis));
       if(!std::isfinite(value))return ArenaGroundTransport::Invalid;
       const float limit=std::nextafter(float(axis==0?storage.width:storage.height),0.f);
-      put(slot,4*axis,std::bit_cast<std::uint32_t>(std::clamp(value,0.f,limit)));
+      put(slot,4*axis,std::bit_cast<std::uint32_t>(motion_contacts?value:std::clamp(value,0.f,limit)));
+    }
+    if(motion_contacts) {
+      ArenaGroundBoundsQuery bounds;
+      for(unsigned axis=0;axis<3;++axis){bounds.position[axis]=scalar(slot,4*axis);bounds.velocity[axis]=scalar(slot,0x40+4*axis);}
+      bounds.max_x=float(storage.width);bounds.max_z=float(storage.height);
+      // 7DD0 supplies floor=0, ceiling=2; 9A70 derives the two radii.
+      volatile float radius=float(slot[14])*std::bit_cast<float>(0x3c23d70au);
+      volatile float lateral=float(slot[0x32])*std::bit_cast<float>(0x3c23d70au);
+      bounds.radius=radius;bounds.lateral_radius=lateral;bounds.restitution_percent=slot[0x7d];
+      bounds.movable=(word(slot,0x60)&0x4000)!=0;bounds.floor_uses_lateral_radius=(word(slot,0x60)&0x02000000)!=0;
+      const auto result=contain_arena_ground_unit(bounds);if(!result)return ArenaGroundTransport::Invalid;
+      for(unsigned axis=0;axis<3;++axis){
+        put(slot,4*axis,std::bit_cast<std::uint32_t>(result->position[axis]));
+        put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(result->velocity[axis]));
+      }
     }
   }
   if(!bases.empty()) {

@@ -121,6 +121,11 @@ int main(int argc, char **argv) {
         std::cout << '\n';
         if (result.status == ArenaUnitSpawnStatus::Invalid)
           throw std::invalid_argument("unsupported spawn request");
+      } else if (w[0] == "contacts" && w.size()==2) {
+        const auto flag=number<unsigned>(w[1]);
+        if(flag>1)throw std::invalid_argument("invalid contacts flag");
+        if(scene)scene->set_ground_contacts(flag!=0);else simulation->set_ground_contacts(flag!=0);
+        std::cout<<"contacts "<<flag<<'\n';
       } else if (w[0] == "dynamics" && w.size() == 2) {
         const auto flag = number<unsigned>(w[1]);
         if (flag > 1) throw std::invalid_argument("invalid dynamics flag");
@@ -133,6 +138,19 @@ int main(int argc, char **argv) {
         if (scene) scene->set_ground_transport(flag != 0);
         else simulation->set_ground_transport(flag != 0);
         std::cout << "transport " << flag << '\n';
+      } else if (w[0] == "expect-unit-separated" && w.size()==4) {
+        const auto first=number<unsigned>(w[1]),second=number<unsigned>(w[2]);
+        const double minimum=number<double>(w[3]);const auto &storage=state().storage();
+        const auto &bank=storage.banks[storage.read_bank];
+        if(first==second||first>=bank.size()||second>=bank.size()||!std::isfinite(minimum)||minimum<0)
+          throw std::invalid_argument("invalid separation expectation");
+        auto coordinate=[](const ArenaEntitySlot &s,unsigned offset){unsigned bits=0;for(unsigned i=0;i<4;++i)bits=(bits<<8)|s[offset+i];return std::bit_cast<float>(bits);};
+        double squared=0;
+        for(auto index:{first,second})if(bank[index][15]<40||bank[index][15]>48)
+          throw std::invalid_argument("separation requires live units");
+        for(unsigned axis=0;axis<3;++axis){const double delta=double(coordinate(bank[first],4*axis))-coordinate(bank[second],4*axis);squared+=delta*delta;}
+        if(!std::isfinite(squared)||std::sqrt(squared)<minimum)throw std::runtime_error("unit separation expectation failed");
+        std::cout<<"expect-unit-separated passed\n";
       } else if (w[0] == "expect-unit-near" && w.size() == 5) {
         const auto index=number<unsigned>(w[1]);
         const float x=number<float>(w[2]),z=number<float>(w[3]),tolerance=number<float>(w[4]);

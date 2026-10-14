@@ -28,7 +28,7 @@ float finite(const std::string &s) {
 ArenaConstructionSimulationConfig
 read_arena_construction_config(std::istream &in, std::size_t &line) {
   ArenaConstructionSimulationConfig c;
-  bool world = false, production_seen = false, transport_seen = false, dynamics_seen = false;
+  bool world = false, production_seen = false, transport_seen = false, dynamics_seen = false, contacts_seen = false;
   std::array<bool, 4> quota_seen{}, unit_base_seen{}, unit_target_seen{};
   std::string text;
   while (std::getline(in, text)) {
@@ -45,6 +45,7 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
     if (w[0] == "run" && w.size() == 1) {
       if (!world || c.players.empty())
         throw std::invalid_argument("world and players required");
+      if(c.ground_contacts_enabled)c.ground_dynamics_enabled=true;
       return c;
     }
     if (w[0] == "world" && w.size() == 3 && !world && c.players.empty()) {
@@ -63,6 +64,9 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
       if (a.resource < 0 || a.resource > a.resource_max)
         throw std::invalid_argument("invalid balance");
       c.players.push_back(a);
+    } else if (w[0] == "contacts" && w.size()==2 && world) {
+      if(contacts_seen)throw std::invalid_argument("duplicate contacts flag");
+      contacts_seen=true;c.ground_contacts_enabled=bounded(w[1],1);
     } else if (w[0] == "dynamics" && w.size() == 2 && world) {
       if (dynamics_seen) throw std::invalid_argument("duplicate dynamics flag");
       dynamics_seen = true;

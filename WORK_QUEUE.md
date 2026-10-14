@@ -169,3 +169,24 @@ movement/rendering pass. Independent review found no blocking issues.
 Estimate: 48% toward a playable single-player mission (previous 46%).
 Next: original 7E40 collision/crowd preparation and remaining 158B8 base/height/
 special-kind state, then weapons/damage/mission rules. No combat credit.
+
+
+## 2026-10-14 — original contact response and world containment
+
+Continued `a437a30` / PR #36. Recovered motion-only `7510` contact response
+and six-plane `7A50` bounds. Opt-in config/replay contacts and viewer C enable
+friendly ground-unit separation and radius-aware containment with dynamics.
+Original gather/RNG jitter, terrain/corners, effects, enemy capture and damage
+remain excluded; native broad-phase preparation is explicitly distinguished.
+
+Untouched motion-instruction comparisons (effect callback intercepted externally)
+match 15,000 randomized queries, 180,000 float lanes and 15,000 return values.
+All 30 native/CLI/graphics CTests, 233 Python regressions and focused ASan/UBSan
+checks pass; leak inspection is unavailable on this host. Original level-0
+movement with two units and 40-model rendering pass. Independent review caught
+and resolved coincident index-order signs; both regressions now pass.
+See docs/decomp/native-ground-contact.md. Original assets/harnesses stay private.
+
+Estimate: 50% toward a playable single-player mission (previous 48%).
+Next original neighbor gathering/jitter and terrain collision, then base/special
+state, enemy capture/weapons/damage and mission rules. No combat credit.
