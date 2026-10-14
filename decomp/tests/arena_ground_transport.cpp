@@ -16,21 +16,67 @@ struct Fixture {
   ArenaRoutingGrid grid;
   std::array<ArenaUnitTargetPlayer,2> players{{{0,true,255},{1,true,255}}};
   ArenaRandom random{1};
-  Fixture(unsigned kind=40) {
-    for(auto &b:storage.banks)b.resize(1);
-    reset_arena_entity_index_pool(storage,1);
+  std::array<std::uint8_t,128> stats{};
+  Fixture(unsigned kind=40,std::array<float,4> position={2.95f,0,3.5f,0},unsigned capacity=1) {
+    for(auto &b:storage.banks)b.resize(capacity);
+    reset_arena_entity_index_pool(storage,capacity);
     for(auto &c:grid.cells)c.routes.fill(14); // east
-    std::array<std::uint8_t,128> stats{};
-    ArenaUnitProductionQuota q; q.capacity=1;q.pending=1;q.by_type[kind-40]=1;
+    ArenaUnitProductionQuota q; q.capacity=capacity;q.pending=capacity;q.by_type[kind-40]=capacity;
     store_arena_unit_production_quota(stats,q);
     assert(spawn_reserved_arena_ground_unit(storage,stats,kind,0,
-      {2.95f,0,3.5f,0},players,grid,random).status==ArenaUnitSpawnStatus::Spawned);
+      position,players,grid,random).status==ArenaUnitSpawnStatus::Spawned);
   }
 };
 void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
   for(unsigned i=0;i<4;++i)s[o+i]=bits>>(24-8*i);
 }
 int main() {
+  for(unsigned actor:{0u,1u}) {
+    Fixture f(40,{3.5f,0,3.5f,0},2);
+    auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{3.5f,0,3.5f,0},f.players,f.grid,f.random);assert(peer.entity_index);
+    for(auto &bank:f.storage.banks)for(auto &s:bank){put(s,0,std::bit_cast<unsigned>(3.5f));put(s,4,0);put(s,8,std::bit_cast<unsigned>(3.5f));put(s,0x40,0);put(s,0x44,0);put(s,0x48,0);}
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,actor,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    const float z=scalar(f.storage.banks[0][actor],8);
+    assert(actor==0?z<3.5f:z>3.5f); // original SELB index-order nudge
+  }
+
+  {
+    ArenaConstructionSimulationConfig c;c.capacity=1;c.players={{{{0,0},0,false},1,1}};c.ground_contacts_enabled=true;
+    ArenaConstructionSimulation sim(c);assert(sim.ground_dynamics_enabled() && sim.ground_contacts_enabled());
+    sim.set_ground_dynamics(false);assert(!sim.ground_contacts_enabled());
+    sim.set_ground_contacts(true);assert(sim.ground_dynamics_enabled());
+  }
+
+  {
+    Fixture f(40,{3.4f,0,3.5f,0},2);
+    auto peer=spawn_reserved_arena_ground_unit(f.storage,f.stats,40,0,{3.55f,0,3.5f,0},f.players,f.grid,f.random);
+    assert(peer.entity_index && *peer.entity_index==1);
+    for(auto &bank:f.storage.banks){
+      put(bank[0],0,std::bit_cast<unsigned>(3.4f));put(bank[1],0,std::bit_cast<unsigned>(3.55f));
+      put(bank[0],4,0);put(bank[1],4,0);put(bank[0],8,std::bit_cast<unsigned>(3.5f));put(bank[1],8,std::bit_cast<unsigned>(3.5f));
+      put(bank[0],0x40,std::bit_cast<unsigned>(1.6f));put(bank[1],0x40,std::bit_cast<unsigned>(-1.6f));
+      put(bank[0],0x48,0);put(bank[1],0x48,0);
+    }
+    const auto peer_before=f.storage.banks[0][1];const auto stats=f.stats;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(scalar(f.storage.banks[0][0],0)<3.4f && scalar(f.storage.banks[0][0],0x40)<0);
+    assert(f.storage.banks[0][1]==peer_before && f.storage.banks[1][1]==peer_before && f.stats==stats);
+    assert(f.storage.banks[0]==f.storage.banks[1] && f.storage.summary_counts[3*24+3]==2);
+  }
+
+  {
+    Fixture f(40,{.05f,0,3.5f,0});for(auto &c:f.grid.cells)c.routes.fill(6);
+    for(auto &b:f.storage.banks)put(b[0],0x40,std::bit_cast<unsigned>(-1.6f));
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    const auto &unit=f.storage.banks[0][0];
+    assert(scalar(unit,0)>=.12f && scalar(unit,4)>=.1f && scalar(unit,0x40)>0);
+    assert(f.storage.banks[0]==f.storage.banks[1]);
+    assert(unit[12]==0 && unit[13]==0 && unit[15]==40);
+  }
+
   {
     Fixture f;const auto before=f.storage.banks[0][0];
     for(auto &c:f.grid.cells)c.routes.fill(2); // turn south from initial east
@@ -180,6 +226,7 @@ int main() {
     const auto before=full.storage.banks;const auto cells=full.storage.cells;
     const auto counts=full.storage.summary_counts;auto rng=full.random;
     assert(transport_arena_ground_unit(full.storage,0,.1f,full.players,full.grid,full.random,bases,{},true)==ArenaGroundTransport::CellFull);
+    assert(transport_arena_ground_unit(full.storage,0,.1f,full.players,full.grid,full.random,bases,{},true,true)==ArenaGroundTransport::CellFull);
     assert(full.storage.banks==before && full.storage.cells==cells && full.storage.summary_counts==counts);
     assert(full.random.next()==rng.next());
   }

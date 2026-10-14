@@ -8,5 +8,6 @@ ArenaGroundTransport transport_arena_ground_unit(
     std::span<const ArenaUnitTargetPlayer>, const ArenaRoutingGrid &,
     ArenaRandom &, std::span<const ArenaGridPosition> target_bases = {},
     std::span<const std::uint8_t> visibility_bits = {},
-    bool original_velocity_dynamics = false);
+    bool original_velocity_dynamics = false,
+    bool motion_contacts = false);
 } // namespace comet::decomp

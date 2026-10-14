@@ -108,3 +108,18 @@ dynamics_scenario = Path(__file__).resolve().parent.parent / "examples/ground-dy
 result = run(dynamics_scenario.read_text())
 assert result.returncode == 0, (result.stdout,result.stderr)
 assert result.stdout.count("unit-transport entity=1") == 3
+
+result=run(production_config.replace("run\n","contacts 1\nrun\n")+"contacts 0\ncontacts 1\n")
+assert result.returncode==0,result.stderr
+for setting in ("contacts 2\n","contacts 1\ncontacts 1\n"):
+    assert run(production_config.replace("run\n",setting+"run\n")).returncode!=0
+assert run(production_config+"contacts 2\n").returncode!=0
+
+contact_scenario=Path(__file__).resolve().parent.parent/"examples/ground-contacts.scenario"
+result=run(contact_scenario.read_text());assert result.returncode==0,(result.stdout,result.stderr)
+for command in ("expect-unit-separated 1 1 .1\n","expect-unit-separated 1 999 .1\n","expect-unit-separated 1 2 nan\n","expect-unit-separated 1 2 -1\n"):
+    assert run(contact_scenario.read_text()+command).returncode!=0
+
+# The same scene without contacts retains overlap; this distinguishes the feature.
+result=run(contact_scenario.read_text().replace("contacts 1","dynamics 1\ncontacts 0"))
+assert result.returncode!=0 and "unit separation expectation failed" in result.stderr

@@ -76,7 +76,7 @@ int main() {
     config.construction=&transport_scene;finished.store(false);
     std::thread motion_controls([&]{
         while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
-        SDL_Delay(100);SDL_Event key{};key.type=SDL_KEYDOWN;key.key.keysym.sym=SDLK_m;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_n;SDL_PushEvent(&key);
+        SDL_Delay(100);SDL_Event key{};key.type=SDL_KEYDOWN;key.key.keysym.sym=SDLK_m;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_n;SDL_PushEvent(&key);key.key.keysym.sym=SDLK_c;SDL_PushEvent(&key);
         for(int i=0;i<2;++i){SDL_Delay(100);key.key.keysym.sym=SDLK_t;SDL_PushEvent(&key);}
         SDL_Delay(100);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
     });
@@ -84,7 +84,7 @@ int main() {
     finished.store(true);motion_controls.join();
     if(!motion)throw std::runtime_error(motion.detail);
     const auto after_position=transport_scene.arena().entities[1].position;
-    if(!transport_scene.simulation().ground_transport_enabled() || !transport_scene.simulation().ground_dynamics_enabled() ||
+    if(!transport_scene.simulation().ground_transport_enabled() || !transport_scene.simulation().ground_dynamics_enabled() || !transport_scene.simulation().ground_contacts_enabled() ||
        (before_position.x==after_position.x && before_position.z==after_position.z))
         throw std::runtime_error("keyboard transport did not move/project unit");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";

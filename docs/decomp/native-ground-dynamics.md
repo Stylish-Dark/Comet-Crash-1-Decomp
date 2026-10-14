@@ -108,3 +108,6 @@ full-game parity remain unfinished.
 Capability estimate: **48% toward a playable single-player mission**, up from
 46%. Two points credit independently verified acceleration/drag/speed limiting
 and its selectable live integration. This remains an incomplete source port.
+
+Follow-up: [original contact response and world containment](native-ground-contact.md)
+adds opt-in friendly contacts and radius-aware bounds.
