@@ -27,6 +27,8 @@ add_library(comet_native_recovery STATIC
     src/arena_ground_contact.cpp
     src/arena_ground_pair.cpp
     src/arena_ground_terrain.cpp
+    src/arena_ground_height.cpp
+    src/arena_ground_orientation.cpp
     src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
@@ -299,4 +301,26 @@ if(MSVC)
 else()
   target_compile_options(comet_arena_ground_terrain_tests PRIVATE -UNDEBUG)
   set_source_files_properties(src/arena_ground_terrain.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_ground_height_tests tests/arena_ground_height.cpp)
+target_link_libraries(comet_arena_ground_height_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_ground_height_tests COMMAND comet_arena_ground_height_tests)
+if(MSVC)
+  target_compile_options(comet_arena_ground_height_tests PRIVATE /UNDEBUG)
+  set_source_files_properties(src/arena_ground_height.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+  target_compile_options(comet_arena_ground_height_tests PRIVATE -UNDEBUG)
+  set_source_files_properties(src/arena_ground_height.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_ground_orientation_tests tests/arena_ground_orientation.cpp)
+target_link_libraries(comet_arena_ground_orientation_tests PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_ground_orientation_tests COMMAND comet_arena_ground_orientation_tests)
+if(MSVC)
+  target_compile_options(comet_arena_ground_orientation_tests PRIVATE /UNDEBUG)
+  set_source_files_properties(src/arena_ground_orientation.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+  target_compile_options(comet_arena_ground_orientation_tests PRIVATE -UNDEBUG)
+  set_source_files_properties(src/arena_ground_orientation.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

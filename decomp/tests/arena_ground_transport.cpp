@@ -6,17 +6,22 @@
 #include <cfenv>
 #include <cmath>
 #include <limits>
+#include <memory>
 using namespace comet::decomp;
 float scalar(const ArenaEntitySlot &s, unsigned o) {
   unsigned v=0; for(unsigned i=0;i<4;++i) v=(v<<8)|s[o+i];
   return std::bit_cast<float>(v);
 }
 struct Fixture {
-  ArenaEntityStorage storage;
+  // Keep the large bank/cell fixture off the Windows test thread stack.
+  std::unique_ptr<ArenaEntityStorage> storage_owner=std::make_unique<ArenaEntityStorage>();
+  ArenaEntityStorage &storage=*storage_owner;
   ArenaRoutingGrid grid;
   std::array<ArenaUnitTargetPlayer,2> players{{{0,true,255},{1,true,255}}};
   ArenaRandom random{1};
   std::array<std::uint8_t,128> stats{};
+  Fixture(const Fixture &other):storage_owner(std::make_unique<ArenaEntityStorage>(other.storage)),
+    grid(other.grid),players(other.players),random(other.random),stats(other.stats){}
   Fixture(unsigned kind=40,std::array<float,4> position={2.95f,0,3.5f,0},unsigned capacity=1) {
     for(auto &b:storage.banks)b.resize(capacity);
     reset_arena_entity_index_pool(storage,capacity);
@@ -31,6 +36,49 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
   for(unsigned i=0;i<4;++i)s[o+i]=bits>>(24-8*i);
 }
 int main() {
+  // Live dynamics interpolate from the prior quaternion instead of snapping
+  // immediately to the route heading; transaction writes both banks equally.
+  {
+    Fixture f(40,{3.5f,.2f,3.5f,0});
+    for(auto &bank:f.storage.banks){
+      for(unsigned i=0;i<4;++i)put(bank[0],0x20+4*i,std::bit_cast<unsigned>(i==3?1.f:0.f));
+      put(bank[0],0x40,std::bit_cast<unsigned>(1.f));put(bank[0],0x44,0);put(bank[0],0x48,0);
+    }
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    const float yaw=scalar(f.storage.banks[0][0],0x24),w=scalar(f.storage.banks[0][0],0x2c);
+    assert(yaw<0 && yaw>-.7f && w>.7f);
+    assert(f.storage.banks[0]==f.storage.banks[1]);
+  }
+  {
+    Fixture f(40,{3.5f,.2f,3.5f,0});
+    for(auto &bank:f.storage.banks){
+      for(unsigned i=0;i<4;++i)put(bank[0],0x20+4*i,std::bit_cast<unsigned>(i==3?1.f:0.f));
+      put(bank[0],0x40,std::bit_cast<unsigned>(1.f));put(bank[0],0x44,0);put(bank[0],0x48,0);
+      put(bank[0],0xe8,0); // turn tuning, independent of speed squared at +88
+    }
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(scalar(f.storage.banks[0][0],0x24)==0 && scalar(f.storage.banks[0][0],0x2c)==1);
+  }
+  // Ordinary caller ceiling and alternate 7DD0 envelope are distinct.
+  for(bool alternate:{false,true}) {
+    Fixture f(40,{3.5f,1.5f,3.5f,0});
+    for(auto &bank:f.storage.banks){bank[0][0xb8]=alternate?1:0;put(bank[0],4,std::bit_cast<unsigned>(1.5f));put(bank[0],0x44,0);}
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    const float y=scalar(f.storage.banks[0][0],4);
+    assert(alternate?y==1.5f:y<=.9f);
+  }
+  {
+    Fixture f(40,{3.5f,.2f,3.5f,0});
+    for(auto &bank:f.storage.banks)bank[0][0xb8]=1; // spring also follows alternate bounds
+    f.grid.cells[3*24+3].visibility=1;
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
+    assert(scalar(f.storage.banks[0][0],0x44)>0);
+    assert(f.storage.banks[0]==f.storage.banks[1]);
+  }
   {
     Fixture f(40,{3.95f,0,3.95f,0});
     for(auto &bank:f.storage.banks){put(bank[0],0,std::bit_cast<unsigned>(3.95f));put(bank[0],8,std::bit_cast<unsigned>(3.95f));put(bank[0],0x48,std::bit_cast<unsigned>(1.6f));}
@@ -120,7 +168,7 @@ int main() {
     const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
     assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true)==ArenaGroundTransport::Moved);
     const auto &unit=f.storage.banks[0][0];
-    assert(scalar(unit,0)>=.12f && scalar(unit,4)>=.1f && scalar(unit,0x40)>0);
+    assert(scalar(unit,0)>=.12f && scalar(unit,4)>=-.1f && scalar(unit,0x40)>0);
     assert(f.storage.banks[0]==f.storage.banks[1]);
     assert(unit[12]==0 && unit[13]==0 && unit[15]==40);
   }

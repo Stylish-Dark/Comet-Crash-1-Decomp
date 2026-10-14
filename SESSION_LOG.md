@@ -672,3 +672,28 @@ See docs/decomp/native-ground-terrain.md for exact-zero and caller-state boundar
 Estimate: 55% toward a playable single-player mission (previous 52%).
 Next original neighbor gathering/scheduling and height/base/special-kind state,
 then hostile capture/weapons/damage, AI and mission rules. No combat credit.
+
+
+## 2026-10-14 — original height control and gradual orientation
+
+Continued `0cb4995` / PR #39. Added ordinary-ground quaternion direction/bank/
+interpolation and height spring kernels; live dynamics now turn gradually.
+Contact mode uses original stage/tuning caller gates for floor BE4CCCCC and
+ceiling 3F7FFFFF, or alternate world-only 0/2 bounds. Obstruction-controlled
+height spring follows terrain correction. Kind 46 retains preview orientation.
+
+Private height comparison: 10,000 queries / 40,000 lanes bit-exact. Orientation:
+6,000 queries / 24,000 lanes within 2e-7; 4,216 quaternions bit-exact, maximum
+lane error 1.78814e-7. Native zero-cross/zero-direction guards are explicitly
+scoped; complete orientation bitwise parity is not claimed. Public live tests
+cover gradual turning, envelope gates and upward height steering.
+Validation: 34 native/CLI/graphics CTests, 233 Python tests, ASan/UBSan with host
+leak inspection disabled, and original level-0 movement/rendering. Independent
+review caught and resolved spring-gate and turn-tuning integration errors; no
+remaining blocker was found. Original inputs and harnesses stay private.
+See docs/decomp/native-ground-height-orientation.md for arithmetic and exclusions.
+
+Estimate: 58% toward a playable single-player mission (previous 55%), a capability
+judgment rather than measured source coverage. Next original gather/scheduling,
+producer deployment and base/special state; hostile capture, weapons/damage,
+mission rules and AI remain major gaps. No combat credit.
