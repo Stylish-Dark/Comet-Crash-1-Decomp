@@ -98,3 +98,6 @@ Estimated capability: **52% toward a playable single-player mission**, up from
 50%. This credits recovered pair preparation and original randomized live contact
 normals, not combat or mission completion. The estimate measures capability, not
 percentage of original source recovered.
+
+Follow-up: [original terrain walls and corners](native-ground-terrain.md)
+adds local obstruction response to live contact mode.

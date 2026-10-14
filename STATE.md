@@ -263,3 +263,23 @@ See docs/decomp/native-ground-pair-preparation.md; original inputs remain privat
 Estimate: 52% toward a playable single-player mission (previous 50%).
 Next original neighbor gather/scheduling and terrain/corner collision, then
 base/special state, hostile capture/weapons/damage and mission rules. No combat credit.
+
+
+## 2026-10-14 — original terrain walls and corners
+
+Continued `6a2ea7f` / PR #38. Recovered routine-20 local rectangle/four-point
+selection and 7970 reference-position point response, composed with 7A50 planes.
+Contact mode now reflects normal velocity and permits tangential wall movement.
+Old cached cell/XZ reference, obstruction flag and team bits are supplied explicitly;
+previous floor0/ceiling2 and conservative route-cell guard remain native policies.
+
+Private original execution matches 10,000 geometry, 10,000 point and 5,000 full
+terrain response queries: 380,000 float lanes and 15,000 returns. Public wall/corner,
+reference-position and coincident rollback checks pass. All 32 native/CLI/graphics
+CTests, 233 Python tests, focused ASan/UBSan without host leak inspection, original
+level-0 movement/rendering and independent review pass. Original inputs stay private.
+See docs/decomp/native-ground-terrain.md for exact-zero and caller-state boundaries.
+
+Estimate: 55% toward a playable single-player mission (previous 52%).
+Next original neighbor gathering/scheduling and height/base/special-kind state,
+then hostile capture/weapons/damage, AI and mission rules. No combat credit.

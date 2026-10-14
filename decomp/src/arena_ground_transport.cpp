@@ -2,6 +2,7 @@
 #include "comet/arena_ground_dynamics.hpp"
 #include "comet/arena_ground_contact.hpp"
 #include "comet/arena_ground_pair.hpp"
+#include "comet/arena_ground_terrain.hpp"
 #include <algorithm>
 #include <bitset>
 #include <bit>
@@ -143,7 +144,18 @@ ArenaGroundTransport transport_arena_ground_unit(
       put(slot,4*axis,std::bit_cast<std::uint32_t>(motion_contacts?value:std::clamp(value,0.f,limit)));
     }
     if(motion_contacts) {
-      ArenaGroundBoundsQuery bounds;
+      ArenaGroundTerrainQuery terrain;
+      auto &bounds=terrain.bounds;
+      terrain.geometry.cell=old_cell;terrain.geometry.width=static_cast<std::uint8_t>(storage.width);
+      terrain.geometry.height=static_cast<std::uint8_t>(storage.height);
+      terrain.geometry.visibility_bit=visibility_bits.empty()?players[owner].team:visibility_bits[owner];
+      if(terrain.geometry.visibility_bit>=4)return ArenaGroundTransport::Invalid;
+      // 9D58..9EC0: the bypass flag is current-cell obstruction unless entity
+      // bit 0x80000 suppresses it. 490 retains original X/Z with Y cleared.
+      terrain.geometry.world_only=(word(slot,0x60)&0x80000)==0 &&
+          (grid.cells[old_flat].visibility&(1u<<terrain.geometry.visibility_bit))!=0;
+      terrain.reference_position={scalar(storage.banks[storage.read_bank][index],0),0,
+                                  scalar(storage.banks[storage.read_bank][index],8),0};
       for(unsigned axis=0;axis<3;++axis){bounds.position[axis]=scalar(slot,4*axis);bounds.velocity[axis]=scalar(slot,0x40+4*axis);}
       bounds.max_x=float(storage.width);bounds.max_z=float(storage.height);
       // 7DD0 supplies floor=0, ceiling=2; 9A70 derives the two radii.
@@ -151,7 +163,7 @@ ArenaGroundTransport transport_arena_ground_unit(
       volatile float lateral=float(slot[0x32])*std::bit_cast<float>(0x3c23d70au);
       bounds.radius=radius;bounds.lateral_radius=lateral;bounds.restitution_percent=slot[0x7d];
       bounds.movable=(word(slot,0x60)&0x4000)!=0;bounds.floor_uses_lateral_radius=(word(slot,0x60)&0x02000000)!=0;
-      const auto result=contain_arena_ground_unit(bounds);if(!result)return ArenaGroundTransport::Invalid;
+      const auto result=contain_arena_ground_terrain(terrain,grid);if(!result)return ArenaGroundTransport::Invalid;
       for(unsigned axis=0;axis<3;++axis){
         put(slot,4*axis,std::bit_cast<std::uint32_t>(result->position[axis]));
         put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(result->velocity[axis]));
