@@ -97,3 +97,6 @@ and full-game parity remain unfinished.
 Estimated capability: **50% toward a playable single-player mission**, up from
 48%. This is a judgment of usable capability, not percentage of original code
 recovered. No combat or mission-completion credit is added.
+
+Follow-up: [original pair preparation](native-ground-pair-preparation.md)
+replaces native normal/distance/mass arithmetic and supplies original random jitter.
