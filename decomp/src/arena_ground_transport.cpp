@@ -3,6 +3,8 @@
 #include "comet/arena_ground_contact.hpp"
 #include "comet/arena_ground_pair.hpp"
 #include "comet/arena_ground_terrain.hpp"
+#include "comet/arena_ground_height.hpp"
+#include "comet/arena_ground_orientation.hpp"
 #include <algorithm>
 #include <bitset>
 #include <bit>
@@ -57,6 +59,8 @@ ArenaGroundTransport transport_arena_ground_unit(
   if(storage.banks[0][index]!=storage.banks[1][index])return ArenaGroundTransport::Invalid;
   const float speed=scalar(slot,0x84);
   if(!std::isnormal(speed)||speed<=0)return ArenaGroundTransport::Invalid;
+  const bool ordinary_height=(slot[0xb4]==255 && slot[0xb5]==255 && slot[0xb8]!=1);
+  bool height_control=false;
   const auto old_cell=cell_for(slot,storage.width,storage.height);
   const unsigned old_flat=old_cell.z*24+old_cell.x;
   std::array<std::size_t,2> offsets{};
@@ -158,7 +162,15 @@ ArenaGroundTransport transport_arena_ground_unit(
                                   scalar(storage.banks[storage.read_bank][index],8),0};
       for(unsigned axis=0;axis<3;++axis){bounds.position[axis]=scalar(slot,4*axis);bounds.velocity[axis]=scalar(slot,0x40+4*axis);}
       bounds.max_x=float(storage.width);bounds.max_z=float(storage.height);
-      // 7DD0 supplies floor=0, ceiling=2; 9A70 derives the two radii.
+      // 14060 selects local terrain for the ordinary deployed caller; the
+      // linked/alternate caller uses 7DD0 world bounds. Context 595 enables
+      // the height spring independently of the selected bounds envelope.
+      height_control=terrain.geometry.world_only;
+      if(ordinary_height){
+        bounds.min_y=std::bit_cast<float>(0xbe4cccccu);
+        bounds.max_y=std::bit_cast<float>(0x3f7fffffu);
+      }else terrain.geometry.world_only=true;
+      // 9A70 derives the two radii.
       volatile float radius=float(slot[14])*std::bit_cast<float>(0x3c23d70au);
       volatile float lateral=float(slot[0x32])*std::bit_cast<float>(0x3c23d70au);
       bounds.radius=radius;bounds.lateral_radius=lateral;bounds.restitution_percent=slot[0x7d];
@@ -185,10 +197,16 @@ ArenaGroundTransport transport_arena_ground_unit(
     const auto steering=steer_arena_ground_unit(query,grid);
     if(!steering)return ArenaGroundTransport::Invalid;
     if(steering->blocked)return ArenaGroundTransport::Blocked;
+    std::optional<std::array<float,4>> recovered_heading;
     if(original_velocity_dynamics) {
       ArenaGroundDynamicsQuery dynamics;
       for(unsigned axis=0;axis<4;++axis)dynamics.velocity[axis]=scalar(slot,0x40+4*axis);
-      dynamics.steering=steering->direction;
+      ArenaGroundHeightQuery height;
+      height.position=query.position;height.velocity=dynamics.velocity;
+      height.direction=steering->direction;height.enabled=height_control;
+      const auto direction=steer_arena_ground_height(height);
+      if(!direction)return ArenaGroundTransport::Invalid;
+      dynamics.steering=*direction;
       dynamics.steering_acceleration=scalar(slot,0x80);
       dynamics.speed_limit=speed;dynamics.elapsed=elapsed;
       dynamics.kind=static_cast<std::uint8_t>(kind);
@@ -197,6 +215,16 @@ ArenaGroundTransport transport_arena_ground_unit(
       // World/crowd acceleration input is intentionally zero in this preview.
       const auto result=advance_arena_ground_velocity(dynamics);
       if(!result)return ArenaGroundTransport::Invalid;
+      if(kind!=46){
+        ArenaGroundOrientationQuery orientation;
+        orientation.velocity=result->velocity;orientation.steering_direction=dynamics.steering;
+        orientation.quaternion=query.orientation;orientation.elapsed=elapsed;
+        orientation.prelimit_speed_squared=result->horizontal_speed_squared_before_limit;
+        orientation.turn_rate=scalar(slot,0xe8);orientation.bank_scale=scalar(slot,0x90);
+        orientation.kind=static_cast<std::uint8_t>(kind);
+        recovered_heading=prepare_arena_ground_orientation(orientation);
+        if(!recovered_heading)return ArenaGroundTransport::Invalid;
+      }
       for(unsigned axis=0;axis<4;++axis)
         put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(result->velocity[axis]));
     } else {
@@ -205,8 +233,11 @@ ArenaGroundTransport transport_arena_ground_unit(
         put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(float(velocity)));
       }
     }
-    auto heading=steering->route_direction?arena_ground_route_heading(*steering->route_direction):
-        std::optional<std::array<float,4>>(query.orientation);
+    // Kind 46 retains the explicit preview heading until its special branch
+    // is recovered. Ordinary dynamics use the original gradual orientation.
+    auto heading=recovered_heading?recovered_heading:
+        (steering->route_direction?arena_ground_route_heading(*steering->route_direction):
+        std::optional<std::array<float,4>>(query.orientation));
     for(unsigned axis=0;axis<4;++axis)
       put(slot,0x20+4*axis,std::bit_cast<std::uint32_t>((*heading)[axis]));
   } else if(binding==ArenaGroundUnitBinding::Blocked)return ArenaGroundTransport::Blocked;
