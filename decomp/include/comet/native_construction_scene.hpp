@@ -22,6 +22,7 @@ public:
   void set_ground_contacts(bool enabled) { simulation_.set_ground_contacts(enabled); }
   void set_ground_dynamics(bool enabled) { simulation_.set_ground_dynamics(enabled); }
   void set_ground_transport(bool enabled) { simulation_.set_ground_transport(enabled); }
+  bool set_ground_capture_ready(std::uint16_t index,bool ready) { return simulation_.set_ground_capture_ready(index,ready); }
   ArenaUnitSpawnResult spawn_reserved_ground_unit(std::uint8_t owner,
                                                   std::uint8_t kind,
                                                   ArenaGridPosition);

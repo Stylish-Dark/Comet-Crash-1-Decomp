@@ -256,3 +256,27 @@ Estimate: 58% toward a playable single-player mission (previous 55%), a capabili
 judgment rather than measured source coverage. Next original gather/scheduling,
 producer deployment and base/special state; hostile capture, weapons/damage,
 mission rules and AI remain major gaps. No combat credit.
+
+
+## 2026-10-15 — original hostile ownership capture
+
+Continued `166a638` / PR #40. Recovered overlapping stage-5 ground capture by a
+hostile ready kind-45 peer: recipient admission precedes source removal, then
+owner/link/target bytes change. Live movement commits statistics with banks,
+cells and RNG; scene owner display and simulation quota synchronization follow.
+Readiness uses an explicit native API/replay control; original automatic weapon
+activation, kind-45 victim lifecycle and notification/FX callbacks are excluded.
+
+Private untouched-instruction comparisons match 10,000 cases / 7,680,000 output
+bytes and 10,000 capture classifications, including 396 transfers and capacity
+rejection. Public tests cover rollback after route/target rejection, malformed
+spans, quota conservation, scene ownership, repeated ticks and factory-to-capture
+replay. All 35 native/CLI/graphics CTests, 233 Python tests, ASan/UBSan without
+host leak inspection and original level-0 capture/rendering pass. Independent
+review findings (statistics span overflow and copied-target validation) fixed.
+See docs/decomp/native-ground-capture.md; original artifacts stay private.
+
+Estimate: 61% toward a playable single-player mission (previous 58%), a capability
+judgment rather than measured source coverage. Next original readiness/weapon
+state, producer deployment, gather/scheduling and lifecycle; weapons/damage,
+enemy AI and mission win/loss remain major gaps. No damage/mission credit.

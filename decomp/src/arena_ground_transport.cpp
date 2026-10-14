@@ -41,16 +41,21 @@ ArenaGroundTransport transport_arena_ground_unit(
     ArenaEntityStorage &storage, std::uint16_t index, float elapsed,
     std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
     ArenaRandom &random, std::span<const ArenaGridPosition> bases,
-    std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics, bool motion_contacts) {
+    std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics, bool motion_contacts,
+    std::span<ArenaPlayerStatisticsBlock> capture_statistics) {
+  if(!capture_statistics.empty() && capture_statistics.size()!=players.size())return ArenaGroundTransport::Invalid;
   if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
      storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
      index>=storage.banks[0].size()||index>=storage.banks[1].size() ||
      players.empty()||players.size()>4) return ArenaGroundTransport::Invalid;
+  std::array<ArenaPlayerStatisticsBlock,4> next_statistics{};
+  std::copy(capture_statistics.begin(),capture_statistics.end(),next_statistics.begin());
   if((!bases.empty() && bases.size()!=players.size()) ||
      (!visibility_bits.empty() && (visibility_bits.size()!=players.size() || bases.empty())))
     return ArenaGroundTransport::Invalid;
   auto slot=storage.banks[storage.read_bank][index];
-  const unsigned kind=slot[15],owner=slot[0x33]>>5;
+  const unsigned kind=slot[15];
+  unsigned owner=slot[0x33]>>5;
   if(owner>=players.size() || !(kind==40||kind==41||(kind>=43&&kind<=47)) ||
      (slot[0x33]&28)!=20 || ((unsigned(slot[12])<<8)|slot[13])!=index)
     return ArenaGroundTransport::Invalid;
@@ -98,8 +103,9 @@ ArenaGroundTransport transport_arena_ground_unit(
       put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(previous));
     }
     if(motion_contacts) {
-      // Native broad phase: ordered nearby bank records, friendly ground units.
-      // Original gather order and enemy capture remain separate. Pair geometry,
+      // Native broad phase: ordered nearby ground bank records. Hostile
+      // contacts require explicit player statistics for ownership transfer.
+      // Original gather order and effect callbacks remain separate. Pair geometry,
       // normal jitter and motion response use recovered arithmetic.
       const int reach=static_cast<int>(std::ceil(float(slot[14])*.01f+2.55f));
       std::bitset<65536> visited;
@@ -114,7 +120,7 @@ ArenaGroundTransport transport_arena_ground_unit(
             const unsigned peer_kind=peer[15],peer_owner=peer[0x33]>>5;
             if(!(peer_kind==40||peer_kind==41||(peer_kind>=43&&peer_kind<=47))||(peer[0x33]&28)!=20)continue;
             if(peer_owner>=players.size())return ArenaGroundTransport::Invalid;
-            if(players[peer_owner].team!=players[owner].team)continue;
+            if(players[peer_owner].team!=players[owner].team && capture_statistics.empty())continue;
             if(peer!=storage.banks[1-storage.read_bank][other] || ((unsigned(peer[12])<<8)|peer[13])!=other)return ArenaGroundTransport::Invalid;
             ArenaGroundPairQuery pair;
             ArenaGroundContactQuery c;
@@ -130,6 +136,15 @@ ArenaGroundTransport transport_arena_ground_unit(
             // Original coincidence correction writes position even without overlap.
             for(unsigned axis=0;axis<3;++axis)put(slot,4*axis,std::bit_cast<std::uint32_t>(prepared->position[axis]));
             if(!prepared->overlapping)continue;
+            if(!capture_statistics.empty()){
+              std::array<std::uint8_t,4> teams{};
+              for(unsigned p=0;p<players.size();++p)teams[p]=players[p].team;
+              const auto captured=capture_arena_ground_unit(slot,peer,
+                  std::span(teams.data(),players.size()),
+                  std::span(next_statistics.data(),players.size()),true);
+              if(captured==ArenaGroundCapture::Invalid)return ArenaGroundTransport::Invalid;
+              if(captured==ArenaGroundCapture::Captured)owner=slot[0x33]>>5;
+            }
             c.position=prepared->position;c.normal=prepared->normal;c.response_share=prepared->response_share;
             c.penetration=-prepared->gap;c.restitution_percent=slot[0x7d];c.movable=(word(slot,0x60)&0x4000)!=0;
             const auto response=resolve_arena_ground_contact(c);if(!response)return ArenaGroundTransport::Invalid;
@@ -191,6 +206,10 @@ ArenaGroundTransport transport_arena_ground_unit(
     query.owner=static_cast<std::uint8_t>(owner);query.target=slot[0x7e];
     query.extent=static_cast<std::uint8_t>(storage.width);
     if(storage.width!=storage.height)return ArenaGroundTransport::Invalid;
+    // Capture copies peer target state after the initial binding validation.
+    // Validate that new target before indexing player/base/route arrays.
+    if(query.target>=players.size() || query.target==owner ||
+       players[query.target].team==players[owner].team)return ArenaGroundTransport::Invalid;
     query.target_available=players[query.target].base_available;
     query.target_base=bases[query.target];
     query.visibility_bit=visibility_bits.empty()?players[owner].team:visibility_bits[owner];
@@ -300,6 +319,7 @@ ArenaGroundTransport transport_arena_ground_unit(
     storage.banks[bank][index]=slot;
   }
   if(flat!=old_flat){--storage.summary_counts[old_flat];++storage.summary_counts[flat];}
+  std::copy_n(next_statistics.begin(),capture_statistics.size(),capture_statistics.begin());
   random=next_random;
   return ArenaGroundTransport::Moved;
 }

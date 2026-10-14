@@ -96,6 +96,8 @@ public:
   ArenaUnitSpawnResult
   spawn_reserved_ground_unit(std::uint8_t owner, std::uint8_t kind,
                              const std::array<float, 4> &position);
+  // Explicit native preview control for the recovered capture-readiness byte.
+  bool set_ground_capture_ready(std::uint16_t index,bool ready);
   const auto &player_statistics() const { return statistics_; }
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }
