@@ -1,4 +1,5 @@
 #include "comet/arena_construction_simulation.hpp"
+#include "comet/arena_ground_base.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -36,6 +37,12 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     ArenaPlayer p;
     p.start_grid = a.route.base;
     players_.push_back(p);
+  }
+  for(unsigned owner=0;owner<4;++owner)if(c.base_counters[owner]) {
+    if(owner>=c.players.size() || *c.base_counters[owner]<0)
+      throw std::invalid_argument("invalid base counter");
+    const auto value=static_cast<std::uint16_t>(*c.base_counters[owner]);
+    statistics_[owner][88]=value>>8;statistics_[owner][89]=value;
   }
   for (unsigned owner = 0; owner < c.players.size(); ++owner) {
     const auto forced = c.unit_target_overrides[owner];
@@ -296,12 +303,15 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
       std::array<ArenaUnitTargetPlayer, 4> targets{};
       std::array<ArenaGridPosition,4> bases{};
+      std::array<ArenaGroundBase,4> impact_bases{};
       std::array<std::uint8_t,4> visibility_bits{};
       for (unsigned p = 0; p < players_.size(); ++p) {
         targets[p] = {static_cast<std::uint8_t>(routes_[p].team),
                       config_.unit_base_available[p],
                       config_.unit_target_overrides[p]};
         bases[p]=routes_[p].base;
+        impact_bases[p]={routes_[p].base,static_cast<std::uint8_t>(routes_[p].team),
+                         config_.base_counters[p].has_value() && config_.unit_base_available[p]};
         visibility_bits[p]=static_cast<std::uint8_t>(routes_[p].team);
       }
       for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
@@ -326,8 +336,26 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               std::span(visibility_bits.data(),players_.size()),
               config_.ground_dynamics_enabled, config_.ground_contacts_enabled,
               std::span(next_statistics.data(),players_.size()));
+          if(result==ArenaGroundTransport::Moved)moved=true;
+          const auto &current=transported.banks[0][i];
+          const auto owner=static_cast<unsigned>(current[0x33]>>5);
+          if(owner>=players_.size())throw std::invalid_argument("invalid impact owner");
+          auto scalar_at=[&](unsigned off){unsigned word=0;for(unsigned b=0;b<4;++b)word=(word<<8)|current[off+b];return std::bit_cast<float>(word);};
+          const auto base=select_arena_ground_base({scalar_at(0),scalar_at(4),scalar_at(8),0},
+              static_cast<std::uint8_t>(routes_[owner].team),scalar_at(0x38),
+              std::span(impact_bases).first(players_.size()));
+          if(base){
+            if(read_arena_unit_production_quota(next_statistics[owner]).active<=0 ||
+               register_arena_entity_statistics(next_statistics[owner],current,false,true)!=ArenaEntityRegistration::Registered)
+              throw std::invalid_argument("invalid impact registration");
+            ArenaPlayerResourceDelta impact;impact.base_counter=-1;impact.attribution=static_cast<std::uint16_t>(owner);impact.base_counter_enabled=true;
+            apply_arena_player_resource_delta(next_statistics[*base],impact);
+            if(!retire_arena_entity(transported,static_cast<std::uint16_t>(i)))
+              throw std::invalid_argument("invalid impact storage membership");
+            tick.base_impacts.push_back({static_cast<std::uint16_t>(i),*base,static_cast<std::uint8_t>(owner)});
+            break;
+          }
           if (result != ArenaGroundTransport::Moved) break;
-          moved = true;
         }
         if (moved) tick.transported_units.push_back(static_cast<std::uint16_t>(i));
       }
@@ -411,6 +439,10 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   }
   tick.construction = step();
   return tick;
+}
+std::optional<std::int16_t> ArenaConstructionSimulation::base_counter(std::size_t owner) const {
+  if(owner>=players_.size() || !config_.base_counters[owner])return {};
+  return std::bit_cast<std::int16_t>(static_cast<std::uint16_t>((unsigned(statistics_[owner][88])<<8)|statistics_[owner][89]));
 }
 bool ArenaConstructionSimulation::set_ground_capture_ready(std::uint16_t index,bool ready){
   if(index>=storage_.banks[0].size() || index>=storage_.banks[1].size() ||

@@ -128,6 +128,12 @@ int main(int argc, char **argv) {
             simulation->set_ground_capture_ready(static_cast<std::uint16_t>(index),ready!=0);
         if(!changed)throw std::invalid_argument("readiness requires a live kind-45 unit");
         std::cout<<"capture-ready "<<index<<' '<<ready<<'\n';
+      } else if (w[0] == "expect-base-counter" && w.size()==3) {
+        const auto owner=number<unsigned>(w[1]),expected=number<unsigned>(w[2]);
+        const auto actual=state().base_counter(owner);
+        if(!actual || expected>32767)throw std::invalid_argument("invalid base counter expectation");
+        if(static_cast<unsigned>(*actual)!=expected)throw std::runtime_error("base counter expectation failed");
+        std::cout<<"expect-base-counter passed\n";
       } else if (w[0] == "expect-unit-owner" && w.size()==3) {
         const auto index=number<unsigned>(w[1]),owner=number<unsigned>(w[2]);
         const auto &bank=state().storage().banks[state().storage().read_bank];
@@ -286,6 +292,8 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for(const auto &impact:tick.base_impacts)
+          std::cout<<"base-impact entity="<<impact.entity_index<<" base="<<unsigned(impact.base)<<" owner="<<unsigned(impact.owner)<<'\n';
         for (auto index : tick.transported_units)
           std::cout << "unit-transport entity=" << index << '\n';
         for (auto index : tick.production_reservations)

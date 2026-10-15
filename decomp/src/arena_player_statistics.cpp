@@ -125,6 +125,26 @@ register_arena_entity_statistics(std::span<std::uint8_t, 128> statistics,
              ? ArenaEntityRegistration::Registered
              : ArenaEntityRegistration::CapacityRejected;
 }
+void apply_arena_player_resource_delta(std::span<std::uint8_t,128> statistics,
+                                       const ArenaPlayerResourceDelta &delta) {
+  std::array<std::uint8_t,128> next;
+  std::copy(statistics.begin(),statistics.end(),next.begin());
+  {
+    Rounding rounding;
+    const float capacity=add(scalar(statistics,76),delta.capacity);
+    const float resource=add(scalar(statistics,72),delta.resource);
+    write_scalar(next,76,capacity);
+    write_scalar(next,72,resource>capacity?capacity:resource);
+    write_scalar(next,80,add(scalar(statistics,80),delta.scalar_80));
+    write(next,84,std::min<std::uint32_t>(10000,read(statistics,84,2)+delta.count_84),2);
+    const auto old=signed_half(statistics,88);
+    const auto change=delta.base_counter_enabled?delta.base_counter:0;
+    const auto sum=std::bit_cast<std::int16_t>(static_cast<std::uint16_t>(read(statistics,88,2)+change));
+    write(next,88,static_cast<std::uint16_t>(std::max<std::int16_t>(sum,0)),2);
+    if(old>0 && change<0)write(next,120,delta.attribution,2);
+  }
+  std::copy(next.begin(),next.end(),statistics.begin());
+}
 ArenaUnitProductionQuota read_arena_unit_production_quota(
     std::span<const std::uint8_t, 128> statistics) {
   ArenaUnitProductionQuota q;

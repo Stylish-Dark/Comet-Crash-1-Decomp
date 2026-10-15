@@ -24,6 +24,8 @@ struct ArenaConstructionSimulationConfig {
   std::array<std::uint32_t, 4> event_exclusion_masks{};
   std::array<bool, 4> unit_base_available{};
   std::array<std::uint8_t, 4> unit_target_overrides{255, 255, 255, 255};
+  // Explicit native bootstrap; absent means base impacts are disabled.
+  std::array<std::optional<std::int16_t>,4> base_counters{};
   bool production_enabled = false;
   bool ground_transport_enabled = false;
   bool ground_dynamics_enabled = false;
@@ -55,6 +57,10 @@ enum class ArenaTimedStatus {
   Unsupported,
   Backpressure
 };
+struct ArenaGroundBaseImpact {
+  std::uint16_t entity_index=0;
+  std::uint8_t base=0,owner=0;
+};
 struct ArenaConstructionTick {
   std::array<ArenaTimedStatus, 4> players{};
   ArenaConstructionSimulationStep construction;
@@ -62,6 +68,7 @@ struct ArenaConstructionTick {
   std::vector<std::uint16_t> factory_selections;
   std::vector<std::uint16_t> production_reservations;
   std::vector<std::uint16_t> transported_units;
+  std::vector<ArenaGroundBaseImpact> base_impacts;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;
@@ -98,6 +105,7 @@ public:
                              const std::array<float, 4> &position);
   // Explicit native preview control for the recovered capture-readiness byte.
   bool set_ground_capture_ready(std::uint16_t index,bool ready);
+  std::optional<std::int16_t> base_counter(std::size_t owner) const;
   const auto &player_statistics() const { return statistics_; }
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }

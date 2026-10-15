@@ -133,3 +133,14 @@ assert result.returncode==0,(result.stdout,result.stderr)
 for command in ("capture-ready 2 1\n", "capture-ready 3 2\n", "capture-ready 65536 1\n", "expect-unit-owner 2 7\n", "expect-unit-owner 999 0\n"):
  result=run(capture_config+capture_commands.split("capture-ready 3 1")[0]+command)
  assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)
+
+# Production -> route -> impact -> quota release -> production again.
+base_scenario=(Path(__file__).resolve().parents[1]/"examples/ground-base-impact.scenario").read_text()
+result=run(base_scenario)
+assert result.returncode==0,(result.stdout,result.stderr)
+assert result.stdout.count("base-impact ")==2,result.stdout
+for setting in ("base-counter 1 -1", "base-counter 1 32768", "base-counter 2 1", "base-counter 1 2\nbase-counter 1 3"):
+ result=run(base_scenario.replace("base-counter 1 2",setting))
+ assert result.returncode!=0 and "line " in result.stderr,(setting,result.stdout,result.stderr)
+result=run(base_scenario.replace("expect-base-counter 1 1","expect-base-counter 1 9"))
+assert result.returncode!=0 and "base counter expectation failed" in result.stderr,(result.stdout,result.stderr)

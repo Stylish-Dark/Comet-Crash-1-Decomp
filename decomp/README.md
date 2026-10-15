@@ -20,3 +20,11 @@ The existing `ps3recomp` path is retained as a reversing oracle. It is useful fo
 `recovered/level_map_000D5D5C.cpp` is the first game-specific function translated out of register-level PPU form. It constructs `"%slevel%u.map"`, reads the current level index from the large game state, and delegates to the map loader at `0x000D91B0`.
 
 `docs/decomp/source-anchors.md` records binary evidence that pins several code regions to original source concepts, including the surviving `arenaGraphics.cpp` line markers.
+
+## Ground-unit base impacts
+
+The native loop supports explicitly configured enemy-base counters, original
+arrival selection/accounting, unit quota release and FIFO entity reuse. Try
+`decomp/examples/ground-base-impact.scenario` with `comet_construction_replay`.
+See [recovery evidence and boundaries](../docs/decomp/native-ground-base-impact.md).
+Mission counter defaults and victory/defeat rules remain unrecovered.
