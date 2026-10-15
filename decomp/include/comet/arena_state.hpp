@@ -70,6 +70,8 @@ struct ArenaEntity {
   std::array<float, 4> orientation{0, 0, 0, 1};
   std::size_t source_record = 0;
   std::optional<std::uint16_t> live_entity_index;
+  // Native corpse preview scale derived from the recovered scalar decay.
+  std::optional<float> corpse_fraction;
   // Present only for structures backed by native simulation state.
   std::optional<float> construction_progress;
   bool construction_ready = false;

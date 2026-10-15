@@ -32,6 +32,11 @@ bool pack_arena_cell_entry(ArenaPackedCellEntry &,
 std::optional<std::uint16_t>
 insert_arena_entity(ArenaEntityStorage &, ArenaGridPosition,
                     std::span<const std::uint8_t, 256> entity_template);
+// Native owned record replacement/migration. Preserves ordered peers, updates
+// both packed lists/banks and summary counts; invalid/full state returns a rejection
+// without writes. The supplied record must retain its pool index.
+enum class ArenaEntityUpdate { Updated, CellFull, Invalid };
+ArenaEntityUpdate update_arena_entity(ArenaEntityStorage &,std::uint16_t index,const ArenaEntitySlot &);
 // Native synchronous retirement: validate unique membership in both banks,
 // remove ordered cell entries, clear slots and return index FIFO (29F8).
 // Original asynchronous kind-63 tombstone delay is not modeled. Invalid or

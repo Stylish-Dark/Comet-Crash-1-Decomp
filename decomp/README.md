@@ -28,3 +28,11 @@ arrival selection/accounting, unit quota release and FIFO entity reuse. Try
 `decomp/examples/ground-base-impact.scenario` with `comet_construction_replay`.
 See [recovery evidence and boundaries](../docs/decomp/native-ground-base-impact.md).
 Mission counter defaults and victory/defeat rules remain unrecovered.
+
+## Ground-unit health depletion
+
+Recovered kind-45 hostile-contact health depletion now enters the ordinary ground
+death/corpse lifecycle, releasing quota once and recycling its slot at expiry.
+Try `decomp/examples/ground-lifecycle.scenario`; see
+[recovery evidence](../docs/decomp/native-ground-lifecycle.md).
+Weapon activation, projectile damage and original tombstone timing remain open.

@@ -69,6 +69,7 @@ struct ArenaConstructionTick {
   std::vector<std::uint16_t> production_reservations;
   std::vector<std::uint16_t> transported_units;
   std::vector<ArenaGroundBaseImpact> base_impacts;
+  std::vector<std::uint16_t> depleted_units, retired_entities;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;

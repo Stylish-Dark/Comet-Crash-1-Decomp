@@ -1,5 +1,6 @@
 #include "comet/arena_construction_simulation.hpp"
 #include "comet/arena_ground_base.hpp"
+#include "comet/arena_ground_lifecycle.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -316,12 +317,12 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       }
       for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
         const auto &unit = transported.banks[0][i];
-        if (!(unit[15] == 40 || unit[15] == 41 ||
+        if (!(unit[15] == 62 || unit[15] == 40 || unit[15] == 41 ||
               (unit[15] >= 43 && unit[15] <= 47))) continue;
         const auto bits = (std::uint32_t(unit[0x84]) << 24) |
                           (std::uint32_t(unit[0x85]) << 16) |
                           (std::uint32_t(unit[0x86]) << 8) | unit[0x87];
-        const float speed = std::bit_cast<float>(bits);
+        const float speed = unit[15]==62?1.f:std::bit_cast<float>(bits);
         if (!std::isnormal(speed) || speed <= 0 || speed > 64) continue;
         // Bound both time and distance: no step travels over a quarter cell.
         const float step = std::min(.05f, .25f / speed);
@@ -329,6 +330,15 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         const float delta = elapsed / static_cast<float>(count);
         bool moved = false;
         for (unsigned n = 0; n < count; ++n) {
+          if(transported.banks[0][i][15]==62){
+            const auto state=advance_arena_ground_corpse(transported,static_cast<std::uint16_t>(i),delta);
+            if(state==ArenaGroundCorpseStep::Expired){
+              tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
+            }
+            if(state!=ArenaGroundCorpseStep::Active)
+              throw std::invalid_argument("invalid corpse update");
+            continue;
+          }
           const auto result = transport_arena_ground_unit(
               transported, static_cast<std::uint16_t>(i), delta,
               std::span(targets.data(), players_.size()), grid_, next_random,
@@ -341,6 +351,19 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           const auto owner=static_cast<unsigned>(current[0x33]>>5);
           if(owner>=players_.size())throw std::invalid_argument("invalid impact owner");
           auto scalar_at=[&](unsigned off){unsigned word=0;for(unsigned b=0;b<4;++b)word=(word<<8)|current[off+b];return std::bit_cast<float>(word);};
+          auto deceased=current;
+          const auto death=begin_arena_ground_death(deceased,next_statistics[owner]);
+          if(death==ArenaGroundDeath::Invalid || death==ArenaGroundDeath::Unsupported)
+            throw std::invalid_argument("invalid ground death");
+          if(death!=ArenaGroundDeath::Alive){
+            tick.depleted_units.push_back(static_cast<std::uint16_t>(i));
+            if(death==ArenaGroundDeath::Retire){
+              if(!retire_arena_entity(transported,static_cast<std::uint16_t>(i)))throw std::invalid_argument("invalid ground retirement");
+              tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
+            }
+            if(update_arena_entity(transported,static_cast<std::uint16_t>(i),deceased)!=ArenaEntityUpdate::Updated)throw std::invalid_argument("invalid corpse conversion");
+            continue;
+          }
           const auto base=select_arena_ground_base({scalar_at(0),scalar_at(4),scalar_at(8),0},
               static_cast<std::uint8_t>(routes_[owner].team),scalar_at(0x38),
               std::span(impact_bases).first(players_.size()));
@@ -352,6 +375,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             apply_arena_player_resource_delta(next_statistics[*base],impact);
             if(!retire_arena_entity(transported,static_cast<std::uint16_t>(i)))
               throw std::invalid_argument("invalid impact storage membership");
+            tick.retired_entities.push_back(static_cast<std::uint16_t>(i));
             tick.base_impacts.push_back({static_cast<std::uint16_t>(i),*base,static_cast<std::uint8_t>(owner)});
             break;
           }
