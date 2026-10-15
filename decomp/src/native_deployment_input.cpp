@@ -1,4 +1,5 @@
 #include "comet/native_deployment_input.hpp"
+#include "comet/native_mission_outcome.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
@@ -24,7 +25,9 @@ std::array<std::string,5> NativeDeploymentInput::status_lines(bool playing) cons
  const auto &control=sim.ground_deployment()[owner_];
  const bool releasing=control && control->strength>0;
  std::ostringstream funds;funds<<std::fixed<<std::setprecision(1)<<sim.accounts()[owner_].resource;
- std::string bases="BASE COUNTERS";
+ const auto outcome=evaluate_native_mission(sim,owner_);
+ const char* state=outcome==NativeMissionOutcome::Victory?"VICTORY":outcome==NativeMissionOutcome::Defeat?"DEFEAT":outcome==NativeMissionOutcome::Draw?"DRAW":outcome==NativeMissionOutcome::InProgress?"ACTIVE":"UNCONFIGURED";
+ std::string bases=std::string("MISSION ")+state+"  BASE COUNTERS";
  for(std::size_t i=0;i<sim.accounts().size();++i){const auto counter=sim.base_counter(i);bases+="  "+std::to_string(i+1)+":"+(counter?std::to_string(*counter):"--");}
  return {"PLAYER "+std::to_string(owner_+1)+"  FUNDS "+funds.str()+"  ACTIVE "+std::to_string(quota.active)+"  PENDING "+std::to_string(quota.pending),
  "RELEASE TYPE "+std::to_string(kind())+"  ORDERS "+std::to_string(quota.by_type[kind()-40])+"  "+(held_?"HELD":releasing?"SCRIPTED":"IDLE")+"  "+(playing?"PLAYING":"PAUSED"),
