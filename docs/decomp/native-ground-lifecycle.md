@@ -4,8 +4,9 @@
 
 Job FE5D8 `7E40`, branch `83D8..83F0`, clears a kind-45 victim's health
 at `+0x38` when it overlaps a hostile ready kind-45 peer. Ownership and
-statistics do not transfer in this branch. The existing readiness control
-remains explicit; this milestone does not recover weapon activation.
+statistics do not transfer in this branch. Readiness now follows the separately recovered
+[converter pulse](native-converter-health.md). Signed queued health effects also
+feed this lifecycle; firing/projectile producers remain unfinished.
 
 The ground caller invokes `6F40` after motion. Its depleted-health branch
 `7368..74F0` reaches `4B68` unless flags `+0x60` contain `0x08000000`.

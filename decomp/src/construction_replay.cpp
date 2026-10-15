@@ -127,6 +127,28 @@ int main(int argc, char **argv) {
         if(!(scene?scene->set_ground_deployment(owner,control):simulation->set_ground_deployment(owner,control)))
           throw std::invalid_argument("invalid ground deployment control");
         std::cout<<"deploy owner="<<owner<<" kind="<<kind<<" strength="<<control.strength<<'\n';
+      } else if (w[0] == "health-delta" && w.size()==3) {
+        const auto index=number<unsigned>(w[1]);const float delta=number<float>(w[2]);
+        if(index>65535 || !(scene?scene->queue_ground_health_delta(static_cast<std::uint16_t>(index),delta):
+            simulation->queue_ground_health_delta(static_cast<std::uint16_t>(index),delta)))
+          throw std::invalid_argument("health delta requires a live ground unit and finite sum");
+        std::cout<<"health-delta queued entity="<<index<<" delta="<<delta<<'\n';
+      } else if (w[0] == "expect-unit-health" && w.size()==3) {
+        const auto index=number<unsigned>(w[1]);const auto expected=number<float>(w[2]);
+        const auto& bank=state().storage().banks[state().storage().read_bank];
+        if(index>=bank.size() || !std::isfinite(expected) ||
+           !(bank[index][15]==40 || bank[index][15]==41 || (bank[index][15]>=43 && bank[index][15]<=47) || bank[index][15]==62))
+          throw std::invalid_argument("invalid health expectation");
+        unsigned word=0;for(unsigned b=0;b<4;++b)word=(word<<8)|bank[index][0x38+b];
+        if(std::bit_cast<float>(word)!=expected)throw std::runtime_error("unit health expectation failed");
+        std::cout<<"expect-unit-health passed\n";
+      } else if (w[0] == "expect-capture-ready" && w.size()==3) {
+        const auto index=number<unsigned>(w[1]),ready=number<unsigned>(w[2]);
+        const auto& bank=state().storage().banks[state().storage().read_bank];
+        if(index>=bank.size() || ready>1 || bank[index][15]!=45)
+          throw std::invalid_argument("invalid converter readiness expectation");
+        if(bank[index][0xbb]!=ready)throw std::runtime_error("converter readiness expectation failed");
+        std::cout<<"expect-capture-ready passed\n";
       } else if (w[0] == "capture-ready" && w.size()==3) {
         const auto index=number<unsigned>(w[1]),ready=number<unsigned>(w[2]);
         if(index>65535||ready>1)throw std::invalid_argument("invalid capture readiness");

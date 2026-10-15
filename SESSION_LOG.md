@@ -859,3 +859,34 @@ native preview lifecycle, not recovery of original campaign win/loss or reset.
 Next: original weapons/targeting/projectiles/damage or automatic capture
 activation, autonomous enemies, original craft controls and mission progression.
 Full-game parity, authentic economy/HUD/audio/effects and aircraft remain open.
+
+
+## 2026-10-16 — original converter pulse and signed health effects
+
+Continued PR #46 / `06eb1e4`. Recovered kind-45 original phase/readiness pulse
+and positive-cooldown state writes; native ground updates now cycle readiness
+automatically after motion/contact and before death. No manual readiness seed
+is needed for the new capture example. No-target/blocked motion preserves the
+full independent pulse clock; review caught and verified that regression.
+
+Recovered signed health accumulation and the original flag-gated, upper-capped
+health consumer. Owned per-unit pending effects apply once before the ground
+lifecycle, survive rejected/paused updates and restart checkpoints, and cannot
+leak through retired index reuse. Added health-effect/replay inspections and a
+public automatic capture -> damage/healing -> corpse/expiry scenario.
+
+All 50,000 untouched-original instruction fixtures match: 20,000 converter
+pulses, 10,000 cooldown writes, 10,000 full-slot health updates and 10,000
+accumulator additions. Full original-level-0 capture/health/death/expiry and
+40-model rendering pass (11 textures / ten complete FBOs). Public checks:
+233 Python tests, 43 headless / 44 graphics native CTests, compileall, repository
+safety, focused ASan/UBSan (host leak detection disabled), independent review.
+No proprietary input/disassembly/harness is committed. Exact evidence and
+limits: `docs/decomp/native-converter-health.md`.
+
+Estimate: **76% toward a playable single-player mission**, previously 73%; a
+capability judgment, not source coverage. Original weapon firing/targeting,
+projectile and area-effect producers, enemy decisions, craft controls and
+campaign progression remain open. Native queued hits are explicit test inputs,
+not an invented automatic weapon. Positive cooldown motion-register damping
+remains outside live integration; no supported native producer sets it positive.

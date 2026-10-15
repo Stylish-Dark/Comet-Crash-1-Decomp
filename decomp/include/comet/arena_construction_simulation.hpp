@@ -88,6 +88,9 @@ class ArenaConstructionSimulation {
   ArenaRandom random_;
   float clock_ = 0;
   std::array<float,4> deployment_timers_{};
+  // Native-owned replacement for the health lane of each original accumulator.
+  // Consumed once when the active ground simulation next advances.
+  std::vector<float> health_deltas_;
   std::array<std::array<std::uint8_t, 128>, 4> statistics_{};
   ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);
   ArenaConstructionContext context_for(ArenaConstructionRequest) const;
@@ -114,6 +117,7 @@ public:
                              const std::array<float, 4> &position);
   // Explicit native preview control for the recovered capture-readiness byte.
   bool set_ground_capture_ready(std::uint16_t index,bool ready);
+  bool queue_ground_health_delta(std::uint16_t index,float delta);
   std::optional<std::int16_t> base_counter(std::size_t owner) const;
   bool set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl);
   const auto &ground_deployment() const { return config_.ground_deployment; }
