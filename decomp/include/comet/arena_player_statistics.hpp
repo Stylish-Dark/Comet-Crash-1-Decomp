@@ -22,6 +22,16 @@ enum class ArenaEntityRegistration {
 ArenaEntityRegistration register_arena_entity_statistics(
     std::span<std::uint8_t, 128>, std::span<const std::uint8_t, 256>,
     bool adding, bool count_active, std::uint8_t auxiliary = 0);
+// BF58 resource/base-counter leaf. Counter names retain decimal offsets;
+// mission setup and the original global enable byte are caller inputs.
+struct ArenaPlayerResourceDelta {
+  float resource=0, capacity=0, scalar_80=0;
+  std::uint16_t count_84=0, attribution=0;
+  std::int16_t base_counter=0;
+  bool base_counter_enabled=false;
+};
+void apply_arena_player_resource_delta(std::span<std::uint8_t,128>,
+                                       const ArenaPlayerResourceDelta &);
 // Bridge the raw statistics block to the existing reservation/claim leaf.
 ArenaUnitProductionQuota
     read_arena_unit_production_quota(std::span<const std::uint8_t, 128>);

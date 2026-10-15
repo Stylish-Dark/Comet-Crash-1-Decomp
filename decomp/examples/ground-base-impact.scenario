@@ -1,0 +1,33 @@
+# Explicit native base counters; original mission defaults remain unrecovered.
+world 3 4
+player 0 0 0 400 400 0
+player 4 4 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 0 0 1
+base-counter 1 2
+run
+queue 0 26 2 2
+step
+advance 2
+advance 4
+spawn 0 40 3 4
+transport 1
+advance 6
+expect-base-counter 1 1
+expect unit-active0 0
+expect live-units 0
+expect allocated 1
+# The released quota permits another factory reservation.
+advance 8
+expect unit-pending0 1
+spawn 0 40 4 4
+advance 8.01
+expect-base-counter 1 0
+expect unit-active0 0
+expect live-units 0
+expect allocated 1
+advance 9
+expect-base-counter 1 0

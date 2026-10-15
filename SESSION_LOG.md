@@ -721,3 +721,30 @@ Estimate: 61% toward a playable single-player mission (previous 58%), a capabili
 judgment rather than measured source coverage. Next original readiness/weapon
 state, producer deployment, gather/scheduling and lifecycle; weapons/damage,
 enemy AI and mission win/loss remain major gaps. No damage/mission credit.
+
+
+## 2026-10-15 — enemy-base impacts and reusable unit capacity
+
+Continued `a95c609` / PR #41. Recovered original 6F40 enemy-base arrival
+selection and BF58 resource/base-counter updates. Explicit `base-counter` native
+configuration connects movement to base impacts; arriving units unregister,
+release quota, leave both cell lists and return their indices FIFO. Scene
+projection removal preserves structure links and same-tick index reuse.
+Native immediate slot clearing replaces the original asynchronous tombstone
+waiting period; notification/FX, corpse behavior and mission outcomes stay out
+of scope. Exact-center handling is an explicit native numeric guard.
+
+Private comparison: 10,000 arrival queries (953 hits) match; 10,000 full resource
+updates match 1,280,000 output bytes. Public factory-to-impact replay confirms
+counter decrement, unit removal, quota release and another production reservation.
+Validation: 35 headless / 36 graphics CTests, 233 Python tests, compileall,
+repository safety, ASan/UBSan without host leak inspection, and explicitly placed
+impact/rendering with original level-0 assets. Independent review found no
+blocker; combined capture-to-impact and simulation failure-rollback coverage are
+minor follow-ups. Original assets and harnesses stay private.
+See docs/decomp/native-ground-base-impact.md for recovered rules and boundaries.
+
+Estimate: 64% toward a playable single-player mission (previous 61%), a
+capability judgment rather than source coverage. Next original automatic
+placement and weapon/readiness state, health-depleted lifecycle, mission
+win/loss and enemy AI. No complete combat or mission-victory credit.

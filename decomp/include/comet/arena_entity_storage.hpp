@@ -32,6 +32,11 @@ bool pack_arena_cell_entry(ArenaPackedCellEntry &,
 std::optional<std::uint16_t>
 insert_arena_entity(ArenaEntityStorage &, ArenaGridPosition,
                     std::span<const std::uint8_t, 256> entity_template);
+// Native synchronous retirement: validate unique membership in both banks,
+// remove ordered cell entries, clear slots and return index FIFO (29F8).
+// Original asynchronous kind-63 tombstone delay is not modeled. Invalid or
+// already-free input returns false without writes.
+bool retire_arena_entity(ArenaEntityStorage &, std::uint16_t index);
 // CA2E0 lookup over the selected bank's actual ordered packed records.
 ArenaEventTarget resolve_arena_storage_target(const ArenaEntityStorage &,
                                               std::uint8_t visibility,

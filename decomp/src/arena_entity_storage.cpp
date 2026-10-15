@@ -91,6 +91,31 @@ insert_arena_entity(ArenaEntityStorage &storage, ArenaGridPosition cell,
   ++storage.summary_counts[cell.z * 24 + cell.x];
   return static_cast<std::uint16_t>(index);
 }
+bool retire_arena_entity(ArenaEntityStorage &storage,std::uint16_t index) {
+  if(storage.read_bank>1 || !storage.width || !storage.height || storage.width>24 || storage.height>24 ||
+     index>=storage.banks[0].size() || index>=storage.banks[1].size() ||
+     storage.banks[0][index]!=storage.banks[1][index] ||
+     std::find(storage.free_indices.begin(),storage.free_indices.end(),index)!=storage.free_indices.end())return false;
+  const auto &slot=storage.banks[0][index];
+  if(((unsigned(slot[12])<<8)|slot[13])!=index)return false;
+  std::array<unsigned,2> flats{},offsets{},counts{};
+  for(unsigned bank=0;bank<2;++bank)for(unsigned flat=0;flat<576;++flat){
+    const auto &list=storage.cells[bank][flat];
+    for(unsigned n=0;n<list.size();++n)if(((unsigned(list[n][0])<<8)|list[n][1])==index){
+      ++counts[bank];flats[bank]=flat;offsets[bank]=n;
+    }
+  }
+  if(counts[0]!=1 || counts[1]!=1 || flats[0]!=flats[1] ||
+     flats[0]%24>=storage.width || flats[0]/24>=storage.height || !storage.summary_counts[flats[0]])return false;
+  // Allocate the FIFO node before any irreversible writes to owned records.
+  storage.free_indices.push_back(index);
+  for(unsigned bank=0;bank<2;++bank){
+    auto &list=storage.cells[bank][flats[bank]];
+    list.erase(list.begin()+offsets[bank]);storage.banks[bank][index].fill(0);
+  }
+  --storage.summary_counts[flats[0]];
+  return true;
+}
 ArenaEventTarget resolve_arena_storage_target(const ArenaEntityStorage &storage,
                                               std::uint8_t visibility,
                                               std::uint32_t mask,

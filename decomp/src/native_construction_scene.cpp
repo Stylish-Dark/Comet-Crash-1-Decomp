@@ -184,6 +184,23 @@ ArenaFactorySelection NativeConstructionScene::select_factory(
 }
 ArenaConstructionTick NativeConstructionScene::advance(float t) {
   auto tick = simulation_.advance(t);
+  if(!tick.base_impacts.empty()){
+    // Retire by the tick's identities BEFORE projecting construction: a newly
+    // allocated structure can already have reused one of the retired indices.
+    std::vector<std::optional<std::size_t>> remap(arena_.entities.size());
+    std::size_t write=0;
+    for(std::size_t old=0;old<arena_.entities.size();++old){
+      const auto &e=arena_.entities[old];
+      const bool retired=e.live_entity_index && std::any_of(tick.base_impacts.begin(),tick.base_impacts.end(),
+          [&](const auto &impact){return impact.entity_index==*e.live_entity_index;});
+      if(retired)continue;
+      remap[old]=write;
+      if(write!=old)arena_.entities[write]=arena_.entities[old];
+      ++write;
+    }
+    arena_.entities.resize(write);
+    for(auto &cell:arena_.cells)if(cell.entity_index)cell.entity_index=remap[*cell.entity_index];
+  }
   project(tick.construction);
   refresh_construction();
   arena_.players = simulation_.players();
