@@ -144,3 +144,10 @@ for setting in ("base-counter 1 -1", "base-counter 1 32768", "base-counter 2 1",
  assert result.returncode!=0 and "line " in result.stderr,(setting,result.stdout,result.stderr)
 result=run(base_scenario.replace("expect-base-counter 1 1","expect-base-counter 1 9"))
 assert result.returncode!=0 and "base counter expectation failed" in result.stderr,(result.stdout,result.stderr)
+
+# Opposing kind-45 contact depletes health, unregisters, leaves a temporary
+# corpse, releases the slot on expiry, and permits factory production again.
+lifecycle_scenario=(Path(__file__).resolve().parents[1]/"examples/ground-lifecycle.scenario").read_text()
+result=run(lifecycle_scenario)
+assert result.returncode==0,(result.stdout,result.stderr)
+assert "ground-depleted entity=2" in result.stdout and "entity-retired entity=2" in result.stdout,result.stdout

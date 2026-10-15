@@ -292,6 +292,8 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for(auto index:tick.depleted_units)std::cout<<"ground-depleted entity="<<index<<'\n';
+        for(auto index:tick.retired_entities)std::cout<<"entity-retired entity="<<index<<'\n';
         for(const auto &impact:tick.base_impacts)
           std::cout<<"base-impact entity="<<impact.entity_index<<" base="<<unsigned(impact.base)<<" owner="<<unsigned(impact.owner)<<'\n';
         for (auto index : tick.transported_units)
@@ -307,7 +309,9 @@ int main(int argc, char **argv) {
         std::size_t actual;
         if (w[1] == "allocated")
           actual = config.capacity - state().storage().free_indices.size();
-        else if (w[1] == "live-units") {
+        else if(w[1]=="corpses"){
+          actual=0;for(const auto &slot:state().storage().banks[state().storage().read_bank])actual+=slot[15]==62;
+        } else if (w[1] == "live-units") {
           actual = 0;
           for (const auto &slot :
                state().storage().banks[state().storage().read_bank])

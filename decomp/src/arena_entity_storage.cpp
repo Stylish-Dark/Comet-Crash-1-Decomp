@@ -91,6 +91,37 @@ insert_arena_entity(ArenaEntityStorage &storage, ArenaGridPosition cell,
   ++storage.summary_counts[cell.z * 24 + cell.x];
   return static_cast<std::uint16_t>(index);
 }
+ArenaEntityUpdate update_arena_entity(ArenaEntityStorage &storage,std::uint16_t index,const ArenaEntitySlot &record) {
+  if(storage.read_bank>1 || !storage.width || !storage.height || storage.width>24 || storage.height>24 ||
+     index>=storage.banks[0].size() || index>=storage.banks[1].size() ||
+     storage.banks[0][index]!=storage.banks[1][index] ||
+     ((unsigned(record[12])<<8)|record[13])!=index ||
+     std::find(storage.free_indices.begin(),storage.free_indices.end(),index)!=storage.free_indices.end())return ArenaEntityUpdate::Invalid;
+  for(unsigned o:{0u,4u,8u})if(!std::isfinite(read_float(record,o)) || std::abs(read_float(record,o))>64)return ArenaEntityUpdate::Invalid;
+  std::array<unsigned,2> flats{},offsets{},counts{};
+  for(unsigned bank=0;bank<2;++bank)for(unsigned flat=0;flat<576;++flat){
+    const auto &list=storage.cells[bank][flat];
+    for(unsigned n=0;n<list.size();++n)if(((unsigned(list[n][0])<<8)|list[n][1])==index){++counts[bank];flats[bank]=flat;offsets[bank]=n;}
+  }
+  if(counts[0]!=1 || counts[1]!=1 || flats[0]!=flats[1] ||
+     flats[0]%24>=storage.width || flats[0]/24>=storage.height || !storage.summary_counts[flats[0]])return ArenaEntityUpdate::Invalid;
+  ArenaGridPosition cell{static_cast<std::uint8_t>(std::clamp(std::trunc(read_float(record,0)),0.f,float(storage.width-1))),
+                         static_cast<std::uint8_t>(std::clamp(std::trunc(read_float(record,8)),0.f,float(storage.height-1)))};
+  const unsigned flat=cell.z*24+cell.x;
+  if(flat!=flats[0] && (storage.cells[0][flat].size()>=126 || storage.cells[1][flat].size()>=126 || storage.summary_counts[flat]==65535))return ArenaEntityUpdate::CellFull;
+  auto slot=record;slot[0xc8]=slot[0xca]=0;slot[0xc9]=cell.x;slot[0xcb]=cell.z;
+  ArenaPackedCellEntry entry;
+  pack_arena_cell_entry(entry,slot,slot[0x33],slot[0x6f],cell,storage.width,storage.height);
+  if(flat!=flats[0])for(auto &bank:storage.cells)bank[flat].reserve(bank[flat].size()+1);
+  for(unsigned bank=0;bank<2;++bank){
+    auto &list=storage.cells[bank][flats[bank]];
+    if(flat==flats[bank])list[offsets[bank]]=entry;
+    else{list.erase(list.begin()+offsets[bank]);storage.cells[bank][flat].push_back(entry);}
+    storage.banks[bank][index]=slot;
+  }
+  if(flat!=flats[0]){--storage.summary_counts[flats[0]];++storage.summary_counts[flat];}
+  return ArenaEntityUpdate::Updated;
+}
 bool retire_arena_entity(ArenaEntityStorage &storage,std::uint16_t index) {
   if(storage.read_bank>1 || !storage.width || !storage.height || storage.width>24 || storage.height>24 ||
      index>=storage.banks[0].size() || index>=storage.banks[1].size() ||

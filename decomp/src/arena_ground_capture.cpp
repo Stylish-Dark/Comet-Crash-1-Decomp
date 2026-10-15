@@ -1,5 +1,6 @@
 #include "comet/arena_ground_capture.hpp"
 #include "comet/arena_player_statistics.hpp"
+#include <algorithm>
 #include <stdexcept>
 namespace comet::decomp {
 namespace {
@@ -12,8 +13,11 @@ ArenaGroundCapture capture_arena_ground_unit(ArenaEntitySlot &victim,const Arena
  if(teams.empty()||teams.size()>4||statistics.size()!=teams.size()||owner>=teams.size()||recipient>=teams.size())return ArenaGroundCapture::Invalid;
  if(!overlapping||teams[owner]==teams[recipient]||peer[15]!=45||peer[0xbb]==0||
     (word(peer,0x60)&0x20000)!=0||(victim[0x33]&28)!=20)return ArenaGroundCapture::NotEligible;
- // The kind-45 victim branch clears health and needs lifecycle recovery.
- if(!ground(victim[15])||victim[15]==45||(peer[0x33]&28)!=20)return ArenaGroundCapture::Unsupported;
+ if(!ground(victim[15])||(peer[0x33]&28)!=20)return ArenaGroundCapture::Unsupported;
+ // 83D8..83F0: kind-45 victims lose health instead of changing ownership.
+ if(victim[15]==45){
+  std::fill_n(victim.begin()+0x38,4,0);return ArenaGroundCapture::HealthDepleted;
+ }
  auto destination=statistics[recipient],source=statistics[owner];
  // 83F4..8454: admit to the new owner before removing from the old owner.
  // Capacity rejection preserves the original admission's partial statistics

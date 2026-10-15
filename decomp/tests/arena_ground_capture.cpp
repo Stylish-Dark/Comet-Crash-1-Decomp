@@ -2,6 +2,7 @@
 #include "comet/arena_player_statistics.hpp"
 #include "comet/arena_unit_entity.hpp"
 #include "comet/native_construction_scene.hpp"
+#include <algorithm>
 #include <cassert>
 #include <bit>
 #include <limits>
@@ -64,7 +65,7 @@ int main(){
   assert(read_arena_unit_production_quota(f.stats[0]).active==1 && read_arena_unit_production_quota(f.stats[1]).active==0);
  }
  {
-  Fixture f;f.victim[15]=45;auto old=f.victim;auto stats=f.stats;assert(f.run()==ArenaGroundCapture::Unsupported);assert(f.victim==old && f.stats==stats);
+  Fixture f;f.victim[15]=45;auto old=f.victim;auto stats=f.stats;assert(f.run()==ArenaGroundCapture::HealthDepleted);std::fill_n(old.begin()+0x38,4,0);assert(f.victim==old && f.stats==stats);
  }
  {
   Fixture f;f.peer[0x33]=0xf4;auto old=f.victim;auto stats=f.stats;assert(f.run()==ArenaGroundCapture::Invalid);assert(f.victim==old && f.stats==stats);

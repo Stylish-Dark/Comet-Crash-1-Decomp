@@ -94,12 +94,17 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
-    if (slot[15] >= 40 && slot[15] <= 48) {
+    if ((slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
       auto scalar = [&](unsigned o) {
         std::uint32_t bits=0;
         for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
         return std::bit_cast<float>(bits);
       };
+      entity.type=slot[15];
+      if(slot[15]==62){
+        const auto initial=scalar(0x88);
+        entity.corpse_fraction=initial>0?std::clamp(scalar(0x78)/initial,0.f,1.f):1.f;
+      }else entity.corpse_fraction.reset();
       entity.owner=slot[0x33]>>5;
       entity.position = {scalar(0), scalar(4), scalar(8)};
       entity.grid = {static_cast<std::uint8_t>(std::clamp(std::trunc(entity.position.x),0.f,float(arena_.extent-1))),
@@ -184,15 +189,14 @@ ArenaFactorySelection NativeConstructionScene::select_factory(
 }
 ArenaConstructionTick NativeConstructionScene::advance(float t) {
   auto tick = simulation_.advance(t);
-  if(!tick.base_impacts.empty()){
+  if(!tick.retired_entities.empty()){
     // Retire by the tick's identities BEFORE projecting construction: a newly
     // allocated structure can already have reused one of the retired indices.
     std::vector<std::optional<std::size_t>> remap(arena_.entities.size());
     std::size_t write=0;
     for(std::size_t old=0;old<arena_.entities.size();++old){
       const auto &e=arena_.entities[old];
-      const bool retired=e.live_entity_index && std::any_of(tick.base_impacts.begin(),tick.base_impacts.end(),
-          [&](const auto &impact){return impact.entity_index==*e.live_entity_index;});
+      const bool retired=e.live_entity_index && std::find(tick.retired_entities.begin(),tick.retired_entities.end(),*e.live_entity_index)!=tick.retired_entities.end();
       if(retired)continue;
       remap[old]=write;
       if(write!=old)arena_.entities[write]=arena_.entities[old];

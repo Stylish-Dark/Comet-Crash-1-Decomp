@@ -167,7 +167,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             }
             };
             if(arena){
-                auto instance=[&](std::uint32_t slot,ModelPosition position,const std::array<float,4>& orientation){
+                auto instance=[&](std::uint32_t slot,ModelPosition position,const std::array<float,4>& orientation,float scale){
                     const auto found=std::find_if(models.begin(),models.end(),[&](const auto& model){return model.spec.original_slot_index==slot;});
                     if(found==models.end())throw std::runtime_error("arena entity model slot missing: "+std::to_string(slot));
                     glPushMatrix();glTranslatef(position.x,position.y,position.z);
@@ -176,10 +176,10 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                     const GLfloat rotation[]={1-2*(q[1]*q[1]+q[2]*q[2]),2*(q[0]*q[1]+q[2]*q[3]),2*(q[0]*q[2]-q[1]*q[3]),0,
                         2*(q[0]*q[1]-q[2]*q[3]),1-2*(q[0]*q[0]+q[2]*q[2]),2*(q[1]*q[2]+q[0]*q[3]),0,
                         2*(q[0]*q[2]+q[1]*q[3]),2*(q[1]*q[2]-q[0]*q[3]),1-2*(q[0]*q[0]+q[1]*q[1]),0,0,0,0,1};
-                    glMultMatrixf(rotation);draw(static_cast<std::size_t>(found-models.begin()));glPopMatrix();
+                    glMultMatrixf(rotation);glScalef(scale,scale,scale);draw(static_cast<std::size_t>(found-models.begin()));glPopMatrix();
                 };
-                instance(37,arena->background_position,arena->background_orientation);
-                for(const auto& entity:arena->entities)instance(entity.model_slot,entity.position,entity.orientation);
+                instance(37,arena->background_position,arena->background_orientation,1.f);
+                for(const auto& entity:arena->entities)instance(entity.model_slot,entity.position,entity.orientation,entity.corpse_fraction.value_or(1.f));
                 if(config.construction){
                     gpu.api.bind(GL_ARRAY_BUFFER,0);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,0);
                     glDisable(GL_LIGHTING);glDisable(GL_TEXTURE_2D);glDisableClientState(GL_VERTEX_ARRAY);glDisableClientState(GL_NORMAL_ARRAY);glDisableClientState(GL_TEXTURE_COORD_ARRAY);

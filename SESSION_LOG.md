@@ -748,3 +748,31 @@ Estimate: 64% toward a playable single-player mission (previous 61%), a
 capability judgment rather than source coverage. Next original automatic
 placement and weapon/readiness state, health-depleted lifecycle, mission
 win/loss and enemy AI. No complete combat or mission-victory credit.
+
+
+## 2026-10-15 — depleted-health ground lifecycle
+
+Continued `78a8350` / PR #42. Recovered kind-45 victim health depletion on
+hostile ready-kind-45 contact; ordinary ground death unregisters once and
+becomes kind 62, or requests direct retirement under original flag bit 27.
+Recovered original corpse drift/age/velocity/scalar decay and strict expiry.
+Owned migration keeps banks/cells consistent; expiry releases the pool index;
+scene cleanup and native corpse shrink preview are connected. Original visual
+FX, asynchronous kind-63 timing and weapon activation/damage remain excluded.
+
+Private comparisons: 10,000 corpse updates and 10,000 death transitions match
+6,400,000 bytes; 10,000 extended capture queries including kind-45 victims match
+7,680,000 bytes. Existing base-arrival/resource comparisons remain green. The
+public factory-to-contact-to-expiry scenario proves quota release and renewed
+production. Original level-0 assets render the temporary corpse (fraction .625)
+and verify expiry; 40 models, 11 textures and 10 complete FBOs, three frames.
+Independent review caught full-cell corpse migration freezing the entire tick;
+a regression now proves age and expiry progress while native drift is blocked.
+Final local checks: 36 headless / 37 clean graphics CTests, 233 Python tests,
+compileall, repository safety and ASan/UBSan (host leak inspection disabled).
+See docs/decomp/native-ground-lifecycle.md for original addresses and boundaries.
+
+Estimate: 66% toward a playable single-player mission (previous 64%), a
+capability judgment rather than measured source coverage. Next automatic
+producer placement/readiness and original weapon/projectile/damage behavior;
+AI, mission win/loss and full original lifecycle scheduling remain incomplete.
