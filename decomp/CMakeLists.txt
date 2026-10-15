@@ -10,6 +10,7 @@ add_library(comet_native_recovery STATIC
     src/material_textures.cpp
     src/material_properties.cpp
     src/model_load_parameters.cpp
+    src/obj_geometry.cpp
 )
 
 target_include_directories(comet_native_recovery PUBLIC
@@ -33,3 +34,8 @@ target_link_libraries(comet_native_recovery_smoke PRIVATE comet_native_recovery)
 target_compile_features(comet_native_recovery_smoke PRIVATE cxx_std_20)
 
 add_test(NAME comet_native_recovery_smoke COMMAND comet_native_recovery_smoke)
+
+add_executable(comet_obj_geometry_test tests/obj_geometry.cpp)
+target_link_libraries(comet_obj_geometry_test PRIVATE comet_native_recovery)
+target_compile_features(comet_obj_geometry_test PRIVATE cxx_std_20)
+add_test(NAME comet_obj_geometry_test COMMAND comet_obj_geometry_test)
