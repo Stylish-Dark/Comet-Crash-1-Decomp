@@ -1,6 +1,8 @@
 #include "comet/arena_construction_simulation.hpp"
 #include "comet/arena_ground_base.hpp"
 #include "comet/arena_ground_lifecycle.hpp"
+#include "comet/arena_health_delta.hpp"
+#include "comet/arena_converter_activation.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -29,6 +31,7 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
   if(config_.ground_contacts_enabled)config_.ground_dynamics_enabled=true;
   if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536 || !c.native_extent || c.native_extent > 24)
     throw std::invalid_argument("invalid simulation dimensions");
+  health_deltas_.resize(c.capacity);
   for (const auto &a : c.players) {
     if (a.route.base.x >= c.native_extent || a.route.base.z >= c.native_extent || a.route.team > 3 ||
         !std::isfinite(a.resource) || !std::isfinite(a.resource_max) ||
@@ -270,6 +273,14 @@ ArenaTimedSubmit ArenaConstructionSimulation::enqueue_event(std::size_t owner,
   p.events.push(e);
   return ArenaTimedSubmit::Scheduled;
 }
+bool ArenaConstructionSimulation::queue_ground_health_delta(std::uint16_t index,float delta){
+  if(index>=storage_.banks[0].size() || index>=storage_.banks[1].size() || index>=health_deltas_.size())return false;
+  const auto& slot=storage_.banks[storage_.read_bank][index];
+  const auto kind=slot[15];
+  if(!(kind==40 || kind==41 || (kind>=43 && kind<=47)) || (slot[0x33]&28)!=20 ||
+     ((unsigned(slot[12])<<8)|slot[13])!=index || storage_.banks[0][index]!=storage_.banks[1][index])return false;
+  return accumulate_arena_health_delta(health_deltas_[index],delta);
+}
 ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
   if (!std::isfinite(clock) || clock < clock_)
     throw std::invalid_argument("clock must be finite and monotonic");
@@ -306,6 +317,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       auto next_random = random_;
       auto next_deployment_timers=deployment_timers_;
       auto next_statistics=statistics_;
+      auto next_health_deltas=health_deltas_;
       for(unsigned owner=0;owner<players_.size();++owner)
         store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
       std::array<ArenaUnitTargetPlayer, 4> targets{};
@@ -330,11 +342,21 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
                           (std::uint32_t(unit[0x86]) << 8) | unit[0x87];
         const float speed = unit[15]==62?1.f:std::bit_cast<float>(bits);
         if (!std::isnormal(speed) || speed <= 0 || speed > 64) continue;
+        if(unit[15]!=62){
+          auto changed=unit;
+          if(apply_arena_health_delta(changed,next_health_deltas[i])==ArenaHealthDelta::Invalid)
+            throw std::invalid_argument("invalid ground health delta");
+          if(update_arena_entity(transported,static_cast<std::uint16_t>(i),changed)!=ArenaEntityUpdate::Updated)
+            throw std::invalid_argument("invalid health target membership");
+          // Original accumulator is consumed even when the health flag suppresses it.
+          next_health_deltas[i]=0;
+        }
         // Bound both time and distance: no step travels over a quarter cell.
         const float step = std::min(.05f, .25f / speed);
         const unsigned count = static_cast<unsigned>(std::ceil(elapsed / step));
         const float delta = elapsed / static_cast<float>(count);
         bool moved = false;
+        bool transport_stopped = false;
         for (unsigned n = 0; n < count; ++n) {
           if(transported.banks[0][i][15]==62){
             const auto state=advance_arena_ground_corpse(transported,static_cast<std::uint16_t>(i),delta);
@@ -345,7 +367,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               throw std::invalid_argument("invalid corpse update");
             continue;
           }
-          const auto result = transport_arena_ground_unit(
+          const auto result = transport_stopped ? ArenaGroundTransport::Blocked : transport_arena_ground_unit(
               transported, static_cast<std::uint16_t>(i), delta,
               std::span(targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
@@ -353,6 +375,17 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               config_.ground_dynamics_enabled, config_.ground_contacts_enabled,
               std::span(next_statistics.data(),players_.size()));
           if(result==ArenaGroundTransport::Moved)moved=true;
+          // Original 18030 calls contact/motion 14060, then activation 158B8,
+          // then health-depleted lifecycle 6F40. Preserve that per-unit order.
+          // The existing ordered native substeps are not original SPU scheduling.
+          if(transported.banks[0][i][15]==45){
+            auto changed=transported.banks[0][i];
+            const auto context_scalar_18=advance_arena_converter_activation(changed,delta);
+            if(!context_scalar_18)throw std::invalid_argument("invalid converter activation");
+            scalar(changed,0x18,*context_scalar_18);
+            if(update_arena_entity(transported,static_cast<std::uint16_t>(i),changed)!=ArenaEntityUpdate::Updated)
+              throw std::invalid_argument("invalid converter membership");
+          }
           const auto &current=transported.banks[0][i];
           const auto owner=static_cast<unsigned>(current[0x33]>>5);
           if(owner>=players_.size())throw std::invalid_argument("invalid impact owner");
@@ -385,7 +418,12 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             tick.base_impacts.push_back({static_cast<std::uint16_t>(i),*base,static_cast<std::uint8_t>(owner)});
             break;
           }
-          if (result != ArenaGroundTransport::Moved) break;
+          if (result != ArenaGroundTransport::Moved) {
+            if(current[15]!=45)break;
+            // Blocked/no-target motion stops retrying, but the independent
+            // converter pulse and lifecycle still receive all elapsed time.
+            transport_stopped=true;
+          }
         }
         if (moved) tick.transported_units.push_back(static_cast<std::uint16_t>(i));
       }
@@ -410,6 +448,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       storage_ = std::move(transported);
       random_ = next_random;
       statistics_=next_statistics;
+      health_deltas_=std::move(next_health_deltas);
       for(unsigned owner=0;owner<players_.size();++owner)
         quotas[owner]=read_arena_unit_production_quota(statistics_[owner]);
     } else {

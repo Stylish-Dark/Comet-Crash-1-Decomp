@@ -1,10 +1,13 @@
 # Active gameplay continuation
 
-Latest milestone: native preview matches freeze on global victory/draw and F2
-restores the full viewer launch checkpoint paused. Partial active base tables
-cannot manufacture outcomes. This is preview policy, not recovered campaign logic.
+Latest milestone: original converter pulse now drives capture automatically;
+signed damage/healing accumulation feeds the existing ground death/corpse loop.
+Preview finish/freeze and full F2 restart remain usable. See
+`docs/decomp/native-converter-health.md` for exact boundaries and numeric evidence.
 
-- Recover original weapon targeting, projectiles, damage and capture activation.
+- Recover original weapon targeting/firing/projectile production and area-effect
+  gathering, falloff and attribution. Health consumption and converter activation
+  are complete; cooldown motion damping and its stun producer remain open.
 - Recover autonomous enemy decisions, moving craft/controller input and aircraft.
 - Recover original mission objectives, progression, rewards and restart/reset rules.
 - Finish special-unit lifecycle, delayed tombstones and original scheduling.

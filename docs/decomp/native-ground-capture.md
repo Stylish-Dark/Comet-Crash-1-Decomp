@@ -26,8 +26,8 @@ penetration and mass share are supplied by the existing recovered pair kernel.
 The existing `48C8` / `BB30` semantic registration updates weighted ground counts
 and active quotas. Capture consumes no production order and allocates no new
 entity. Invalid native arithmetic or unsupported registration leaves the helper's
-caller-owned state unchanged. Capture of a kind-45 victim instead clears its
-health in the original; that lifecycle branch is deliberately excluded.
+caller-owned state unchanged. Capture of a kind-45 victim instead clears health and enters the separately
+recovered [ground lifecycle](native-ground-lifecycle.md).
 
 ## Live integration and controls
 
@@ -50,10 +50,10 @@ and reads updated quotas back after movement. This prevents capture counts from
 being overwritten by the old production quota snapshot. Scene refresh now reads
 a moving unit's owner as well as position/quaternion, so team display follows it.
 
-Readiness is **explicit native preview control**, not recovered automatic weapon
-activation. `set_ground_capture_ready(index, bool)` updates +BB in both banks of a
-live stage-5 kind-45 record; invalid indices and other kinds are rejected. It
-neither invents a cooldown nor enables all kind-45 units by default.
+Readiness now follows the [original converter pulse](native-converter-health.md)
+automatically during active ground simulation. The explicit control remains a
+one-time debugging seed, replaced by subsequent pulse updates. `set_ground_capture_ready(index, bool)` updates +BB in both banks of a
+live stage-5 kind-45 record; invalid indices and other kinds are rejected. It changes neither pulse phase nor cooldown.
 
 Replay commands:
 

@@ -25,6 +25,7 @@ public:
   void set_ground_dynamics(bool enabled) { simulation_.set_ground_dynamics(enabled); }
   void set_ground_transport(bool enabled) { simulation_.set_ground_transport(enabled); }
   bool set_ground_capture_ready(std::uint16_t index,bool ready) { return simulation_.set_ground_capture_ready(index,ready); }
+  bool queue_ground_health_delta(std::uint16_t index,float delta) { return simulation_.queue_ground_health_delta(index,delta); }
   ArenaUnitSpawnResult spawn_reserved_ground_unit(std::uint8_t owner,
                                                   std::uint8_t kind,
                                                   ArenaGridPosition);

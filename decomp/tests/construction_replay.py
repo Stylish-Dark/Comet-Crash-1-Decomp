@@ -163,3 +163,15 @@ for setting in ("deploy 0 42 1", "deploy 2 40 1", "deploy 0 40 nan", "deploy 0 4
  assert result.returncode!=0 and "line " in result.stderr,(setting,result.stdout,result.stderr)
 result=run(deployment_scenario.split("advance 4")[0]+"deploy 0 40 0\nadvance 4\nexpect live-units 0\nexpect unit-pending0 1\ndeploy 0 40 1\nadvance 4.1\nexpect live-units 1\n")
 assert result.returncode==0,(result.stdout,result.stderr)
+
+# Converter readiness is automatic; queued signed damage/healing consumes once
+# and reaches the same death/corpse/retirement path as original interactions.
+health_scenario=(Path(__file__).resolve().parents[1]/"examples/automatic-capture-health.scenario").read_text()
+result=run(health_scenario)
+assert result.returncode==0,(result.stdout,result.stderr)
+assert "ground-depleted entity=2" in result.stdout and "entity-retired entity=2" in result.stdout,result.stdout
+live_prefix=health_scenario.split("health-delta 3 -20")[0]
+for command in ("health-delta 9 -1\n","health-delta 3 nan\n","health-delta 65536 -1\n",
+                "health-delta 0 -1\n","expect-unit-health 3 nan\n","expect-capture-ready 3 1\n"):
+ result=run(live_prefix+command)
+ assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)
