@@ -87,6 +87,43 @@ int main() {
     if(!transport_scene.simulation().ground_transport_enabled() || !transport_scene.simulation().ground_dynamics_enabled() || !transport_scene.simulation().ground_contacts_enabled() ||
        (before_position.x==after_position.x && before_position.z==after_position.z))
         throw std::runtime_error("keyboard transport did not move/project unit");
+    // Actual SDL release selection, key-up, owner switch, focus loss and exit.
+    ArenaConstructionSimulationConfig input_config;input_config.capacity=8;input_config.seed=4;
+    input_config.players={{{{1,1},0,false},100,100},{{{4,1},1,false},100,100}};
+    input_config.unit_base_available={true,true,false,false};
+    input_config.unit_quotas[0].capacity=3;input_config.unit_quotas[0].pending=3;
+    input_config.unit_quotas[0].by_type[0]=2;input_config.unit_quotas[0].by_type[1]=1;
+    ArenaState input_arena;input_arena.players.resize(2);
+    input_arena.players[0].start_grid=ArenaGridPosition{1,1};input_arena.players[1].start_grid=ArenaGridPosition{4,1};
+    NativeConstructionScene input_scene(input_arena,input_config);
+    auto second_kind=spawned_model;second_kind.spec.original_slot_index=3;
+    config.construction=&input_scene;finished.store(false);
+    std::thread release_controls([&]{
+        while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
+        SDL_Delay(100);
+        auto key=[](SDL_Keycode code,Uint32 type=SDL_KEYDOWN){SDL_Event e{};e.type=type;e.key.keysym.sym=code;SDL_PushEvent(&e);};
+        key(SDLK_e);key(SDLK_d);key(SDLK_t);SDL_Delay(100);
+        key(SDLK_d,SDL_KEYUP);key(SDLK_t);SDL_Delay(100);
+        key(SDLK_TAB);key(SDLK_d);key(SDLK_TAB);key(SDLK_q);key(SDLK_d);key(SDLK_t);SDL_Delay(100);
+        SDL_Event focus{};focus.type=SDL_WINDOWEVENT;focus.window.event=SDL_WINDOWEVENT_FOCUS_LOST;SDL_PushEvent(&focus);SDL_Delay(100);
+        focus.window.event=SDL_WINDOWEVENT_FOCUS_GAINED;SDL_PushEvent(&focus);key(SDLK_t);SDL_Delay(100);
+        key(SDLK_d);key(SDLK_p);key(SDLK_p);SDL_Delay(100);key(SDLK_t);SDL_Delay(100);key(SDLK_d);SDL_Event quit{};quit.type=SDL_QUIT;SDL_PushEvent(&quit);
+    });
+    const auto released=run_native_viewer({spawned_model,second_kind,background},config);
+    finished.store(true);release_controls.join();
+    if(!released)throw std::runtime_error(released.detail);
+    if(input_scene.simulation().unit_quotas()[0].active!=2 || input_scene.simulation().unit_quotas()[0].pending!=1 ||
+       input_scene.simulation().unit_quotas()[0].by_type[1]!=0)
+        throw std::runtime_error("held deployment SDL controls did not consume exactly the selected orders");
+    if(input_scene.simulation().ground_deployment()[0]->strength!=0 || input_scene.simulation().ground_deployment()[1]->strength!=0)
+        throw std::runtime_error("viewer left deployment held after focus/owner/exit change");
+    config.frame_limit=2;config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
+    const auto overlay=run_native_viewer({spawned_model,second_kind,background},config);
+    if(!overlay)throw std::runtime_error(overlay.detail);
+    std::ifstream hud(config.screenshot,std::ios::binary);hud>>magic>>width>>height>>max;hud.get();
+    pixels.resize(static_cast<std::size_t>(width)*height*3);hud.read(reinterpret_cast<char*>(pixels.data()),pixels.size());
+    int text_pixels=0;for(int y=10;y<17;++y)for(int x=10;x<300;++x){const auto offset=(y*width+x)*3;if(pixels[offset]>150 && pixels[offset+1]>150 && pixels[offset+2]>150)++text_pixels;}
+    if(text_pixels<50)throw std::runtime_error("on-screen status text missing");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }

@@ -5,7 +5,7 @@
 - Selected held base release now consumes factory reservations without manual spawning; recover moving-craft/controller input, autonomous AI selection and aircraft deployment/binding.
 - Recover weapons/damage, enemy behavior and mission win/loss/restart.
 - Recover authentic income/balance, composite base/weapon parts and gameplay HUD/input/audio.
-- Construction and live movement are usable development controls; no complete playable mission yet.
+- Construction, selected held deployment, live movement and native status feedback are usable development controls; no complete playable mission yet.
 
 # WORK QUEUE
 
@@ -281,3 +281,27 @@ Estimate: 61% toward a playable single-player mission (previous 58%), a capabili
 judgment rather than measured source coverage. Next original readiness/weapon
 state, producer deployment, gather/scheduling and lifecycle; weapons/damage,
 enemy AI and mission win/loss remain major gaps. No damage/mission credit.
+
+
+## 2026-10-15 — interactive selected deployment and status
+
+Continued `ae13373` / PR #44. Native viewer Q/E selects a supported ground kind,
+hold D releases its reserved orders through the recovered timer, and Tab keeps
+per-player selections. Key-up, player switch, pause, focus loss and viewer exit
+cancel held release. Focus regain stays paused. Native on-screen bitmap status
+shows funds, active/pending units, selected orders and configured base counters.
+Added `interactive-ground-level0.cfg` with explicit synthetic development inputs.
+No original input/HUD/combat recovery is claimed. See
+`docs/decomp/native-interactive-deployment.md`.
+
+Validation: 38 headless / 39 graphics CTests, 233 Python regressions, compileall,
+repository safety and ASan/UBSan (host leak inspection disabled). SDL-injected
+controls verify order consumption and cleanup; captured pixels verify status
+text. Original level-0 assets render 40 models, 11 textures and 10 complete FBOs;
+a private input-driven production/release/movement test passes. Independent
+review found no blocker; preserved prior elapsed-time behavior after feedback.
+
+Estimate: 71% toward a playable single-player mission, previously 69%; capability
+judgment rather than source coverage. Next: original weapon targeting/damage or
+capture activation, then enemy AI and mission outcomes. Original craft controls,
+aircraft, economy/HUD/audio/effects and full scheduling also remain incomplete.

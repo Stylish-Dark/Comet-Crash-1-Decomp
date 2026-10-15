@@ -802,3 +802,27 @@ capability judgment rather than measured source coverage. Weapon targeting/
 projectiles/damage, player-craft controls, AI, authentic economy/HUD/audio and
 mission win/loss remain the main gaps. No full original controller or completed
 mission claim.
+
+
+## 2026-10-15 — interactive selected deployment and status
+
+Continued `ae13373` / PR #44. Native viewer Q/E selects a supported ground kind,
+hold D releases its reserved orders through the recovered timer, and Tab keeps
+per-player selections. Key-up, player switch, pause, focus loss and viewer exit
+cancel held release. Focus regain stays paused. Native on-screen bitmap status
+shows funds, active/pending units, selected orders and configured base counters.
+Added `interactive-ground-level0.cfg` with explicit synthetic development inputs.
+No original input/HUD/combat recovery is claimed. See
+`docs/decomp/native-interactive-deployment.md`.
+
+Validation: 38 headless / 39 graphics CTests, 233 Python regressions, compileall,
+repository safety and ASan/UBSan (host leak inspection disabled). SDL-injected
+controls verify order consumption and cleanup; captured pixels verify status
+text. Original level-0 assets render 40 models, 11 textures and 10 complete FBOs;
+a private input-driven production/release/movement test passes. Independent
+review found no blocker; preserved prior elapsed-time behavior after feedback.
+
+Estimate: 71% toward a playable single-player mission, previously 69%; capability
+judgment rather than source coverage. Next: original weapon targeting/damage or
+capture activation, then enemy AI and mission outcomes. Original craft controls,
+aircraft, economy/HUD/audio/effects and full scheduling also remain incomplete.

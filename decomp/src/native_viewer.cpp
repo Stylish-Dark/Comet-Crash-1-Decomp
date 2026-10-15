@@ -2,6 +2,9 @@
 #include "comet/native_viewer.hpp"
 #include "comet/dds_image.hpp"
 #include "gpu_render_targets.hpp"
+#include "comet/native_deployment_input.hpp"
+#include "native_status_overlay.hpp"
+#include <memory>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <algorithm>
@@ -91,14 +94,21 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         const GLfloat ambient[]={0.28f,0.28f,0.32f,1};glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
         std::size_t selected=config.initial_model;float yaw=25,pitch=55,zoom=1;bool quit=false,wireframe=false;
         std::uint32_t frames=0;int width=config.width,height=config.height;
-        ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool playing=false,manual_tick=false;
+        ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool playing=false,manual_tick=false,focused=true;
+        std::unique_ptr<NativeDeploymentInput> deployment;
+        if(config.construction)deployment=std::make_unique<NativeDeploymentInput>(*config.construction);
         auto last_counter=SDL_GetPerformanceCounter();
-        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, U: spawn pending ground unit, M: transport, N: dynamics, C: contacts, T: tick, P: play, F5..F9: factory mode | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(playing?" playing":" paused")+(config.construction->simulation().ground_transport_enabled()?" transport on":" transport off")+(config.construction->simulation().ground_dynamics_enabled()?" dynamics on":" dynamics off")+(config.construction->simulation().ground_contacts_enabled()?" contacts on":" contacts off");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";if(entity.production_mode)text+=" factory mode "+std::to_string(*entity.production_mode)+" timer "+std::to_string(*entity.production_elapsed)+"/"+std::to_string(*entity.production_period)+" pending units "+std::to_string(config.construction->simulation().unit_quotas()[entity.owner].pending);}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
+        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, Q/E: release type, hold D: release, U: spawn pending ground unit, M: transport, N: dynamics, C: contacts, T: tick, P: play, F5..F9: factory mode | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(playing?" playing":" paused")+(config.construction->simulation().ground_transport_enabled()?" transport on":" transport off")+(config.construction->simulation().ground_dynamics_enabled()?" dynamics on":" dynamics off")+(config.construction->simulation().ground_contacts_enabled()?" contacts on":" contacts off");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";if(entity.production_mode)text+=" factory mode "+std::to_string(*entity.production_mode)+" timer "+std::to_string(*entity.production_elapsed)+"/"+std::to_string(*entity.production_period)+" pending units "+std::to_string(config.construction->simulation().unit_quotas()[entity.owner].pending);}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         while(!quit){
             SDL_Event event;
             while(SDL_PollEvent(&event)){
                 if(event.type==SDL_QUIT)quit=true;
-                if(event.type==SDL_KEYDOWN){
+                if(config.construction && event.type==SDL_WINDOWEVENT){
+                    if(event.window.event==SDL_WINDOWEVENT_FOCUS_LOST){deployment->cancel();playing=false;manual_tick=false;focused=false;title();}
+                    if(event.window.event==SDL_WINDOWEVENT_FOCUS_GAINED)focused=true;
+                }
+                if(deployment && event.type==SDL_KEYUP && event.key.keysym.sym==SDLK_d){deployment->release();title();}
+                if(event.type==SDL_KEYDOWN && focused){
                     if(event.key.keysym.sym==SDLK_ESCAPE)quit=true;
                     if(!arena&&(event.key.keysym.sym==SDLK_RIGHT||event.key.keysym.sym==SDLK_LEFT)){selected=(selected+models.size()+(event.key.keysym.sym==SDLK_RIGHT?1:-1))%models.size();zoom=1;title();}
                     if(config.construction&&!event.key.repeat){
@@ -108,7 +118,10 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                         if(key==SDLK_DOWN&&cursor.z+1u<arena->extent)++cursor.z;
                         if(key==SDLK_UP&&cursor.z)--cursor.z;
                         if(key>=SDLK_1&&key<=SDLK_8){constexpr unsigned types[]={20,21,22,23,24,25,26,28};opcode=types[key-SDLK_1];}
-                        if(key==SDLK_TAB)owner=(owner+1)%config.construction->simulation().accounts().size();
+                        if(key==SDLK_TAB){deployment->next_owner();owner=static_cast<unsigned>(deployment->owner());}
+                        if(key==SDLK_q)deployment->cycle_kind(-1);
+                        if(key==SDLK_e)deployment->cycle_kind(1);
+                        if(key==SDLK_d)deployment->press();
                         if(key==SDLK_b||key==SDLK_SPACE){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';if(result==ArenaConstructionSubmit::Queued)manual_tick=true;}
                         if(key>=SDLK_F5&&key<=SDLK_F9){auto result=config.construction->select_factory(owner,cursor,static_cast<std::uint8_t>(4+key-SDLK_F5));std::cout<<"Factory selection: "<<static_cast<unsigned>(result)<<'\n';}
                         if(key==SDLK_u){
@@ -119,7 +132,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                         if(key==SDLK_n){config.construction->set_ground_dynamics(!config.construction->simulation().ground_dynamics_enabled());std::cout<<"Original ground velocity dynamics: "<<config.construction->simulation().ground_dynamics_enabled()<<'\n';title();}
                         if(key==SDLK_m){config.construction->set_ground_transport(!config.construction->simulation().ground_transport_enabled());std::cout<<"Native ground transport: "<<config.construction->simulation().ground_transport_enabled()<<'\n';title();}
                         if(key==SDLK_t)manual_tick=true;
-                        if(key==SDLK_p)playing=!playing;
+                        if(key==SDLK_p){playing=!playing;if(!playing)deployment->cancel();}
                         title();
                     }
                     if(event.key.keysym.sym==SDLK_w)wireframe=!wireframe;
@@ -196,6 +209,8 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             }else draw(selected);
             if(glGetError()!=GL_NO_ERROR)return error("OpenGL draw failed");
             targets.present();
+            if(deployment)detail::draw_status_overlay(deployment->status_lines(playing),width,height);
+            if(glGetError()!=GL_NO_ERROR)return error("OpenGL status overlay failed");
             ++frames;
             if(!config.screenshot.empty() && (config.frame_limit==0||frames==config.frame_limit)){
                 if(!screenshot(config.screenshot,width,height))return error("could not save rendered screenshot");
