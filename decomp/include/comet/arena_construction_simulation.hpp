@@ -9,6 +9,7 @@
 #include "comet/arena_unit_entity.hpp"
 #include "comet/arena_unit_spawn.hpp"
 #include "comet/arena_ground_transport.hpp"
+#include "comet/arena_ground_deployment.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -26,6 +27,7 @@ struct ArenaConstructionSimulationConfig {
   std::array<std::uint8_t, 4> unit_target_overrides{255, 255, 255, 255};
   // Explicit native bootstrap; absent means base impacts are disabled.
   std::array<std::optional<std::int16_t>,4> base_counters{};
+  std::array<std::optional<ArenaGroundDeploymentControl>,4> ground_deployment{};
   bool production_enabled = false;
   bool ground_transport_enabled = false;
   bool ground_dynamics_enabled = false;
@@ -61,6 +63,10 @@ struct ArenaGroundBaseImpact {
   std::uint16_t entity_index=0;
   std::uint8_t base=0,owner=0;
 };
+struct ArenaGroundDeploymentAttempt {
+  std::uint8_t owner=0,kind=40;
+  ArenaUnitSpawnResult result{};
+};
 struct ArenaConstructionTick {
   std::array<ArenaTimedStatus, 4> players{};
   ArenaConstructionSimulationStep construction;
@@ -70,6 +76,7 @@ struct ArenaConstructionTick {
   std::vector<std::uint16_t> transported_units;
   std::vector<ArenaGroundBaseImpact> base_impacts;
   std::vector<std::uint16_t> depleted_units, retired_entities;
+  std::vector<ArenaGroundDeploymentAttempt> ground_deployments;
 };
 class ArenaConstructionSimulation {
   ArenaConstructionSimulationConfig config_;
@@ -80,6 +87,7 @@ class ArenaConstructionSimulation {
   std::vector<ArenaPlayer> players_;
   ArenaRandom random_;
   float clock_ = 0;
+  std::array<float,4> deployment_timers_{};
   std::array<std::array<std::uint8_t, 128>, 4> statistics_{};
   ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);
   ArenaConstructionContext context_for(ArenaConstructionRequest) const;
@@ -107,6 +115,9 @@ public:
   // Explicit native preview control for the recovered capture-readiness byte.
   bool set_ground_capture_ready(std::uint16_t index,bool ready);
   std::optional<std::int16_t> base_counter(std::size_t owner) const;
+  bool set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl);
+  const auto &ground_deployment() const { return config_.ground_deployment; }
+  const auto &deployment_timers() const { return deployment_timers_; }
   const auto &player_statistics() const { return statistics_; }
   const auto &unit_quotas() const { return config_.unit_quotas; }
   const auto &accounts() const { return config_.players; }

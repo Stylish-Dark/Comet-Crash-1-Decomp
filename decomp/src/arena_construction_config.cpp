@@ -80,6 +80,13 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
         throw std::invalid_argument("duplicate production flag");
       production_seen = true;
       c.production_enabled = bounded(w[1], 1);
+    } else if(w[0]=="deploy" && w.size()==4 && world){
+      const auto owner=bounded(w[1],3),kind=bounded(w[2],255);
+      const float strength=finite(w[3]);
+      if(owner>=c.players.size() || c.ground_deployment[owner] ||
+         !(kind==40 || kind==41 || (kind>=43 && kind<=47)) || strength<0 || strength>1 || std::fpclassify(strength)==FP_SUBNORMAL)
+        throw std::invalid_argument("invalid or duplicate ground deployment");
+      c.ground_deployment[owner]=ArenaGroundDeploymentControl{static_cast<std::uint8_t>(kind),strength};
     } else if (w[0] == "base-counter" && w.size()==3 && world) {
       const auto owner=bounded(w[1],3);
       if(owner>=c.players.size() || c.base_counters[owner])

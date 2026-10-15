@@ -2,7 +2,7 @@
 
 - Recover surrounding ground physics at `14060`/`158B8`: acceleration, damping, collision, crowds, height and target transitions. Original route steering and native bank/cell migration are integrated.
 - Base impacts and ordinary ground death/corpse expiry now release quota and recycle slots; recover original delayed tombstones, special-unit/aircraft lifecycle and mission outcomes.
-- Recover automatic producer placement and aircraft binding; explicit ground deployment and factory reservations already work.
+- Selected held base release now consumes factory reservations without manual spawning; recover moving-craft/controller input, autonomous AI selection and aircraft deployment/binding.
 - Recover weapons/damage, enemy behavior and mission win/loss/restart.
 - Recover authentic income/balance, composite base/weapon parts and gameplay HUD/input/audio.
 - Construction and live movement are usable development controls; no complete playable mission yet.

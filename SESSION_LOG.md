@@ -776,3 +776,29 @@ Estimate: 66% toward a playable single-player mission (previous 64%), a
 capability judgment rather than measured source coverage. Next automatic
 producer placement/readiness and original weapon/projectile/damage behavior;
 AI, mission win/loss and full original lifecycle scheduling remain incomplete.
+
+
+## 2026-10-15 — selected base deployment closes the production loop
+
+Continued `d7836fd` / PR #43. Recovered original base-controller release timer,
+per-kind/held-input threshold and job-cell center position. Explicit native
+`deploy owner kind strength` controls now release reserved ground units without
+manual spawn calls, reset timer only on success and project new units after
+retired identities are removed. Newborns start moving on the next native tick.
+The public two-impact example continuously produces, deploys, moves, hits a base,
+releases quota/pool capacity and repeats. Aircraft/full input controller/AI and
+original asynchronous scheduling remain excluded.
+
+Original-instruction comparisons: 20,000 timer words/readiness results (8,436
+ready), 54 exact-threshold/next-float checks and all 576 four-word cell centers
+match. Independent review found no blocker; added multi-owner, full-cell,
+same-tick reuse and rejected-clock coverage. Final local validation: 37 headless /
+38 graphics CTests, 233 Python tests, compileall, repository safety and ASan/UBSan
+(host leak inspection disabled). Original level-0 factory-to-base release and
+subsequent movement/rendering pass with 40 models, 11 textures and 10 complete FBOs. See docs/decomp/native-base-deployment.md.
+
+Estimate: 69% toward a playable single-player mission (previous 66%), a
+capability judgment rather than measured source coverage. Weapon targeting/
+projectiles/damage, player-craft controls, AI, authentic economy/HUD/audio and
+mission win/loss remain the main gaps. No full original controller or completed
+mission claim.

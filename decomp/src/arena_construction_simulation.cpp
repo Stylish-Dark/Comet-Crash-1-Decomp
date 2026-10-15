@@ -39,6 +39,10 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     p.start_grid = a.route.base;
     players_.push_back(p);
   }
+  for(unsigned owner=0;owner<4;++owner)if(c.ground_deployment[owner]) {
+    if(!set_ground_deployment(owner,*c.ground_deployment[owner]))
+      throw std::invalid_argument("invalid ground deployment control");
+  }
   for(unsigned owner=0;owner<4;++owner)if(c.base_counters[owner]) {
     if(owner>=c.players.size() || *c.base_counters[owner]<0)
       throw std::invalid_argument("invalid base counter");
@@ -271,7 +275,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
     throw std::invalid_argument("clock must be finite and monotonic");
   ArenaConstructionTick tick;
   const float elapsed = clock - clock_;
-  if (config_.ground_transport_enabled && elapsed > 10)
+  const bool deploying=std::any_of(config_.ground_deployment.begin(),config_.ground_deployment.end(),[](const auto &c){return c.has_value();});
+  if ((config_.ground_transport_enabled || deploying) && elapsed > 10)
     throw std::invalid_argument("transport tick is limited to ten seconds");
   if (elapsed > 0) {
     auto next = storage_.banks[storage_.read_bank];
@@ -294,11 +299,12 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           ArenaFactoryProduction::Reserved)
         tick.production_reservations.push_back(static_cast<std::uint16_t>(i));
     }
-    if (config_.ground_transport_enabled) {
+    if (config_.ground_transport_enabled || deploying) {
       auto transported = storage_;
       transported.banks[0] = next;
       transported.banks[1] = std::move(next);
       auto next_random = random_;
+      auto next_deployment_timers=deployment_timers_;
       auto next_statistics=statistics_;
       for(unsigned owner=0;owner<players_.size();++owner)
         store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
@@ -315,7 +321,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
                          config_.base_counters[p].has_value() && config_.unit_base_available[p]};
         visibility_bits[p]=static_cast<std::uint8_t>(routes_[p].team);
       }
-      for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
+      if(config_.ground_transport_enabled)for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
         const auto &unit = transported.banks[0][i];
         if (!(unit[15] == 62 || unit[15] == 40 || unit[15] == 41 ||
               (unit[15] >= 43 && unit[15] <= 47))) continue;
@@ -383,6 +389,24 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         }
         if (moved) tick.transported_units.push_back(static_cast<std::uint16_t>(i));
       }
+      // Newly spawned output records start moving on the next native tick,
+      // matching the original read/output-bank boundary rather than backdating
+      // their movement over the elapsed interval that produced their order.
+      for(unsigned owner=0;owner<players_.size();++owner){
+        const auto control=config_.ground_deployment[owner];
+        if(!control || !config_.unit_base_available[owner])continue;
+        const auto gate=advance_arena_ground_deployment(next_deployment_timers[owner],*control,elapsed);
+        if(gate==ArenaGroundDeploymentGate::Invalid)throw std::invalid_argument("invalid ground deployment timer");
+        if(gate!=ArenaGroundDeploymentGate::Ready)continue;
+        const auto position=arena_ground_deployment_position(routes_[owner].base);
+        if(!position)throw std::invalid_argument("invalid ground deployment base");
+        const auto spawned=spawn_reserved_arena_ground_unit(transported,next_statistics[owner],control->kind,
+            static_cast<std::uint8_t>(owner),*position,std::span(targets).first(players_.size()),grid_,next_random);
+        if(spawned.status==ArenaUnitSpawnStatus::Invalid)throw std::invalid_argument("invalid ground deployment spawn");
+        tick.ground_deployments.push_back({static_cast<std::uint8_t>(owner),control->kind,spawned});
+        if(spawned.status==ArenaUnitSpawnStatus::Spawned)next_deployment_timers[owner]=0;
+      }
+      deployment_timers_=next_deployment_timers;
       storage_ = std::move(transported);
       random_ = next_random;
       statistics_=next_statistics;
@@ -467,6 +491,11 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
 std::optional<std::int16_t> ArenaConstructionSimulation::base_counter(std::size_t owner) const {
   if(owner>=players_.size() || !config_.base_counters[owner])return {};
   return std::bit_cast<std::int16_t>(static_cast<std::uint16_t>((unsigned(statistics_[owner][88])<<8)|statistics_[owner][89]));
+}
+bool ArenaConstructionSimulation::set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl control){
+  if(owner>=players_.size() || !(control.kind==40 || control.kind==41 || (control.kind>=43 && control.kind<=47)) ||
+     !std::isfinite(control.strength) || control.strength<0 || control.strength>1 || std::fpclassify(control.strength)==FP_SUBNORMAL)return false;
+  config_.ground_deployment[owner]=control;return true;
 }
 bool ArenaConstructionSimulation::set_ground_capture_ready(std::uint16_t index,bool ready){
   if(index>=storage_.banks[0].size() || index>=storage_.banks[1].size() ||
