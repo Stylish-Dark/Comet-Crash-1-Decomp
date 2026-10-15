@@ -12,6 +12,7 @@ class NativeConstructionScene {
   bootstrap(const ArenaState &, ArenaConstructionSimulationConfig);
   void refresh_construction();
   void project(const ArenaConstructionSimulationStep &);
+  void project_ground_unit(std::uint16_t index);
 
 public:
   NativeConstructionScene(const ArenaState &,
@@ -19,6 +20,7 @@ public:
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
   ArenaConstructionTick advance(float);
+  bool set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl control) { return simulation_.set_ground_deployment(owner,control); }
   void set_ground_contacts(bool enabled) { simulation_.set_ground_contacts(enabled); }
   void set_ground_dynamics(bool enabled) { simulation_.set_ground_dynamics(enabled); }
   void set_ground_transport(bool enabled) { simulation_.set_ground_transport(enabled); }

@@ -121,6 +121,12 @@ int main(int argc, char **argv) {
         std::cout << '\n';
         if (result.status == ArenaUnitSpawnStatus::Invalid)
           throw std::invalid_argument("unsupported spawn request");
+      } else if(w[0]=="deploy" && w.size()==4){
+        const auto owner=number<unsigned>(w[1]);const auto kind=byte(w[2]);
+        const ArenaGroundDeploymentControl control{static_cast<std::uint8_t>(kind),number<float>(w[3])};
+        if(!(scene?scene->set_ground_deployment(owner,control):simulation->set_ground_deployment(owner,control)))
+          throw std::invalid_argument("invalid ground deployment control");
+        std::cout<<"deploy owner="<<owner<<" kind="<<kind<<" strength="<<control.strength<<'\n';
       } else if (w[0] == "capture-ready" && w.size()==3) {
         const auto index=number<unsigned>(w[1]),ready=number<unsigned>(w[2]);
         if(index>65535||ready>1)throw std::invalid_argument("invalid capture readiness");
@@ -292,6 +298,12 @@ int main(int argc, char **argv) {
                     << names[static_cast<unsigned>(tick.players[i])];
         std::cout << '\n';
         completion(tick.construction);
+        for(const auto &attempt:tick.ground_deployments){
+          constexpr const char *status[]={"spawned","no-order","invalid","capacity-rejected","allocation-failed"};
+          std::cout<<"base-deployment "<<status[static_cast<unsigned>(attempt.result.status)]<<" owner="<<unsigned(attempt.owner)<<" kind="<<unsigned(attempt.kind);
+          if(attempt.result.entity_index)std::cout<<" entity="<<*attempt.result.entity_index;
+          std::cout<<'\n';
+        }
         for(auto index:tick.depleted_units)std::cout<<"ground-depleted entity="<<index<<'\n';
         for(auto index:tick.retired_entities)std::cout<<"entity-retired entity="<<index<<'\n';
         for(const auto &impact:tick.base_impacts)

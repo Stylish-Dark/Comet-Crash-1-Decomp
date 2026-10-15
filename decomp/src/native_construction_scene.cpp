@@ -206,6 +206,7 @@ ArenaConstructionTick NativeConstructionScene::advance(float t) {
     for(auto &cell:arena_.cells)if(cell.entity_index)cell.entity_index=remap[*cell.entity_index];
   }
   project(tick.construction);
+  for(const auto &attempt:tick.ground_deployments)if(attempt.result.entity_index)project_ground_unit(*attempt.result.entity_index);
   refresh_construction();
   arena_.players = simulation_.players();
   return tick;
@@ -216,11 +217,13 @@ ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(
     return {};
   const auto result = simulation_.spawn_reserved_ground_unit(
       owner, kind, {cell.x + .5f, 0, cell.z + .5f, 0});
-  if (!result.entity_index)
-    return result;
+  if(result.entity_index)project_ground_unit(*result.entity_index);
+  return result;
+}
+void NativeConstructionScene::project_ground_unit(std::uint16_t index){
   const auto &slot =
       simulation_.storage()
-          .banks[simulation_.storage().read_bank][*result.entity_index];
+          .banks[simulation_.storage().read_bank][index];
   auto scalar = [&](unsigned o) {
     std::uint32_t bits = 0;
     for (unsigned i = 0; i < 4; ++i)
@@ -241,11 +244,10 @@ ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(
                            static_cast<float>(arena_.extent - 1)))};
   for (unsigned i = 0; i < 4; ++i)
     e.orientation[i] = scalar(0x20 + 4 * i);
-  e.live_entity_index = result.entity_index;
+  e.live_entity_index = index;
   e.source_record = std::numeric_limits<std::size_t>::max();
   // Cell.entity_index remains the structure lookup link; mobile records live
   // in the simulation's ordered cell lists and may share a structure cell.
   arena_.entities.push_back(e);
-  return result;
 }
 } // namespace comet::decomp

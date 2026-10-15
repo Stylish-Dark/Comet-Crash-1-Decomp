@@ -151,3 +151,15 @@ lifecycle_scenario=(Path(__file__).resolve().parents[1]/"examples/ground-lifecyc
 result=run(lifecycle_scenario)
 assert result.returncode==0,(result.stdout,result.stderr)
 assert "ground-depleted entity=2" in result.stdout and "entity-retired entity=2" in result.stdout,result.stdout
+
+# Selected held deployment closes the factory -> base release -> movement ->
+# base impact -> released quota/index -> next production/release loop.
+deployment_scenario=(Path(__file__).resolve().parents[1]/"examples/base-deployment.scenario").read_text()
+result=run(deployment_scenario)
+assert result.returncode==0,(result.stdout,result.stderr)
+assert result.stdout.count("base-deployment spawned")==2 and result.stdout.count("base-impact ")==2,result.stdout
+for setting in ("deploy 0 42 1", "deploy 2 40 1", "deploy 0 40 nan", "deploy 0 40 1.01", "deploy 0 40 1\ndeploy 0 41 1"):
+ result=run(deployment_scenario.replace("deploy 0 40 1",setting))
+ assert result.returncode!=0 and "line " in result.stderr,(setting,result.stdout,result.stderr)
+result=run(deployment_scenario.split("advance 4")[0]+"deploy 0 40 0\nadvance 4\nexpect live-units 0\nexpect unit-pending0 1\ndeploy 0 40 1\nadvance 4.1\nexpect live-units 1\n")
+assert result.returncode==0,(result.stdout,result.stderr)

@@ -1,0 +1,36 @@
+# Synthetic economy, explicit held deployment; no manual spawn commands.
+world 2 4
+player 1 1 0 400 400 0
+player 4 1 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+transport 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 0 0 1
+base-counter 1 2
+deploy 0 40 1
+run
+queue 0 26 2 2
+step
+advance 2
+expect unit-pending0 0
+advance 4
+expect live-units 1
+expect-unit-near 1 1.5 1.5 .2
+expect unit-active0 1
+expect unit-pending0 0
+expect allocated 2
+advance 7
+expect-base-counter 1 1
+expect unit-active0 0
+expect live-units 0
+expect allocated 1
+advance 8
+expect live-units 1
+expect unit-active0 1
+expect allocated 2
+advance 10
+expect-base-counter 1 0
+expect live-units 0
+expect allocated 1

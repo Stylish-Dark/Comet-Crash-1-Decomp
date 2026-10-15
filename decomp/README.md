@@ -36,3 +36,11 @@ death/corpse lifecycle, releasing quota once and recycling its slot at expiry.
 Try `decomp/examples/ground-lifecycle.scenario`; see
 [recovery evidence](../docs/decomp/native-ground-lifecycle.md).
 Weapon activation, projectile damage and original tombstone timing remain open.
+
+## Selected base release
+
+`deploy OWNER KIND STRENGTH` configures a held base-release control. Produced
+ground units now deploy, move, hit an enemy base and free capacity for further
+production without manual spawning. Run `decomp/examples/base-deployment.scenario`;
+see [evidence and boundaries](../docs/decomp/native-base-deployment.md).
+Original moving-craft/controller input, AI selection and aircraft remain open.
