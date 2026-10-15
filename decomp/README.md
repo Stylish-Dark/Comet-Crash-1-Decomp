@@ -44,3 +44,11 @@ ground units now deploy, move, hit an enemy base and free capacity for further
 production without manual spawning. Run `decomp/examples/base-deployment.scenario`;
 see [evidence and boundaries](../docs/decomp/native-base-deployment.md).
 Original moving-craft/controller input, AI selection and aircraft remain open.
+
+## Interactive ground loop
+
+Launch level 0 with `--arena --construction-config decomp/examples/interactive-ground-level0.cfg`.
+P advances production/movement; Q/E selects ground type; hold D releases orders
+from the selected player's base; Tab switches player. The native status panel
+shows orders, active units and configured base counters. Focus loss/pause/exit
+cancel held input. See [controls and limits](../docs/decomp/native-interactive-deployment.md).
