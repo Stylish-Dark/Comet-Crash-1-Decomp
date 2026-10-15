@@ -826,3 +826,36 @@ Estimate: 71% toward a playable single-player mission, previously 69%; capabilit
 judgment rather than source coverage. Next: original weapon targeting/damage or
 capture activation, then enemy AI and mission outcomes. Original craft controls,
 aircraft, economy/HUD/audio/effects and full scheduling also remain incomplete.
+
+
+## 2026-10-16 — replayable native preview match lifecycle
+
+Continued the latest active PR #45 at `60778fa`, rather than stale main.
+The existing outcome display now has an interactive lifecycle: global victory
+or draw freezes simulation and cancels all configured deployment strengths;
+finished matches reject further gameplay mutations. F2 restores the complete
+viewer launch checkpoint paused, including banks/cells, pool, queues/events,
+RNG, funds, quotas, counters, timers, motion configuration and scene projection.
+Camera and player/type inspection remain available. A three-team elimination
+alone does not stop surviving opponents. Restart does not reread assets or maps.
+
+Fixed the existing evaluator silently ignoring missing active base counters,
+and made inactive perspectives unconfigured. Its Release test previously lost
+all assert checks under NDEBUG; assertions are now enabled and the partial-table
+regression was observed failing before the fix.
+
+Validation: all 233 Python tests, 40 headless / 41 SDL/OpenGL CTests, warning-free
+Release builds with -Werror, compileall, repository safety and focused ASan/UBSan
+(leak detection disabled) pass. Tests drive an actual base impact into a win,
+freeze subsequent updates, restore launch state, compare replay entity bytes
+including subsequent RNG-dependent spawn, and send real SDL keys to verify
+finished-command guards and F2 restoration. Independent review found no blocker.
+This session uses synthetic public fixtures; no new original-asset execution,
+original-instruction comparison or local Windows execution is claimed.
+
+Estimate: **73% toward a playable single-player mission**, previously 71%, a
+capability judgment rather than measured source coverage. This milestone is
+native preview lifecycle, not recovery of original campaign win/loss or reset.
+Next: original weapons/targeting/projectiles/damage or automatic capture
+activation, autonomous enemies, original craft controls and mission progression.
+Full-game parity, authentic economy/HUD/audio/effects and aircraft remain open.

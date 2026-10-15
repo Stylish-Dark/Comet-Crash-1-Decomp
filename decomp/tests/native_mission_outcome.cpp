@@ -22,4 +22,21 @@ int main() {
  c.players[1].route.team=0;
  ArenaConstructionSimulation same_team(c);
  assert(evaluate_native_mission(same_team,0)==NativeMissionOutcome::Unconfigured);
+ // A missing allied/opposing counter must never manufacture a win or loss.
+ c.players[1].route.team=1;
+ c.players.push_back({{{5,5},1,false},100,100});
+ ArenaConstructionSimulation partial(c);
+ assert(evaluate_native_mission(partial,0)==NativeMissionOutcome::Unconfigured);
+ c.base_counters[2]=3;
+ c.players[0].route.inactive=true;
+ ArenaConstructionSimulation inactive(c);
+ assert(evaluate_native_mission(inactive,0)==NativeMissionOutcome::Unconfigured);
+ c.players[0].route.inactive=false;
+ c.players[2].route.team=0; // Surviving ally means this side still wins.
+ ArenaConstructionSimulation allied(c);
+ assert(evaluate_native_mission(allied,0)==NativeMissionOutcome::Victory);
+ assert(evaluate_native_mission(allied,1)==NativeMissionOutcome::Defeat);
+ c.players[2].route.inactive=true; c.base_counters[2].reset();
+ ArenaConstructionSimulation ignored(c);
+ assert(evaluate_native_mission(ignored,0)==NativeMissionOutcome::Draw);
 }

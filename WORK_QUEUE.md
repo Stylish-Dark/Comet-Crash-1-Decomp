@@ -1,11 +1,16 @@
 # Active gameplay continuation
 
-- Recover surrounding ground physics at `14060`/`158B8`: acceleration, damping, collision, crowds, height and target transitions. Original route steering and native bank/cell migration are integrated.
-- Base impacts and ordinary ground death/corpse expiry now release quota and recycle slots; recover original delayed tombstones, special-unit/aircraft lifecycle and mission outcomes.
-- Selected held base release now consumes factory reservations without manual spawning; recover moving-craft/controller input, autonomous AI selection and aircraft deployment/binding.
-- Recover weapons/damage, enemy behavior and mission win/loss/restart.
-- Recover authentic income/balance, composite base/weapon parts and gameplay HUD/input/audio.
-- Construction, selected held deployment, live movement and native status feedback are usable development controls; no complete playable mission yet.
+Latest milestone: native preview matches freeze on global victory/draw and F2
+restores the full viewer launch checkpoint paused. Partial active base tables
+cannot manufacture outcomes. This is preview policy, not recovered campaign logic.
+
+- Recover original weapon targeting, projectiles, damage and capture activation.
+- Recover autonomous enemy decisions, moving craft/controller input and aircraft.
+- Recover original mission objectives, progression, rewards and restart/reset rules.
+- Finish special-unit lifecycle, delayed tombstones and original scheduling.
+- Recover authentic income/balance, composite weapon parts and HUD/input/audio.
+- Development construction/deployment/movement and replayable preview lifecycle
+  are usable; full battle simulation and a complete original mission remain open.
 
 # WORK QUEUE
 

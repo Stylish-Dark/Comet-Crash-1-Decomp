@@ -31,7 +31,7 @@ std::array<std::string,5> NativeDeploymentInput::status_lines(bool playing) cons
  for(std::size_t i=0;i<sim.accounts().size();++i){const auto counter=sim.base_counter(i);bases+="  "+std::to_string(i+1)+":"+(counter?std::to_string(*counter):"--");}
  return {"PLAYER "+std::to_string(owner_+1)+"  FUNDS "+funds.str()+"  ACTIVE "+std::to_string(quota.active)+"  PENDING "+std::to_string(quota.pending),
  "RELEASE TYPE "+std::to_string(kind())+"  ORDERS "+std::to_string(quota.by_type[kind()-40])+"  "+(held_?"HELD":releasing?"SCRIPTED":"IDLE")+"  "+(playing?"PLAYING":"PAUSED"),
- bases,"Q/E TYPE  HOLD D RELEASE  TAB PLAYER  P PLAY  T TICK",
+ bases,"Q/E TYPE  HOLD D RELEASE  TAB PLAYER  P PLAY  T TICK  F2 RESTART",
  "B BUILD  F5-F9 FACTORY  M MOVE  N DYNAMICS  C CONTACT"};
 }
 }

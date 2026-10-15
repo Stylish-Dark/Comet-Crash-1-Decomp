@@ -32,6 +32,7 @@ factory's production mode. Its mode/timer remain in the window title.
 | Tab | Stop the previous player's hold, then switch player |
 | P | Toggle playback; pausing stops held release |
 | T | Advance one second while paused; held release also works with ticks |
+| F2 | Restore viewer launch checkpoint paused |
 
 Selection persists separately for each player. Aircraft 42/48 are omitted.
 Changing type while held updates the selected release type. Switching player
@@ -45,8 +46,9 @@ controlled, so existing automated previews keep working.
 
 A small native bitmap alphabet displays player, funds, active/pending counts,
 selected kind's remaining orders, HELD/SCRIPTED/IDLE, playback state, configured
-base counters and key hints. An unset counter is `--`. A zero counter does not
-trigger victory or defeat; those original consumers are still unrecovered.
+base counters and key hints. An unset counter is `--`. Complete active base tables drive native preview
+victory/defeat/draw. Finished matches freeze; F2 restarts. See
+[native mission lifecycle](native-mission-outcome.md) for limits.
 The panel wraps at narrow window widths. It uses a window-sized viewport after
 arena presentation and restores OpenGL state, so arena supersampling and
 wireframe state do not hide or distort the text. No original font assets are
@@ -75,7 +77,8 @@ preserving existing elapsed-time behavior, and pause coverage was added.
 
 Original moving craft/gamepad controls, automatic capture activation,
 weapon targeting/projectiles/damage, aircraft, autonomous enemy behavior,
-authentic economy/HUD/audio/effects and mission win/loss/restart remain open.
+authentic economy/HUD/audio/effects and original mission/campaign rules remain open.
+Native preview freeze/restart is now implemented separately.
 Estimate: **71% toward a playable single-player mission**, up from 69%; a
 capability judgment, not source coverage. This increase credits usable control
 and feedback for the production/deployment loop, with no combat recovery credit.
