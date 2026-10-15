@@ -149,3 +149,19 @@ Continue through the loader after geometry collapse to recover:
 
 The goal is to replace the remaining 0x78-byte opaque submesh record with a
 native typed `Submesh + Material` representation.
+
+## Native OBJ indexing boundary (2026-10-15)
+
+`decomp/include/comet/obj_geometry.hpp` and `decomp/src/obj_geometry.cpp`
+now implement standard OBJ `v`, `v/vt`, `v//vn`, and `v/vt/vn`
+face reference normalization (positive 1-based and negative relative),
+keyed vertex deduplication, u16 index-limit checks, and polygon fan
+triangulation. The dedicated CTest executable exercises negative/positive
+equivalence, shared vertices, quads, and malformed references.
+
+**Provenance boundary:** the 12-byte staging stride and final u16 indices
+are recovered from the original PPU binary; standard OBJ normalization,
+fan triangulation, and dedup keyed by the triplet are currently **native
+implementation policies**, not yet proven bit-exact against the original
+loader. Reconcile those policies through the `0x00105308` source-index
+conversion and collapse sites before declaring loader fidelity.
