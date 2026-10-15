@@ -37,6 +37,7 @@ add_library(comet_native_recovery STATIC
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
     src/arena_construction_config.cpp
+    src/native_mission_outcome.cpp
     src/native_deployment_input.cpp
     src/native_construction_scene.cpp
     src/arena_routes.cpp
@@ -392,3 +393,7 @@ if(MSVC)
 else()
   target_compile_options(comet_native_deployment_input_tests PRIVATE -UNDEBUG)
 endif()
+
+add_executable(comet_native_mission_outcome_test tests/native_mission_outcome.cpp)
+target_link_libraries(comet_native_mission_outcome_test PRIVATE comet_native_recovery)
+add_test(NAME comet_native_mission_outcome_test COMMAND comet_native_mission_outcome_test)
