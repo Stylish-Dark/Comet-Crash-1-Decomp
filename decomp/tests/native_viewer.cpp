@@ -124,6 +124,46 @@ int main() {
     pixels.resize(static_cast<std::size_t>(width)*height*3);hud.read(reinterpret_cast<char*>(pixels.data()),pixels.size());
     int text_pixels=0;for(int y=10;y<17;++y)for(int x=10;x<300;++x){const auto offset=(y*width+x)*3;if(pixels[offset]>150 && pixels[offset+1]>150 && pixels[offset+2]>150)++text_pixels;}
     if(text_pixels<50)throw std::runtime_error("on-screen status text missing");
+    // Actual SDL input must freeze a base-impact win, then restore the launch
+    // checkpoint with F2. Rendering uses only synthetic geometry.
+    auto mission_config=input_config;
+    mission_config.base_counters[0]=1;mission_config.base_counters[1]=1;
+    mission_config.ground_transport_enabled=true;
+    mission_config.unit_quotas[0].pending=1;
+    mission_config.unit_quotas[0].by_type={1,0,0,0,0,0,0,0};
+    auto launch=[&]{
+        auto s=std::make_unique<NativeConstructionScene>(input_arena,mission_config);
+        if(!s->spawn_reserved_ground_unit(0,40,{4,1}).entity_index)
+            throw std::runtime_error("mission SDL setup failed");
+        return s;
+    };
+    auto controls_for=[&](std::vector<SDL_Keycode> keys){
+        return std::thread([&,keys=std::move(keys)]{
+            while(!SDL_WasInit(SDL_INIT_VIDEO)){if(finished.load())return;SDL_Delay(1);}
+            SDL_Delay(100);
+            for(auto code:keys){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.sym=code;SDL_PushEvent(&e);SDL_Delay(100);}
+            SDL_Event e{};e.type=SDL_QUIT;SDL_PushEvent(&e);
+        });
+    };
+    config.frame_limit=0;config.screenshot.clear();
+    auto mission_scene=launch();config.construction=mission_scene.get();finished.store(false);
+    auto frozen_controls=controls_for({SDLK_t,SDLK_b,SDLK_d,SDLK_t,SDLK_p,SDLK_u,SDLK_m});
+    const auto frozen_result=run_native_viewer({spawned_model,background},config);
+    finished.store(true);frozen_controls.join();
+    if(!frozen_result)throw std::runtime_error(frozen_result.detail);
+    if(mission_scene->simulation().clock()!=1 || mission_scene->simulation().base_counter(1)!=0 ||
+       mission_scene->simulation().pending()!=0 || !mission_scene->simulation().ground_transport_enabled() ||
+       !mission_scene->arena().entities.empty())
+        throw std::runtime_error("finished viewer accepted gameplay mutation or continued ticking");
+    mission_scene=launch();config.construction=mission_scene.get();finished.store(false);
+    const auto launch_banks=mission_scene->simulation().storage().banks;
+    auto restart_controls=controls_for({SDLK_t,SDLK_TAB,SDLK_e,SDLK_F2});
+    const auto restart_result=run_native_viewer({spawned_model,second_kind,background},config);
+    finished.store(true);restart_controls.join();
+    if(!restart_result)throw std::runtime_error(restart_result.detail);
+    if(mission_scene->simulation().clock()!=0 || mission_scene->simulation().base_counter(1)!=1 ||
+       mission_scene->simulation().storage().banks!=launch_banks || mission_scene->arena().entities.size()!=1)
+        throw std::runtime_error("F2 failed to restore launch checkpoint paused");
     config.screenshot=std::filesystem::temp_directory_path()/"comet-render-test.ppm";
     std::filesystem::remove(config.screenshot);std::filesystem::remove(texture);
 }

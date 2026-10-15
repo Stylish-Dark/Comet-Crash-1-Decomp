@@ -6,7 +6,13 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current phase
 
-**Native source recovery includes all 29 map initial states, original assets, construction commits/readiness, factory reservations, explicit live ground deployment and opt-in movement with recovered original route steering and base centering. The native scene projects moving units. Recovered hostile capture and opt-in enemy-base impacts release unit quota and recycle owned entity slots. Ordinary ground health depletion and temporary corpse expiry now release quota and pool slots. Selected held base input now releases produced ground units and closes the continuous production-to-impact loop. Native viewer held deployment and status feedback are usable. Combat, original craft/controller and AI deployment, special-unit lifecycle, authentic HUD and mission progression remain incomplete.**
+**The active native branch includes original-asset rendering, construction,
+factory production, held ground deployment, recovered movement/contact/capture,
+base impacts and ordinary death/corpse lifecycle. Preview victory/draw now freezes
+the viewer simulation; F2 restores its complete launch checkpoint paused.
+Combat, autonomous enemies, original craft controls, original mission rules and
+campaign progression remain incomplete. Continue from the latest active PR,
+not the older main branch.**
 
 ## Exact-title baseline retained
 
@@ -38,7 +44,9 @@ Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and re
 
 ## Current target
 
-**Next gameplay target: recover the surrounding ground dynamics at `14060`/`158B8`, then weapon/base interaction. Route steering is recovered; acceleration, damping, collision and auxiliary behavior remain. Model initializer details below are an outstanding rendering track.**
+**Next gameplay target: original weapon targeting/projectile/damage or automatic
+capture activation. Native preview match lifecycle is usable; original win/loss,
+AI and campaign progression remain unrecovered.**
 
 Recovered from `arenaGraphics.cpp`:
 
@@ -437,3 +445,36 @@ Estimate: 71% toward a playable single-player mission, previously 69%; capabilit
 judgment rather than source coverage. Next: original weapon targeting/damage or
 capture activation, then enemy AI and mission outcomes. Original craft controls,
 aircraft, economy/HUD/audio/effects and full scheduling also remain incomplete.
+
+
+## 2026-10-16 — replayable native preview match lifecycle
+
+Continued the latest active PR #45 at `60778fa`, rather than stale main.
+The existing outcome display now has an interactive lifecycle: global victory
+or draw freezes simulation and cancels all configured deployment strengths;
+finished matches reject further gameplay mutations. F2 restores the complete
+viewer launch checkpoint paused, including banks/cells, pool, queues/events,
+RNG, funds, quotas, counters, timers, motion configuration and scene projection.
+Camera and player/type inspection remain available. A three-team elimination
+alone does not stop surviving opponents. Restart does not reread assets or maps.
+
+Fixed the existing evaluator silently ignoring missing active base counters,
+and made inactive perspectives unconfigured. Its Release test previously lost
+all assert checks under NDEBUG; assertions are now enabled and the partial-table
+regression was observed failing before the fix.
+
+Validation: all 233 Python tests, 40 headless / 41 SDL/OpenGL CTests, warning-free
+Release builds with -Werror, compileall, repository safety and focused ASan/UBSan
+(leak detection disabled) pass. Tests drive an actual base impact into a win,
+freeze subsequent updates, restore launch state, compare replay entity bytes
+including subsequent RNG-dependent spawn, and send real SDL keys to verify
+finished-command guards and F2 restoration. Independent review found no blocker.
+This session uses synthetic public fixtures; no new original-asset execution,
+original-instruction comparison or local Windows execution is claimed.
+
+Estimate: **73% toward a playable single-player mission**, previously 71%, a
+capability judgment rather than measured source coverage. This milestone is
+native preview lifecycle, not recovery of original campaign win/loss or reset.
+Next: original weapons/targeting/projectiles/damage or automatic capture
+activation, autonomous enemies, original craft controls and mission progression.
+Full-game parity, authentic economy/HUD/audio/effects and aircraft remain open.
