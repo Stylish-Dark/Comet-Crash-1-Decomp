@@ -41,6 +41,10 @@ add_library(comet_native_recovery STATIC
     src/native_mission_playback.cpp
     src/arena_health_delta.cpp
     src/arena_converter_activation.cpp
+    src/arena_ground_slam.cpp
+    src/arena_ground_hop.cpp
+    src/arena_area_effect.cpp
+    src/arena_ground_slam_effect.cpp
     src/native_deployment_input.cpp
     src/native_construction_scene.cpp
     src/arena_routes.cpp
@@ -415,7 +419,7 @@ else()
   target_compile_options(comet_native_mission_playback_test PRIVATE -UNDEBUG)
 endif()
 
-foreach(name arena_health_delta arena_converter_activation arena_ground_health)
+foreach(name arena_health_delta arena_converter_activation arena_ground_health arena_ground_slam arena_ground_hop arena_area_effect arena_ground_slam_effect arena_ground_slam_simulation)
   add_executable(comet_${name}_test tests/${name}.cpp)
   target_link_libraries(comet_${name}_test PRIVATE comet_native_recovery)
   add_test(NAME comet_${name}_test COMMAND comet_${name}_test)
@@ -426,7 +430,7 @@ foreach(name arena_health_delta arena_converter_activation arena_ground_health)
   endif()
 endforeach()
 if(MSVC)
-  set_source_files_properties(src/arena_health_delta.cpp src/arena_converter_activation.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+  set_source_files_properties(src/arena_health_delta.cpp src/arena_converter_activation.cpp src/arena_ground_slam.cpp src/arena_ground_hop.cpp src/arena_area_effect.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
 else()
-  set_source_files_properties(src/arena_health_delta.cpp src/arena_converter_activation.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+  set_source_files_properties(src/arena_health_delta.cpp src/arena_converter_activation.cpp src/arena_ground_slam.cpp src/arena_ground_hop.cpp src/arena_area_effect.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

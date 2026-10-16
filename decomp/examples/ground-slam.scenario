@@ -1,0 +1,44 @@
+# Original kind-44 hop -> floor impact -> enemy fighter damage.
+# Synthetic resources/tuning; stationary victim has no available enemy base.
+world 8 4
+player 0 0 0 400 400 0
+player 12 12 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 1 1
+unit-quota 0 0 1
+unit-quota 1 0 2
+contacts 1
+run
+queue 0 26 2 2
+step
+queue 1 26 8 8
+step
+factory 0 8
+factory 1 5
+advance 26
+spawn 0 44 3 3
+spawn 1 41 5 5
+transport 1
+advance 26.1
+advance 26.2
+advance 26.3
+advance 26.4
+advance 26.5
+advance 26.6
+advance 26.7
+advance 26.8
+advance 26.9
+advance 27.0
+advance 27.1
+advance 27.2
+advance 27.3
+advance 27.4
+advance 27.5
+advance 27.6
+advance 27.7
+advance 27.8
+advance 27.9
+advance 28.0
+expect damaged-ground-units 1
+expect live-units 2

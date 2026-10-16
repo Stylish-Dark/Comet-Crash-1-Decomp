@@ -81,12 +81,12 @@ std::optional<ArenaGroundContactResult> resolve_arena_ground_contact(const Arena
 std::optional<ArenaGroundBoundsResult> contain_arena_ground_unit(const ArenaGroundBoundsQuery&q){
  for(float f:{q.min_x,q.max_x,q.min_z,q.max_z,q.min_y,q.max_y,q.radius,q.lateral_radius})
    if(!std::isfinite(f))return {};
- if(!finite(q.position)||!finite(q.velocity)||q.radius<0||q.lateral_radius<0||
+ if(!finite(q.position)||!finite(q.velocity)||!finite(q.accumulated_impulse)||q.radius<0||q.lateral_radius<0||
     q.max_x<=q.min_x||q.max_z<=q.min_z||q.max_y<=q.min_y||
     q.max_x-q.min_x<2*q.lateral_radius||q.max_z-q.min_z<2*q.lateral_radius||
     q.max_y-q.min_y<q.radius+(q.floor_uses_lateral_radius?q.lateral_radius:q.radius))return {};
  Rounding rounding;
- ArenaGroundBoundsResult result;result.position=q.position;result.velocity=q.velocity;
+ ArenaGroundBoundsResult result;result.position=q.position;result.velocity=q.velocity;result.accumulated_impulse=q.accumulated_impulse;
  auto plane=[&](unsigned axis,float boundary,bool upper,float radius)->bool{
    // Preserve the original two subtractions before testing zero > difference.
    const float difference=upper?subtract(boundary,add(result.position[axis],radius)):

@@ -3,6 +3,8 @@
 #include "comet/arena_ground_lifecycle.hpp"
 #include "comet/arena_health_delta.hpp"
 #include "comet/arena_converter_activation.hpp"
+#include "comet/arena_ground_slam_effect.hpp"
+#include "comet/arena_ground_slam.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -367,13 +369,14 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
               throw std::invalid_argument("invalid corpse update");
             continue;
           }
+          std::array<float,4> contact_impulse{};
           const auto result = transport_stopped ? ArenaGroundTransport::Blocked : transport_arena_ground_unit(
               transported, static_cast<std::uint16_t>(i), delta,
               std::span(targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
               std::span(visibility_bits.data(),players_.size()),
               config_.ground_dynamics_enabled, config_.ground_contacts_enabled,
-              std::span(next_statistics.data(),players_.size()));
+              std::span(next_statistics.data(),players_.size()),&contact_impulse);
           if(result==ArenaGroundTransport::Moved)moved=true;
           // Original 18030 calls contact/motion 14060, then activation 158B8,
           // then health-depleted lifecycle 6F40. Preserve that per-unit order.
@@ -385,6 +388,20 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             scalar(changed,0x18,*context_scalar_18);
             if(update_arena_entity(transported,static_cast<std::uint16_t>(i),changed)!=ArenaEntityUpdate::Updated)
               throw std::invalid_argument("invalid converter membership");
+          }
+          if(result==ArenaGroundTransport::Moved && transported.banks[0][i][15]==44){
+            const auto ready=arena_ground_slam_ready(contact_impulse);
+            if(!ready)throw std::invalid_argument("invalid ground slam impulse");
+            if(*ready){
+              const unsigned source_owner=transported.banks[0][i][0x33]>>5;
+              if(source_owner>=players_.size())throw std::invalid_argument("invalid ground slam owner");
+              std::uint32_t mask=0;
+              for(unsigned p=0;p<players_.size();++p)
+                if(routes_[p].team!=routes_[source_owner].team)mask|=1u<<p;
+              if(!accumulate_arena_ground_slam(transported,static_cast<std::uint16_t>(i),mask,contact_impulse,next_health_deltas))
+                throw std::invalid_argument("invalid ground slam gather");
+              tick.ground_slams.push_back(static_cast<std::uint16_t>(i));
+            }
           }
           const auto &current=transported.banks[0][i];
           const auto owner=static_cast<unsigned>(current[0x33]>>5);

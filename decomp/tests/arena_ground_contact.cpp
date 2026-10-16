@@ -43,6 +43,11 @@ int main(){
  bounded=contain_arena_ground_unit(b);assert(bounded && bounded->contacts==3);
  bits(bounded->position,{0x41bf0a35,0x3ff3328c,0x3df5ce13,0});
  bits(bounded->velocity,{0xbf999994,0xbf4cccc8,0x3eccccc8,0});
+ b.position={2,1,3,0};b.velocity={};b.accumulated_impulse={2,3,4,0};
+ bounded=contain_arena_ground_unit(b);assert(bounded && bounded->accumulated_impulse==b.accumulated_impulse);
+ b.position[1]=-.1f;b.velocity[1]=-2;
+ bounded=contain_arena_ground_unit(b);assert(bounded && bounded->accumulated_impulse[0]==2 && bounded->accumulated_impulse[1]>5 && bounded->accumulated_impulse[2]==4);
+ b.accumulated_impulse={};
  int previous=std::fegetround();std::fesetround(FE_UPWARD);r=resolve_arena_ground_contact(q);assert(r && std::fegetround()==FE_UPWARD);std::fesetround(previous);
  q.penetration=-1;assert(!resolve_arena_ground_contact(q));q.penetration=.1f;q.normal={};assert(!resolve_arena_ground_contact(q));
  b.max_x=0;assert(!contain_arena_ground_unit(b));b.max_x=24;b.position[0]=std::numeric_limits<float>::quiet_NaN();assert(!contain_arena_ground_unit(b));
