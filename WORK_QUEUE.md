@@ -12,9 +12,10 @@ capability judgment rather than source coverage. See
   ground targeting/damage, kind-44 impact damage and converter activation are
   integrated. Original successful particle allocation and shared RNG scheduling,
   full stun state and cooldown motion damping remain open.
-- Finish this milestone's final Python, graphics, sanitizer, original-asset smoke
-  and independent review checks. Current integration checkpoint: 51 headless
-  CTests passing; source private original-oracle comparisons complete.
+- Tesla validation complete: 51 headless / 52 graphics CTests, 233 Python tests,
+  compileall, repository safety, nine ASan/UBSan checks and original-asset smoke
+  pass. Independent review found no remaining actionable findings; source and
+  beam private original-instruction comparisons pass.
 - Recover autonomous enemy decisions, moving craft/controller input and aircraft.
 - Recover original mission objectives, progression, rewards and restart/reset rules.
 - Finish special-unit lifecycle, delayed tombstones and original scheduling.
