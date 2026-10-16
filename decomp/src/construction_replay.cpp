@@ -326,6 +326,7 @@ int main(int argc, char **argv) {
           if(attempt.result.entity_index)std::cout<<" entity="<<*attempt.result.entity_index;
           std::cout<<'\n';
         }
+        for(auto index:tick.ground_slams)std::cout<<"ground-slam entity="<<index<<'\n';
         for(auto index:tick.depleted_units)std::cout<<"ground-depleted entity="<<index<<'\n';
         for(auto index:tick.retired_entities)std::cout<<"entity-retired entity="<<index<<'\n';
         for(const auto &impact:tick.base_impacts)
@@ -343,7 +344,14 @@ int main(int argc, char **argv) {
         std::size_t actual;
         if (w[1] == "allocated")
           actual = config.capacity - state().storage().free_indices.size();
-        else if(w[1]=="corpses"){
+        else if(w[1]=="damaged-ground-units"){
+          actual=0;
+          for(const auto &slot:state().storage().banks[state().storage().read_bank]){
+            if(!(slot[15]==40 || slot[15]==41 || (slot[15]>=43 && slot[15]<=47)))continue;
+            auto value=[&](unsigned offset){unsigned word=0;for(unsigned b=0;b<4;++b)word=(word<<8)|slot[offset+b];return std::bit_cast<float>(word);};
+            actual+=value(0x38)<value(0x64);
+          }
+        }else if(w[1]=="corpses"){
           actual=0;for(const auto &slot:state().storage().banks[state().storage().read_bank])actual+=slot[15]==62;
         } else if (w[1] == "live-units") {
           actual = 0;

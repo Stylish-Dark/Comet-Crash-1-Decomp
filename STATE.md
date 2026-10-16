@@ -11,7 +11,9 @@ factory production, held ground deployment, recovered movement/contact/capture,
 base impacts and ordinary death/corpse lifecycle. Preview victory/draw now freezes
 the viewer simulation; F2 restores its complete launch checkpoint paused.
 Automatic converter capture and signed health-effect consumption are now
-recovered and integrated. Weapon firing/projectiles, autonomous enemies,
+recovered and integrated. Kind 44 now has its original hop/dynamics and
+contact-triggered area health effect; see `docs/decomp/native-ground-slam.md`.
+Other weapon firing/projectiles, autonomous enemies,
 original craft controls, original mission rules and
 campaign progression remain incomplete. Continue from the latest active PR,
 not the older main branch.**

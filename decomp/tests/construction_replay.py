@@ -175,3 +175,7 @@ for command in ("health-delta 9 -1\n","health-delta 3 nan\n","health-delta 65536
                 "health-delta 0 -1\n","expect-unit-health 3 nan\n","expect-capture-ready 3 1\n"):
  result=run(live_prefix+command)
  assert result.returncode!=0 and "line " in result.stderr,(command,result.stdout,result.stderr)
+
+slam_scenario = Path(__file__).resolve().parents[1] / "examples" / "ground-slam.scenario"
+result = run(slam_scenario.read_text())
+assert result.returncode == 0 and "ground-slam entity=2" in result.stdout, (result.stdout, result.stderr)

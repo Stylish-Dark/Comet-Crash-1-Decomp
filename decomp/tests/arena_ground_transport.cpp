@@ -36,6 +36,23 @@ void put(ArenaEntitySlot &s,unsigned o,unsigned bits) {
   for(unsigned i=0;i<4;++i)s[o+i]=bits>>(24-8*i);
 }
 int main() {
+  // A successful floor impact publishes the contact accumulator for special
+  // unit activation. Rejected motion must preserve the caller's output.
+  {
+    Fixture f(44,{3.5f,0.f,3.5f,0});
+    for(auto &bank:f.storage.banks) {
+      put(bank[0],4,std::bit_cast<unsigned>(-.15f));
+      put(bank[0],0x44,std::bit_cast<unsigned>(-3.f));
+    }
+    const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    std::array<float,4> impulse{99,99,99,99};
+    assert(transport_arena_ground_unit(f.storage,0,.01f,f.players,f.grid,f.random,bases,{},true,true,{},&impulse)==ArenaGroundTransport::Moved);
+    assert(impulse[1]>1.f && impulse[0]==0 && impulse[2]==0 && impulse[3]==0);
+    const auto before=impulse;
+    assert(transport_arena_ground_unit(f.storage,0,-1.f,f.players,f.grid,f.random,bases,{},true,true,{},&impulse)==ArenaGroundTransport::Invalid);
+    assert(impulse==before);
+  }
+
   {
     Fixture f(40,{3.5f,.2f,3.5f,0},2);
     ArenaUnitProductionQuota q;q.capacity=8;q.pending=1;q.by_type[5]=1;
@@ -73,6 +90,15 @@ int main() {
     const std::array<ArenaUnitTargetPlayer,5> too_many{};
     std::array<ArenaPlayerStatisticsBlock,5> stats{};
     assert(transport_arena_ground_unit(f.storage,0,.01f,too_many,f.grid,f.random,{}, {},true,true,stats)==ArenaGroundTransport::Invalid);
+  }
+  {
+    Fixture f(44);const std::array<ArenaGridPosition,2> bases{{{0,0},{10,10}}};
+    for(auto &bank:f.storage.cells)bank[3*24+3].resize(126);
+    const auto banks=f.storage.banks;const auto cells=f.storage.cells;auto rng=f.random;
+    std::array<float,4> impulse{9,9,9,9};
+    assert(transport_arena_ground_unit(f.storage,0,.1f,f.players,f.grid,f.random,bases,{},true,true,{},&impulse)==ArenaGroundTransport::CellFull);
+    assert(f.storage.banks==banks && f.storage.cells==cells && f.random.next()==rng.next());
+    assert((impulse==std::array<float,4>{9,9,9,9}));
   }
   // Live dynamics interpolate from the prior quaternion instead of snapping
   // immediately to the route heading; transaction writes both banks equally.

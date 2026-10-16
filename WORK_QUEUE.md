@@ -1,12 +1,14 @@
 # Active gameplay continuation
 
-Latest milestone: original converter pulse now drives capture automatically;
-signed damage/healing accumulation feeds the existing ground death/corpse loop.
+Latest milestone: original kind-44 hop, landing/contact trigger and cubic area
+health effect now damage eligible opposing ground units automatically. Converter
+capture and signed health accumulation retain their existing integration.
 Preview finish/freeze and full F2 restart remain usable. See
-`docs/decomp/native-converter-health.md` for exact boundaries and numeric evidence.
+`docs/decomp/native-ground-slam.md` for current boundaries and numeric evidence.
 
 - Recover original weapon targeting/firing/projectile production and area-effect
-  gathering, falloff and attribution. Health consumption and converter activation
+  producers, other area modes and attribution. Kind-44 impact damage, cubic
+  falloff, health consumption and converter activation
   are complete; cooldown motion damping and its stun producer remain open.
 - Recover autonomous enemy decisions, moving craft/controller input and aircraft.
 - Recover original mission objectives, progression, rewards and restart/reset rules.

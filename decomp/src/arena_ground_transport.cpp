@@ -1,5 +1,6 @@
 #include "comet/arena_ground_transport.hpp"
 #include "comet/arena_ground_dynamics.hpp"
+#include "comet/arena_ground_hop.hpp"
 #include "comet/arena_ground_contact.hpp"
 #include "comet/arena_ground_pair.hpp"
 #include "comet/arena_ground_terrain.hpp"
@@ -42,7 +43,9 @@ ArenaGroundTransport transport_arena_ground_unit(
     std::span<const ArenaUnitTargetPlayer> players, const ArenaRoutingGrid &grid,
     ArenaRandom &random, std::span<const ArenaGridPosition> bases,
     std::span<const std::uint8_t> visibility_bits, bool original_velocity_dynamics, bool motion_contacts,
-    std::span<ArenaPlayerStatisticsBlock> capture_statistics) {
+    std::span<ArenaPlayerStatisticsBlock> capture_statistics,
+    std::array<float,4> *contact_impulse) {
+  std::array<float,4> next_impulse{};
   if(!capture_statistics.empty() && capture_statistics.size()!=players.size())return ArenaGroundTransport::Invalid;
   if(!std::isfinite(elapsed)||elapsed<=0||elapsed>.25f || storage.read_bank>1 ||
      storage.width==0||storage.height==0||storage.width>24||storage.height>24 ||
@@ -145,9 +148,11 @@ ArenaGroundTransport transport_arena_ground_unit(
               if(captured==ArenaGroundCapture::Invalid)return ArenaGroundTransport::Invalid;
               if(captured==ArenaGroundCapture::Captured)owner=slot[0x33]>>5;
             }
+            c.accumulated_impulse=next_impulse;
             c.position=prepared->position;c.normal=prepared->normal;c.response_share=prepared->response_share;
             c.penetration=-prepared->gap;c.restitution_percent=slot[0x7d];c.movable=(word(slot,0x60)&0x4000)!=0;
             const auto response=resolve_arena_ground_contact(c);if(!response)return ArenaGroundTransport::Invalid;
+            next_impulse=response->accumulated_impulse;
             for(unsigned axis=0;axis<3;++axis) {
               put(slot,4*axis,std::bit_cast<std::uint32_t>(response->position[axis]));
               put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(response->velocity[axis]));
@@ -165,6 +170,7 @@ ArenaGroundTransport transport_arena_ground_unit(
     if(motion_contacts) {
       ArenaGroundTerrainQuery terrain;
       auto &bounds=terrain.bounds;
+      bounds.accumulated_impulse=next_impulse;
       terrain.geometry.cell=old_cell;terrain.geometry.width=static_cast<std::uint8_t>(storage.width);
       terrain.geometry.height=static_cast<std::uint8_t>(storage.height);
       terrain.geometry.visibility_bit=visibility_bits.empty()?players[owner].team:visibility_bits[owner];
@@ -191,6 +197,7 @@ ArenaGroundTransport transport_arena_ground_unit(
       bounds.radius=radius;bounds.lateral_radius=lateral;bounds.restitution_percent=slot[0x7d];
       bounds.movable=(word(slot,0x60)&0x4000)!=0;bounds.floor_uses_lateral_radius=(word(slot,0x60)&0x02000000)!=0;
       const auto result=contain_arena_ground_terrain(terrain,grid);if(!result)return ArenaGroundTransport::Invalid;
+      next_impulse=result->accumulated_impulse;
       for(unsigned axis=0;axis<3;++axis){
         put(slot,4*axis,std::bit_cast<std::uint32_t>(result->position[axis]));
         put(slot,0x40+4*axis,std::bit_cast<std::uint32_t>(result->velocity[axis]));
@@ -231,8 +238,34 @@ ArenaGroundTransport transport_arena_ground_unit(
       dynamics.kind=static_cast<std::uint8_t>(kind);
       // 9C98/9D44 derive this context mask from the entity's stage bits.
       dynamics.context_flags=1u<<((slot[0x33]>>2)&7);
-      // World/crowd acceleration input is intentionally zero in this preview.
-      const auto result=advance_arena_ground_velocity(dynamics);
+      // Generic kinds retain the preview zero external vector; kind 44 below
+      // uses the recovered original default world acceleration.
+      std::optional<ArenaGroundDynamicsResult> result;
+      if(kind==44){
+        ArenaGroundHopQuery hop;hop.velocity=dynamics.velocity;hop.steering=dynamics.steering;
+        hop.timer=scalar(slot,0xec);hop.elapsed=elapsed;hop.speed_limit=speed;hop.flags=word(slot,0x60);
+        volatile float floor_height=scalar(slot,4)+std::bit_cast<float>(0x3e4cccccu);
+        volatile float own_radius=float(slot[14])*std::bit_cast<float>(0x3c23d70au);
+        volatile float floor_gap=float(floor_height)-float(own_radius);
+        hop.grounded=std::bit_cast<float>(0x38d1b717u)>float(floor_gap);
+        volatile float next_timer=hop.timer-elapsed;
+        if(next_timer<0){
+          auto lookahead=query;
+          if(hop.flags&2u)lookahead.position[1]=std::bit_cast<float>(0xbdccccccu);
+          for(unsigned axis=0;axis<4;++axis){
+            volatile float p=lookahead.position[axis]+hop.steering[axis];lookahead.position[axis]=p;
+          }
+          const auto sampled=steer_arena_ground_unit(lookahead,grid);
+          if(!sampled)return ArenaGroundTransport::Invalid;
+          hop.lookahead_steering=sampled->direction;
+        }
+        const auto hopped=advance_arena_ground_hop(hop,next_random);
+        if(!hopped)return ArenaGroundTransport::Invalid;
+        put(slot,0xec,std::bit_cast<std::uint32_t>(hopped->timer));
+        if(hopped->position_y)put(slot,4,std::bit_cast<std::uint32_t>(*hopped->position_y));
+        result=ArenaGroundDynamicsResult{hopped->acceleration,hopped->velocity,
+            hopped->horizontal_speed_squared_before_limit,hopped->speed_limited};
+      }else result=advance_arena_ground_velocity(dynamics);
       if(!result)return ArenaGroundTransport::Invalid;
       if(kind!=46){
         ArenaGroundOrientationQuery orientation;
@@ -321,6 +354,7 @@ ArenaGroundTransport transport_arena_ground_unit(
   if(flat!=old_flat){--storage.summary_counts[old_flat];++storage.summary_counts[flat];}
   std::copy_n(next_statistics.begin(),capture_statistics.size(),capture_statistics.begin());
   random=next_random;
+  if(contact_impulse)*contact_impulse=next_impulse;
   return ArenaGroundTransport::Moved;
 }
 } // namespace comet::decomp

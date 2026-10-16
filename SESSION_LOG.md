@@ -890,3 +890,28 @@ projectile and area-effect producers, enemy decisions, craft controls and
 campaign progression remain open. Native queued hits are explicit test inputs,
 not an invented automatic weapon. Positive cooldown motion-register damping
 remains outside live integration; no supported native producer sets it positive.
+
+
+## 2026-10-16 — original kind-44 hop and area damage
+
+Continued PR #47 at 92d4a76. Recovered kind-44 timer, one-draw XZ hop,
+lookahead direction, ground/air dynamics and original default gravity; threaded
+contact impulses through live motion. Strong upward impacts emit original
+3x3 area health effects with exact cubic approximation and opposing-team masks.
+Marker-2/scout exclusion and the small healing outer shell are preserved.
+Factory-to-hop-to-damage scenario requires no injected health/readiness/velocity.
+
+Original comparisons: 20,084 impact classifications, 10,000 hop/RNG fixtures
+(120,000 words), 20,000 area candidates and 1,000 complete neighborhoods
+(4,464 ordered emissions), all equal. Public validation: 233 Python tests,
+48 headless / 49 graphics CTests, strict Release, compileall/repository safety,
+eight focused ASan/UBSan tests without host leak detection. Independent reviews
+found no actionable issue. Level-0 original-asset three-frame render smoke passes
+with 40 models, 11 textures and ten complete FBOs; no authentic new battle claim.
+
+Estimate: **79% toward a first playable single-player mission**, previously 76%;
+a capability judgment, not source coverage. Full stun/cooldown state, projectile
+weapons/targeting, enemy AI, craft/aircraft and original mission/campaign rules
+remain. Native NoTarget/Blocked movement still freezes kind-44 hop processing;
+ordered current-bank gathering is not original asynchronous scheduling. See
+`docs/decomp/native-ground-slam.md`. Private original material stays excluded.

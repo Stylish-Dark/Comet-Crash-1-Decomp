@@ -19,7 +19,7 @@ struct ArenaGroundContactResult {
 std::optional<ArenaGroundContactResult>
 resolve_arena_ground_contact(const ArenaGroundContactQuery &);
 struct ArenaGroundBoundsQuery {
-  std::array<float,4> position{},velocity{};
+  std::array<float,4> position{},velocity{},accumulated_impulse{};
   float min_x=0,max_x=24,min_z=0,max_z=24,min_y=0,max_y=2;
   float radius=.1f,lateral_radius=.1f;
   std::uint8_t restitution_percent=100;
