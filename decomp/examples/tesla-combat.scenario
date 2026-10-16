@@ -1,0 +1,29 @@
+# Original Tesla target selection -> persistent beam -> damage/death.
+# Synthetic funds/tuning; the victim has no available enemy base.
+world 8 4
+player 0 0 0 400 400 0
+player 12 12 1 400 400 0
+tuning 22 100 50 30 20 7.5
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 1 1
+unit-quota 1 0 1
+tesla 1
+run
+queue 0 22 4 4
+step
+queue 1 26 8 8
+step
+factory 1 5
+advance 26
+spawn 1 41 5 4
+transport 1
+advance 26.1
+expect tesla-beams 1
+advance 26.2
+expect damaged-ground-units 1
+advance 29
+advance 29.1
+expect live-units 0
+expect unit-active1 0
+expect tesla-beams 1

@@ -33,6 +33,18 @@ int main() {
     config.arena=&arena;
     const auto scene=run_native_viewer({m,background},config);
     if(!scene)throw std::runtime_error(scene.detail);
+    ArenaEntity beam;beam.type=5;beam.model_slot=40;
+    beam.beam_path=std::array<ModelPosition,5>{{{.2f,.4f,.2f},{.5f,.6f,.5f},{1.5f,.6f,1.5f},{2.f,.5f,2.f},{3.f,.4f,3.f}}};
+    arena.entities.push_back(beam);
+    const auto beam_scene=run_native_viewer({m,background},config);
+    if(!beam_scene)throw std::runtime_error(beam_scene.detail);
+    {
+        std::ifstream image(config.screenshot,std::ios::binary);image>>magic>>width>>height>>max;image.get();
+        std::vector<unsigned char> frame(width*height*3);image.read(reinterpret_cast<char*>(frame.data()),frame.size());
+        unsigned cyan=0;for(std::size_t i=0;i<frame.size();i+=3)cyan+=frame[i+2]>180 && frame[i+1]>100 && frame[i]*2<frame[i+2];
+        if(cyan<5)throw std::runtime_error("beam control-point line not visible");
+    }
+    arena.entities.pop_back();
     const auto missing=run_native_viewer({m},config);
     if(missing||missing.detail.find("slot missing: 37")==std::string::npos)throw std::runtime_error("missing arena model was not rejected");
     ArenaConstructionSimulationConfig construction;construction.production_enabled=true;construction.unit_quotas[0].capacity=2;construction.capacity=4;construction.players={{{{0,0},0,false},400,400}};construction.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};

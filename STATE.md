@@ -13,6 +13,8 @@ the viewer simulation; F2 restores its complete launch checkpoint paused.
 Automatic converter capture and signed health-effect consumption are now
 recovered and integrated. Kind 44 now has its original hop/dynamics and
 contact-triggered area health effect; see `docs/decomp/native-ground-slam.md`.
+An opt-in kind-22 Tesla now acquires opposing ground targets and drives its
+original kind-5 beam health path; see `docs/decomp/native-tesla-combat.md`.
 Other weapon firing/projectiles, autonomous enemies,
 original craft controls, original mission rules and
 campaign progression remain incomplete. Continue from the latest active PR,
@@ -48,9 +50,10 @@ not the older main branch.**
 
 ## Current target
 
-**Next gameplay target: original weapon targeting/projectile/damage or automatic
-capture activation. Native preview match lifecycle is usable; original win/loss,
-AI and campaign progression remain unrecovered.**
+**Next gameplay target: additional original weapons/projectiles, autonomous
+enemy decisions, craft controls or mission progression. Converter activation,
+kind-44 impact damage and bounded kind-22 Tesla targeting/beam damage are
+integrated. Original win/loss, AI and campaign progression remain unrecovered.**
 
 Recovered from `arenaGraphics.cpp`:
 
@@ -513,3 +516,30 @@ projectile and area-effect producers, enemy decisions, craft controls and
 campaign progression remain open. Native queued hits are explicit test inputs,
 not an invented automatic weapon. Positive cooldown motion-register damping
 remains outside live integration; no supported native producer sets it positive.
+
+
+## 2026-10-16 — original kind-22 Tesla targeting and beam combat
+
+Continued PR #48 / `2b45108`. An opt-in Tesla source now gathers opposing
+ground targets, allocates its original kind-5 beam and applies recovered signed
+health effects. Default sustained damage derives from parent +B0=80; kind-46
+feedback emits the original extra hit and parent cooldown command. Source and
+beam scheduling is deterministic native source-before-beam order, with owned
+pool/command/health/RNG state and restart support. The viewer shows a line strip
+through the five recovered beam control points.
+
+Private source comparisons match 10,000 full-slot constructors, 10,000 source
+gate/state fixtures, 10,000 target scores and 2,208 nonzero cell distances.
+Final verification: 51 headless / 52 graphics CTests, 233 Python tests, compileall,
+repository safety, nine ASan/UBSan checks and original-asset three-frame smoke
+pass. Independent review found no remaining actionable findings. A further
+10,512 beam fixtures match full slots, emissions and future RNG draws bitwise.
+See `docs/decomp/native-tesla-combat.md` for exact evidence and scope. No private
+original bytes, disassembly or harnesses are committed.
+
+Estimate: **82% toward a first playable single-player mission**, previously 79%;
+a capability judgment, not measured source coverage. Ground-only Tesla targets,
+one beam per source and failed visual-particle allocation are explicit bounds.
+Successful original particle effects consume additional shared RNG draws; full
+effects/RNG scheduling parity is not claimed. Other weapons/projectiles, enemy
+decisions, craft/aircraft and original mission/campaign rules remain open.

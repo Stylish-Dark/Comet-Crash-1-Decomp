@@ -72,6 +72,8 @@ struct ArenaEntity {
   std::optional<std::uint16_t> live_entity_index;
   // Native corpse preview scale derived from the recovered scalar decay.
   std::optional<float> corpse_fraction;
+  // Native line preview of the five recovered Tesla beam control points.
+  std::optional<std::array<ModelPosition,5>> beam_path;
   // Present only for structures backed by native simulation state.
   std::optional<float> construction_progress;
   bool construction_ready = false;

@@ -12,7 +12,7 @@ class NativeConstructionScene {
   bootstrap(const ArenaState &, ArenaConstructionSimulationConfig);
   void refresh_construction();
   void project(const ArenaConstructionSimulationStep &);
-  void project_ground_unit(std::uint16_t index);
+  void project_dynamic_entity(std::uint16_t index);
 
 public:
   NativeConstructionScene(const ArenaState &,

@@ -109,7 +109,12 @@ ArenaEntityUpdate update_arena_entity(ArenaEntityStorage &storage,std::uint16_t 
                          static_cast<std::uint8_t>(std::clamp(std::trunc(read_float(record,8)),0.f,float(storage.height-1)))};
   const unsigned flat=cell.z*24+cell.x;
   if(flat!=flats[0] && (storage.cells[0][flat].size()>=126 || storage.cells[1][flat].size()>=126 || storage.summary_counts[flat]==65535))return ArenaEntityUpdate::CellFull;
-  auto slot=record;slot[0xc8]=slot[0xca]=0;slot[0xc9]=cell.x;slot[0xcb]=cell.z;
+  auto slot=record;
+  // C8/CA are cell coordinates only for ground units; structures and beams
+  // own these bytes as weapon state/control points.
+  if(slot[15]>=40 && slot[15]<=48){
+    slot[0xc8]=slot[0xca]=0;slot[0xc9]=cell.x;slot[0xcb]=cell.z;
+  }
   ArenaPackedCellEntry entry;
   pack_arena_cell_entry(entry,slot,slot[0x33],slot[0x6f],cell,storage.width,storage.height);
   if(flat!=flats[0])for(auto &bank:storage.cells)bank[flat].reserve(bank[flat].size()+1);

@@ -5,6 +5,7 @@
 #include "comet/arena_converter_activation.hpp"
 #include "comet/arena_ground_slam_effect.hpp"
 #include "comet/arena_ground_slam.hpp"
+#include "arena_tesla_runtime.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -34,6 +35,8 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
   if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536 || !c.native_extent || c.native_extent > 24)
     throw std::invalid_argument("invalid simulation dimensions");
   health_deltas_.resize(c.capacity);
+  tesla_commands_.resize(c.capacity);
+  if(c.tesla_enabled && c.capacity>65535)throw std::invalid_argument("Tesla links reserve index 65535");
   for (const auto &a : c.players) {
     if (a.route.base.x >= c.native_extent || a.route.base.z >= c.native_extent || a.route.team > 3 ||
         !std::isfinite(a.resource) || !std::isfinite(a.resource_max) ||
@@ -320,6 +323,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       auto next_deployment_timers=deployment_timers_;
       auto next_statistics=statistics_;
       auto next_health_deltas=health_deltas_;
+      auto next_tesla_commands=tesla_commands_;
       for(unsigned owner=0;owner<players_.size();++owner)
         store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
       std::array<ArenaUnitTargetPlayer, 4> targets{};
@@ -444,6 +448,16 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         }
         if (moved) tick.transported_units.push_back(static_cast<std::uint16_t>(i));
       }
+      if(config_.tesla_enabled && config_.ground_transport_enabled){
+        const unsigned count=static_cast<unsigned>(std::ceil(elapsed/.05f));
+        const float delta=elapsed/static_cast<float>(count);
+        for(unsigned n=0;n<count;++n){
+          const auto weapons=stage_arena_teslas(transported,grid_,
+              std::span(visibility_bits).first(players_.size()),delta,next_random,next_health_deltas,next_tesla_commands);
+          tick.spawned_beams.insert(tick.spawned_beams.end(),weapons.spawned.begin(),weapons.spawned.end());
+          tick.retired_entities.insert(tick.retired_entities.end(),weapons.retired.begin(),weapons.retired.end());
+        }
+      }
       // Newly spawned output records start moving on the next native tick,
       // matching the original read/output-bank boundary rather than backdating
       // their movement over the elapsed interval that produced their order.
@@ -466,6 +480,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       random_ = next_random;
       statistics_=next_statistics;
       health_deltas_=std::move(next_health_deltas);
+      tesla_commands_=std::move(next_tesla_commands);
       for(unsigned owner=0;owner<players_.size();++owner)
         quotas[owner]=read_arena_unit_production_quota(statistics_[owner]);
     } else {

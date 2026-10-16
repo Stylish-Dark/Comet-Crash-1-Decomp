@@ -179,3 +179,9 @@ for command in ("health-delta 9 -1\n","health-delta 3 nan\n","health-delta 65536
 slam_scenario = Path(__file__).resolve().parents[1] / "examples" / "ground-slam.scenario"
 result = run(slam_scenario.read_text())
 assert result.returncode == 0 and "ground-slam entity=2" in result.stdout, (result.stdout, result.stderr)
+
+# Actual tower acquisition and beam emissions reach the health/death consumer.
+tesla_scenario=Path(__file__).resolve().parents[1]/"examples/tesla-combat.scenario"
+result=run(tesla_scenario.read_text())
+assert result.returncode==0,(result.stdout,result.stderr)
+assert "tesla-beam entity=3" in result.stdout and "ground-depleted entity=2" in result.stdout,result.stdout

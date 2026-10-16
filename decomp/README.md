@@ -52,3 +52,12 @@ P advances production/movement; Q/E selects ground type; hold D releases orders
 from the selected player's base; Tab switches player. The native status panel
 shows orders, active units and configured base counters. Focus loss/pause/exit
 cancel held input. See [controls and limits](../docs/decomp/native-interactive-deployment.md).
+
+
+## Tesla combat
+
+The interactive ground configuration now enables `tesla 1`: completed kind-22
+towers target opposing ground units and create visible kind-5 beam previews.
+Run `comet_construction_replay < decomp/examples/tesla-combat.scenario` for
+automatic acquisition, damage and death. See
+[evidence and limits](../docs/decomp/native-tesla-combat.md).

@@ -95,4 +95,18 @@ int main() {
         -1);
   moved.read_bank = 0;
   check(resolve_arena_storage_target(moved, 0x1f, 0, {4, 4}).entity_index == 0);
+  // Shared membership updates must preserve type-specific weapon bytes.
+  ArenaEntityStorage weapons;
+  weapons.banks[0].resize(2);weapons.banks[1].resize(2);
+  weapons.free_indices={0,1};
+  for(unsigned kind:{22u,5u}){
+    ArenaEntitySlot weapon{};weapon[15]=kind;weapon[0x33]=kind==22?16:0;
+    put_float(weapon,0,4);put_float(weapon,8,4);put_float(weapon,0xc8,-1.25f);
+    const auto id=insert_arena_entity(weapons,{4,4},weapon);check(id.has_value());
+    weapon=weapons.banks[0][*id];
+    put_float(weapon,0,5);put_float(weapon,0xc8,kind==22?-2.5f:6.75f);
+    check(update_arena_entity(weapons,*id,weapon)==ArenaEntityUpdate::Updated);
+    check(weapons.banks[0][*id]==weapon && weapons.banks[1][*id]==weapon);
+  }
+
 }
