@@ -205,7 +205,18 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                     glMultMatrixf(rotation);glScalef(scale,scale,scale);draw(static_cast<std::size_t>(found-models.begin()));glPopMatrix();
                 };
                 instance(37,arena->background_position,arena->background_orientation,1.f);
-                for(const auto& entity:arena->entities)instance(entity.model_slot,entity.position,entity.orientation,entity.corpse_fraction.value_or(1.f));
+                for(const auto& entity:arena->entities)
+                    if(!entity.beam_path)instance(entity.model_slot,entity.position,entity.orientation,entity.corpse_fraction.value_or(1.f));
+                // Native preview lines follow recovered beam control points;
+                // the original ribbon shader/material remains unrecovered.
+                glPushAttrib(GL_ENABLE_BIT|GL_CURRENT_BIT|GL_LINE_BIT);
+                glDisable(GL_LIGHTING);glDisable(GL_TEXTURE_2D);glColor3f(.35f,.75f,1.f);glLineWidth(2.f);
+                for(const auto& entity:arena->entities)if(entity.beam_path){
+                    glBegin(GL_LINE_STRIP);
+                    for(const auto& point:*entity.beam_path)glVertex3f(point.x,point.y,point.z);
+                    glEnd();
+                }
+                glPopAttrib();
                 if(config.construction){
                     gpu.api.bind(GL_ARRAY_BUFFER,0);gpu.api.bind(GL_ELEMENT_ARRAY_BUFFER,0);
                     glDisable(GL_LIGHTING);glDisable(GL_TEXTURE_2D);glDisableClientState(GL_VERTEX_ARRAY);glDisableClientState(GL_NORMAL_ARRAY);glDisableClientState(GL_TEXTURE_COORD_ARRAY);

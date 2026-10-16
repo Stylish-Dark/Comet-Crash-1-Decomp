@@ -326,6 +326,7 @@ int main(int argc, char **argv) {
           if(attempt.result.entity_index)std::cout<<" entity="<<*attempt.result.entity_index;
           std::cout<<'\n';
         }
+        for(auto index:tick.spawned_beams)std::cout<<"tesla-beam entity="<<index<<'\n';
         for(auto index:tick.ground_slams)std::cout<<"ground-slam entity="<<index<<'\n';
         for(auto index:tick.depleted_units)std::cout<<"ground-depleted entity="<<index<<'\n';
         for(auto index:tick.retired_entities)std::cout<<"entity-retired entity="<<index<<'\n';
@@ -342,7 +343,9 @@ int main(int argc, char **argv) {
       } else if (w[0] == "expect" && w.size() == 3) {
         const auto expected = number<unsigned>(w[2]);
         std::size_t actual;
-        if (w[1] == "allocated")
+        if(w[1]=="tesla-beams"){
+          actual=0;for(const auto &slot:state().storage().banks[state().storage().read_bank])actual+=slot[15]==5;
+        }else if (w[1] == "allocated")
           actual = config.capacity - state().storage().free_indices.size();
         else if(w[1]=="damaged-ground-units"){
           actual=0;

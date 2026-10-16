@@ -915,3 +915,31 @@ weapons/targeting, enemy AI, craft/aircraft and original mission/campaign rules
 remain. Native NoTarget/Blocked movement still freezes kind-44 hop processing;
 ordered current-bank gathering is not original asynchronous scheduling. See
 `docs/decomp/native-ground-slam.md`. Private original material stays excluded.
+
+
+## 2026-10-16 — original kind-22 Tesla targeting and beam combat
+
+Continued PR #48 / `2b45108`. Recovered kind-22 source18908, local-first
+target gather4428/score3F40, kind-5 constructor18F28 and beam update19748.
+Completed tower -> automatic target/beam -> ground health/death now runs with
+no queued damage. Parent +B0=80 controls sustained damage; kind46 gets the
+original delayed extra hit and parent cooldown feedback. Source-before-beam
+substeps, pool/count/command cleanup and replay use explicit native scheduling.
+Viewer line preview uses five recovered control points. Generic entity update
+was corrected so ground-only packed metadata does not overwrite tower +C8.
+
+Private source evidence: 10,000 full-slot constructors, 10,000 source fixtures,
+10,000 target-score fixtures and 2,208 nonzero distances match original
+instructions. A further 10,512 beam fixtures match complete slots, ordered
+emissions and 41 future RNG draws. Final verification passes 51 headless /
+52 graphics CTests, 233 Python tests, compileall, repository safety, nine
+ASan/UBSan checks and original-asset three-frame smoke. Independent review
+found no remaining actionable findings. Exact addresses, bounds and exclusions are recorded in
+`docs/decomp/native-tesla-combat.md`; private inputs and harnesses stay excluded.
+
+Estimate: **82% toward a first playable single-player mission**, previously 79%;
+a capability judgment, not source coverage. Ground-only/one-beam admission,
+failed particle-allocation behavior and native scheduling are explicit. The
+successful original particle branch consumes extra shared RNG draws; complete
+effects/RNG parity is not claimed. Other weapons/projectiles, enemy decisions,
+craft/aircraft and original mission/campaign rules remain open.

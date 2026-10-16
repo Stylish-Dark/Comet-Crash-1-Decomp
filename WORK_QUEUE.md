@@ -1,15 +1,20 @@
 # Active gameplay continuation
 
-Latest milestone: original kind-44 hop, landing/contact trigger and cubic area
-health effect now damage eligible opposing ground units automatically. Converter
-capture and signed health accumulation retain their existing integration.
-Preview finish/freeze and full F2 restart remain usable. See
-`docs/decomp/native-ground-slam.md` for current boundaries and numeric evidence.
+Latest milestone: bounded kind-22 Tesla targeting, kind-5 beam construction
+and automatic ground health effects now join kind-44 hop/impact damage and
+converter capture. Preview finish/freeze and full F2 restart remain usable.
+Estimate: **82% toward a first playable single-player mission** (79% prior), a
+capability judgment rather than source coverage. See
+`docs/decomp/native-tesla-combat.md` for original evidence and native limits.
 
-- Recover original weapon targeting/firing/projectile production and area-effect
-  producers, other area modes and attribution. Kind-44 impact damage, cubic
-  falloff, health consumption and converter activation
-  are complete; cooldown motion damping and its stun producer remain open.
+- Recover additional original weapon firing/projectiles: missiles/bullets, other
+  towers, multi-beam upgrades, structure targets and effect attribution. Tesla
+  ground targeting/damage, kind-44 impact damage and converter activation are
+  integrated. Original successful particle allocation and shared RNG scheduling,
+  full stun state and cooldown motion damping remain open.
+- Finish this milestone's final Python, graphics, sanitizer, original-asset smoke
+  and independent review checks. Current integration checkpoint: 51 headless
+  CTests passing; source private original-oracle comparisons complete.
 - Recover autonomous enemy decisions, moving craft/controller input and aircraft.
 - Recover original mission objectives, progression, rewards and restart/reset rules.
 - Finish special-unit lifecycle, delayed tombstones and original scheduling.

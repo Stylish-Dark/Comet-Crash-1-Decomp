@@ -94,13 +94,19 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
-    if ((slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
+    if (slot[15]==5 || (slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
       auto scalar = [&](unsigned o) {
         std::uint32_t bits=0;
         for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
         return std::bit_cast<float>(bits);
       };
       entity.type=slot[15];
+      entity.beam_path.reset();
+      if(slot[15]==5){
+        std::array<ModelPosition,5> path;
+        for(unsigned i=0;i<5;++i)path[i]={scalar(0x80+16*i),scalar(0x84+16*i),scalar(0x88+16*i)};
+        entity.beam_path=path;
+      }
       if(slot[15]==62){
         const auto initial=scalar(0x88);
         entity.corpse_fraction=initial>0?std::clamp(scalar(0x78)/initial,0.f,1.f):1.f;
@@ -206,7 +212,13 @@ ArenaConstructionTick NativeConstructionScene::advance(float t) {
     for(auto &cell:arena_.cells)if(cell.entity_index)cell.entity_index=remap[*cell.entity_index];
   }
   project(tick.construction);
-  for(const auto &attempt:tick.ground_deployments)if(attempt.result.entity_index)project_ground_unit(*attempt.result.entity_index);
+  for(const auto &attempt:tick.ground_deployments)if(attempt.result.entity_index)project_dynamic_entity(*attempt.result.entity_index);
+  for(auto index:tick.spawned_beams){
+    const auto &bank=simulation_.storage().banks[simulation_.storage().read_bank];
+    if(index<bank.size() && bank[index][15]==5 &&
+       std::none_of(arena_.entities.begin(),arena_.entities.end(),[&](const auto &e){return e.live_entity_index==index;}))
+      project_dynamic_entity(index);
+  }
   refresh_construction();
   arena_.players = simulation_.players();
   return tick;
@@ -217,10 +229,10 @@ ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(
     return {};
   const auto result = simulation_.spawn_reserved_ground_unit(
       owner, kind, {cell.x + .5f, 0, cell.z + .5f, 0});
-  if(result.entity_index)project_ground_unit(*result.entity_index);
+  if(result.entity_index)project_dynamic_entity(*result.entity_index);
   return result;
 }
-void NativeConstructionScene::project_ground_unit(std::uint16_t index){
+void NativeConstructionScene::project_dynamic_entity(std::uint16_t index){
   const auto &slot =
       simulation_.storage()
           .banks[simulation_.storage().read_bank][index];
