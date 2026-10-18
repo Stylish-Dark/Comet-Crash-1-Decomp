@@ -185,3 +185,15 @@ tesla_scenario=Path(__file__).resolve().parents[1]/"examples/tesla-combat.scenar
 result=run(tesla_scenario.read_text())
 assert result.returncode==0,(result.stdout,result.stderr)
 assert "tesla-beam entity=3" in result.stdout and "ground-depleted entity=2" in result.stdout,result.stdout
+
+# Cannon configuration is explicit, defaults off, and rejects duplicates/invalid flags.
+result = run(config.replace("run\n", "cannon 1\nrun\n"))
+assert result.returncode == 0, result.stderr
+for flags in ("cannon 2\n", "cannon 1\ncannon 0\n"):
+    result = run(config.replace("run\n", flags + "run\n"))
+    assert result.returncode != 0
+
+scenario = Path(__file__).resolve().parents[1] / "examples" / "cannon-combat.scenario"
+result = run(scenario.read_text())
+assert result.returncode == 0, (result.stdout, result.stderr)
+assert "cannon-projectile entity=" in result.stdout and "cannon-impact target=" in result.stdout

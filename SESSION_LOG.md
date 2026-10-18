@@ -943,3 +943,32 @@ failed particle-allocation behavior and native scheduling are explicit. The
 successful original particle branch consumes extra shared RNG draws; complete
 effects/RNG parity is not claimed. Other weapons/projectiles, enemy decisions,
 craft/aircraft and original mission/campaign rules remain open.
+
+
+## 2026-10-18 — Cannon projectiles and deferred kinetic impacts
+
+Continued PR #49 at b3c1a27 in an isolated branch, preserving retained local
+unfinished work and unrelated Windows script line endings. Completed cannon
+source/aim/lead/projectile/impulse helpers and live integration. Ready kind21
+sources now launch model27 kind3 rounds, collide with designated ordinary-ground
+targets and queue original zero-health kinetic impulses for next movement.
+Cannon mode enables velocity dynamics at bootstrap. Added configuration, public
+scenario, replay events/expectations, moving scene projection and source yaw.
+
+Review exposed crowded destination-cell and escaping-Y tick aborts; failing
+regressions now pass with explicit projectile retirement. Source-capacity failure,
+allies/disabled mode, no-target zero direction, missed-shot age/domain cleanup,
+shared pool/banks/cells and restart with live/pending combat state are covered.
+
+Validation: 58 headless / 59 graphics CTests, 233 Python tests, compileall,
+repository safety, eight ASan/UBSan checks and three-frame original level0 asset
+smoke. Fresh private comparisons cover constructors, source finite outputs,
+impulse consumption and aim/interception; two original nonfinite source cases
+use explicit native analytic limits. Full projectile instruction comparator is
+blocked by private interpreter unsupported mpyui; full update parity is not
+claimed. All private inputs/harnesses remain excluded. Details and remaining
+boundaries: docs/decomp/native-cannon-combat.md.
+
+Estimate 84% toward a first playable single-player mission (82% prior), not
+source coverage or complete-port percentage. Next: additional projectile weapons,
+autonomous enemies and original mission/control rules. No merge performed.

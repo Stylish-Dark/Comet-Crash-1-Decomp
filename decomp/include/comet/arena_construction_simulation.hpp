@@ -30,6 +30,7 @@ struct ArenaConstructionSimulationConfig {
   std::array<std::optional<ArenaGroundDeploymentControl>,4> ground_deployment{};
   bool production_enabled = false;
   bool tesla_enabled = false;
+  bool cannon_enabled = false;
   bool ground_transport_enabled = false;
   bool ground_dynamics_enabled = false;
   bool ground_contacts_enabled = false;
@@ -79,6 +80,7 @@ struct ArenaConstructionTick {
   std::vector<std::uint16_t> depleted_units, retired_entities;
   std::vector<std::uint16_t> ground_slams;
   std::vector<std::uint16_t> spawned_beams;
+  std::vector<std::uint16_t> spawned_projectiles, cannon_impacts;
   std::vector<ArenaGroundDeploymentAttempt> ground_deployments;
 };
 class ArenaConstructionSimulation {
@@ -94,6 +96,7 @@ class ArenaConstructionSimulation {
   // Native-owned replacement for the health lane of each original accumulator.
   // Consumed once when the active ground simulation next advances.
   std::vector<float> health_deltas_;
+  std::vector<std::array<float,4>> impulse_deltas_;
   std::vector<std::uint32_t> tesla_commands_;
   std::array<std::array<std::uint8_t, 128>, 4> statistics_{};
   ArenaFactorySelection select_factory_index(std::int32_t, std::uint8_t);

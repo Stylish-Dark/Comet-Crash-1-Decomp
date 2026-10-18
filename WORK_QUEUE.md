@@ -1,27 +1,25 @@
 # Active gameplay continuation
 
-Latest milestone: bounded kind-22 Tesla targeting, kind-5 beam construction
-and automatic ground health effects now join kind-44 hop/impact damage and
-converter capture. Preview finish/freeze and full F2 restart remain usable.
-Estimate: **82% toward a first playable single-player mission** (79% prior), a
-capability judgment rather than source coverage. See
-`docs/decomp/native-tesla-combat.md` for original evidence and native limits.
+Latest milestone: kind-21 cannon tracking/firing -> kind-3 rounds -> designated
+ordinary-ground collision -> deferred kinetic impulse. Scene projection, capacity
+retirement and restart checkpoints are integrated. Direct health delta is zero.
+See `docs/decomp/native-cannon-combat.md` and the public cannon-combat scenario.
+Estimate: **84% toward a first playable single-player mission** (82% prior), a
+capability judgment rather than source coverage. Continue from the latest active
+PR above the Tesla branch; main remains behind the gameplay stack.
 
-- Recover additional original weapon firing/projectiles: missiles/bullets, other
-  towers, multi-beam upgrades, structure targets and effect attribution. Tesla
-  ground targeting/damage, kind-44 impact damage and converter activation are
-  integrated. Original successful particle allocation and shared RNG scheduling,
-  full stun state and cooldown motion damping remain open.
-- Tesla validation complete: 51 headless / 52 graphics CTests, 233 Python tests,
-  compileall, repository safety, nine ASan/UBSan checks and original-asset smoke
-  pass. Independent review found no remaining actionable findings; source and
-  beam private original-instruction comparisons pass.
-- Recover autonomous enemy decisions, moving craft/controller input and aircraft.
-- Recover original mission objectives, progression, rewards and restart/reset rules.
-- Finish special-unit lifecycle, delayed tombstones and original scheduling.
-- Recover authentic income/balance, composite weapon parts and HUD/input/audio.
-- Development construction/deployment/movement and replayable preview lifecycle
-  are usable; full battle simulation and a complete original mission remain open.
+- Next combat recovery: original source terrain/occlusion observer, additional
+  damaging projectile families and towers, structure/air targets, effects and
+  attribution. Cannon rounds and Tesla beams now operate natively.
+- Highest broader playability gap: autonomous enemy decisions using recovered
+  construction/production/deployment controls. Moving craft/input and aircraft,
+  original mission objectives/progression/rewards and authentic economy remain.
+- Finish full stun/cooldown motion, composite weapon rendering, original
+  tombstone/output scheduling, HUD and audio.
+- Validation: 58 headless / 59 graphics native checks, 233 Python tests, eight
+  focused ASan/UBSan checks and original-asset render smoke pass. Full projectile
+  instruction comparison remains blocked by an unsupported private interpreter
+  opcode; no complete battle/scheduling parity is claimed.
 
 # WORK QUEUE
 

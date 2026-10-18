@@ -48,6 +48,14 @@ add_library(comet_native_recovery STATIC
     src/arena_laser_beam.cpp
     src/arena_tesla_runtime.cpp
     src/arena_tesla_source.cpp
+    src/arena_cannon_source.cpp
+    src/arena_projectile.cpp
+    src/arena_impulse.cpp
+    src/arena_weapon_aim.cpp
+    src/arena_weapon_lead.cpp
+    src/arena_weapon_target.cpp
+    src/arena_cannon_runtime.cpp
+
     src/native_deployment_input.cpp
     src/native_construction_scene.cpp
     src/arena_routes.cpp
@@ -445,4 +453,29 @@ if(MSVC)
   target_compile_options(comet_arena_tesla_simulation_test PRIVATE /UNDEBUG)
 else()
   target_compile_options(comet_arena_tesla_simulation_test PRIVATE -UNDEBUG)
+endif()
+
+foreach(name arena_cannon_simulation arena_cannon_source arena_projectile arena_impulse arena_weapon_aim arena_weapon_lead)
+  add_executable(comet_${name}_test tests/${name}.cpp)
+  target_link_libraries(comet_${name}_test PRIVATE comet_native_recovery)
+  add_test(NAME comet_${name}_test COMMAND comet_${name}_test)
+  if(MSVC)
+    target_compile_options(comet_${name}_test PRIVATE /UNDEBUG)
+  else()
+    target_compile_options(comet_${name}_test PRIVATE -UNDEBUG)
+  endif()
+endforeach()
+
+if(MSVC)
+  set_source_files_properties(src/arena_cannon_source.cpp src/arena_projectile.cpp src/arena_impulse.cpp src/arena_weapon_aim.cpp src/arena_weapon_lead.cpp src/arena_weapon_target.cpp src/arena_cannon_runtime.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+  set_source_files_properties(src/arena_cannon_source.cpp src/arena_projectile.cpp src/arena_impulse.cpp src/arena_weapon_aim.cpp src/arena_weapon_lead.cpp src/arena_weapon_target.cpp src/arena_cannon_runtime.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+add_executable(comet_arena_cannon_runtime_test tests/arena_cannon_runtime.cpp)
+target_link_libraries(comet_arena_cannon_runtime_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_cannon_runtime_test COMMAND comet_arena_cannon_runtime_test)
+if(MSVC)
+  target_compile_options(comet_arena_cannon_runtime_test PRIVATE /UNDEBUG)
+else()
+  target_compile_options(comet_arena_cannon_runtime_test PRIVATE -UNDEBUG)
 endif()

@@ -1,0 +1,32 @@
+# Kind-21 cannon -> kind-3 projectile -> kinetic impact (zero direct health damage).
+# Development funds and tuning, not original campaign balance.
+world 16 4
+player 0 6 0 400 400 0
+player 23 6 1 400 400 0
+tuning 21 100 50 40 20 7.5
+tuning 26 100 50 10 20 7.5
+production 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 1 0 1
+cannon 1
+contacts 1
+run
+queue 0 21 6 6
+step
+queue 1 26 12 12
+step
+factory 1 5
+advance 26
+spawn 1 41 9 6
+transport 1
+advance 26.1
+advance 26.4
+advance 26.8
+advance 27.2
+advance 27.6
+advance 28
+expect cannon-projectiles 1
+expect live-units 1
+expect damaged-ground-units 0
+expect unit-active1 1
