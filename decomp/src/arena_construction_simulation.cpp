@@ -6,6 +6,8 @@
 #include "comet/arena_ground_slam_effect.hpp"
 #include "comet/arena_ground_slam.hpp"
 #include "arena_tesla_runtime.hpp"
+#include "arena_cannon_runtime.hpp"
+#include "comet/arena_impulse.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -31,12 +33,13 @@ bool native_map_structure_importable(const ArenaEntity &e) {
 ArenaConstructionSimulation::ArenaConstructionSimulation(
     const ArenaConstructionSimulationConfig &c)
     : config_(c), random_(c.seed) {
-  if(config_.ground_contacts_enabled)config_.ground_dynamics_enabled=true;
+  if(config_.ground_contacts_enabled || config_.cannon_enabled)config_.ground_dynamics_enabled=true;
   if (c.players.empty() || c.players.size() > 4 || c.capacity > 65536 || !c.native_extent || c.native_extent > 24)
     throw std::invalid_argument("invalid simulation dimensions");
   health_deltas_.resize(c.capacity);
+  impulse_deltas_.resize(c.capacity);
   tesla_commands_.resize(c.capacity);
-  if(c.tesla_enabled && c.capacity>65535)throw std::invalid_argument("Tesla links reserve index 65535");
+  if((c.tesla_enabled || c.cannon_enabled) && c.capacity>65535)throw std::invalid_argument("weapon links reserve index 65535");
   for (const auto &a : c.players) {
     if (a.route.base.x >= c.native_extent || a.route.base.z >= c.native_extent || a.route.team > 3 ||
         !std::isfinite(a.resource) || !std::isfinite(a.resource_max) ||
@@ -323,6 +326,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       auto next_deployment_timers=deployment_timers_;
       auto next_statistics=statistics_;
       auto next_health_deltas=health_deltas_;
+      auto next_impulses=impulse_deltas_;
       auto next_tesla_commands=tesla_commands_;
       for(unsigned owner=0;owner<players_.size();++owner)
         store_arena_unit_production_quota(next_statistics[owner],quotas[owner]);
@@ -350,6 +354,10 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
         if (!std::isnormal(speed) || speed <= 0 || speed > 64) continue;
         if(unit[15]!=62){
           auto changed=unit;
+          if(std::any_of(next_impulses[i].begin(),next_impulses[i].end(),[](float f){return f!=0;}) &&
+             apply_arena_impulse(changed,next_impulses[i])==ArenaImpulseDelta::Invalid)
+            throw std::invalid_argument("invalid ground impulse");
+          next_impulses[i]={};
           if(apply_arena_health_delta(changed,next_health_deltas[i])==ArenaHealthDelta::Invalid)
             throw std::invalid_argument("invalid ground health delta");
           if(update_arena_entity(transported,static_cast<std::uint16_t>(i),changed)!=ArenaEntityUpdate::Updated)
@@ -367,7 +375,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           if(transported.banks[0][i][15]==62){
             const auto state=advance_arena_ground_corpse(transported,static_cast<std::uint16_t>(i),delta);
             if(state==ArenaGroundCorpseStep::Expired){
-              tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
+              next_impulses[i]={};tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
             }
             if(state!=ArenaGroundCorpseStep::Active)
               throw std::invalid_argument("invalid corpse update");
@@ -419,7 +427,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             tick.depleted_units.push_back(static_cast<std::uint16_t>(i));
             if(death==ArenaGroundDeath::Retire){
               if(!retire_arena_entity(transported,static_cast<std::uint16_t>(i)))throw std::invalid_argument("invalid ground retirement");
-              tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
+              next_impulses[i]={};tick.retired_entities.push_back(static_cast<std::uint16_t>(i));break;
             }
             if(update_arena_entity(transported,static_cast<std::uint16_t>(i),deceased)!=ArenaEntityUpdate::Updated)throw std::invalid_argument("invalid corpse conversion");
             continue;
@@ -435,7 +443,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             apply_arena_player_resource_delta(next_statistics[*base],impact);
             if(!retire_arena_entity(transported,static_cast<std::uint16_t>(i)))
               throw std::invalid_argument("invalid impact storage membership");
-            tick.retired_entities.push_back(static_cast<std::uint16_t>(i));
+            next_impulses[i]={};tick.retired_entities.push_back(static_cast<std::uint16_t>(i));
             tick.base_impacts.push_back({static_cast<std::uint16_t>(i),*base,static_cast<std::uint8_t>(owner)});
             break;
           }
@@ -458,6 +466,21 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
           tick.retired_entities.insert(tick.retired_entities.end(),weapons.retired.begin(),weapons.retired.end());
         }
       }
+      if(config_.cannon_enabled && config_.ground_transport_enabled){
+        const unsigned count=static_cast<unsigned>(std::ceil(elapsed/.05f));
+        const float delta=elapsed/static_cast<float>(count);
+        for(unsigned n=0;n<count;++n){
+          const auto weapons=stage_arena_cannons(transported,grid_,routes_,delta,next_random,next_impulses);
+          tick.spawned_projectiles.insert(tick.spawned_projectiles.end(),weapons.spawned.begin(),weapons.spawned.end());
+          tick.cannon_impacts.insert(tick.cannon_impacts.end(),weapons.impacts.begin(),weapons.impacts.end());
+          tick.retired_entities.insert(tick.retired_entities.end(),weapons.retired.begin(),weapons.retired.end());
+        }
+      }
+      // Clear pending impulses for freed or recycled records; only live ground owns them.
+      for(unsigned i=0;i<next_impulses.size();++i){
+        const auto &record=transported.banks[0][i];
+        if(!((record[0x33]&28)==20 && (record[15]==40 || record[15]==41 || (record[15]>=43 && record[15]<=47))))next_impulses[i]={};
+      }
       // Newly spawned output records start moving on the next native tick,
       // matching the original read/output-bank boundary rather than backdating
       // their movement over the elapsed interval that produced their order.
@@ -473,13 +496,14 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             static_cast<std::uint8_t>(owner),*position,std::span(targets).first(players_.size()),grid_,next_random);
         if(spawned.status==ArenaUnitSpawnStatus::Invalid)throw std::invalid_argument("invalid ground deployment spawn");
         tick.ground_deployments.push_back({static_cast<std::uint8_t>(owner),control->kind,spawned});
-        if(spawned.status==ArenaUnitSpawnStatus::Spawned)next_deployment_timers[owner]=0;
+        if(spawned.status==ArenaUnitSpawnStatus::Spawned){next_deployment_timers[owner]=0;next_impulses[*spawned.entity_index]={};}
       }
       deployment_timers_=next_deployment_timers;
       storage_ = std::move(transported);
       random_ = next_random;
       statistics_=next_statistics;
       health_deltas_=std::move(next_health_deltas);
+      impulse_deltas_=std::move(next_impulses);
       tesla_commands_=std::move(next_tesla_commands);
       for(unsigned owner=0;owner<players_.size();++owner)
         quotas[owner]=read_arena_unit_production_quota(statistics_[owner]);

@@ -94,7 +94,7 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
-    if (slot[15]==5 || (slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
+    if (slot[15]==3 || slot[15]==5 || (slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
       auto scalar = [&](unsigned o) {
         std::uint32_t bits=0;
         for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
@@ -122,6 +122,10 @@ void NativeConstructionScene::refresh_construction() {
     for (unsigned i = 0; i < 4; ++i)
       word = (word << 8) | slot[0x78 + i];
     entity.construction_progress = std::bit_cast<float>(word);
+    if(slot[15]==21)for(unsigned axis=0;axis<4;++axis){
+      unsigned bits=0;for(unsigned b=0;b<4;++b)bits=(bits<<8)|slot[0x20+4*axis+b];
+      entity.orientation[axis]=std::bit_cast<float>(bits);
+    }
     entity.construction_ready = arena_structure_ready(slot);
     if (slot[15] == 26 || slot[15] == 28) {
       entity.production_mode = slot[0xaa];
@@ -218,6 +222,11 @@ ArenaConstructionTick NativeConstructionScene::advance(float t) {
     if(index<bank.size() && bank[index][15]==5 &&
        std::none_of(arena_.entities.begin(),arena_.entities.end(),[&](const auto &e){return e.live_entity_index==index;}))
       project_dynamic_entity(index);
+  }
+  for(auto index:tick.spawned_projectiles){
+    const auto &bank=simulation_.storage().banks[simulation_.storage().read_bank];
+    if(index<bank.size() && bank[index][15]==3 &&
+       std::none_of(arena_.entities.begin(),arena_.entities.end(),[&](const auto&e){return e.live_entity_index==index;}))project_dynamic_entity(index);
   }
   refresh_construction();
   arena_.players = simulation_.players();

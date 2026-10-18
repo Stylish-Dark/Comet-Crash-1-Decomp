@@ -15,6 +15,8 @@ recovered and integrated. Kind 44 now has its original hop/dynamics and
 contact-triggered area health effect; see `docs/decomp/native-ground-slam.md`.
 An opt-in kind-22 Tesla now acquires opposing ground targets and drives its
 original kind-5 beam health path; see `docs/decomp/native-tesla-combat.md`.
+An opt-in kind-21 cannon now tracks ground targets, launches kind-3 kinetic
+rounds and applies deferred knockback; see `docs/decomp/native-cannon-combat.md`.
 Other weapon firing/projectiles, autonomous enemies,
 original craft controls, original mission rules and
 campaign progression remain incomplete. Continue from the latest active PR,

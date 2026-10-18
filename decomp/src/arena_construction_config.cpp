@@ -28,7 +28,7 @@ float finite(const std::string &s) {
 ArenaConstructionSimulationConfig
 read_arena_construction_config(std::istream &in, std::size_t &line) {
   ArenaConstructionSimulationConfig c;
-  bool tesla_seen=false;
+  bool tesla_seen=false, cannon_seen=false;
   bool world = false, production_seen = false, transport_seen = false, dynamics_seen = false, contacts_seen = false;
   std::array<bool, 4> quota_seen{}, unit_base_seen{}, unit_target_seen{};
   std::string text;
@@ -65,6 +65,9 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
       if (a.resource < 0 || a.resource > a.resource_max)
         throw std::invalid_argument("invalid balance");
       c.players.push_back(a);
+    } else if (w[0] == "cannon" && w.size()==2 && world) {
+      if(cannon_seen)throw std::invalid_argument("duplicate cannon flag");
+      cannon_seen=true;c.cannon_enabled=bounded(w[1],1);
     } else if (w[0] == "tesla" && w.size()==2 && world) {
       if(tesla_seen)throw std::invalid_argument("duplicate Tesla flag");
       tesla_seen=true;c.tesla_enabled=bounded(w[1],1);
