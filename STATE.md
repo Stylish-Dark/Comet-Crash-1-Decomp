@@ -4,6 +4,17 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
+## Latest continuation — 2026-10-19
+
+Continued PR #52 after both workflows passed. Added recovered scalar stick
+normalization plus SDL gamepad controls for native skirmish navigation, build,
+factory selection, held release, pause and restart. Focus loss/hot-unplug cancel
+input and pause; controller rearming requires neutral input. Bindings and repeat
+policy are native preview rules; original craft/aircraft and full pad decoder
+remain open. See `docs/decomp/native-gamepad.md` for evidence and validation.
+Capability estimate: **89% toward a first playable single-player mission** (88%
+prior), not full-port/source coverage. Continue the new PR above #52.
+
 ## Current phase
 
 **The active native branch includes original-asset rendering, construction,

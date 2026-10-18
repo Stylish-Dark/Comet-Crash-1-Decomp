@@ -23,6 +23,6 @@ public:
  void press();
  void release();
  void cancel() { release(); }
- std::array<std::string,5> status_lines(bool playing) const;
+ std::array<std::string,5> status_lines(bool playing,bool gamepad=false) const;
 };
 }

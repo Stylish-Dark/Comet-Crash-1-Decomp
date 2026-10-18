@@ -972,3 +972,21 @@ boundaries: docs/decomp/native-cannon-combat.md.
 Estimate 84% toward a first playable single-player mission (82% prior), not
 source coverage or complete-port percentage. Next: additional projectile weapons,
 autonomous enemies and original mission/control rules. No merge performed.
+
+
+## 2026-10-19 — Recovered stick normalization and native gamepad controls
+
+Continued PR #52 after its native/Windows and regression workflows succeeded.
+Recovered the four-axis scalar normalization sequence at PPU F1728..F1868 from
+pinned original ELF. Private subset interpreter and public all256-input fixture
+agree, including deadzone boundaries, positive endpoint and float rounding.
+SDL first-controller input now drives existing native build/factory/deployment
+and mission controls, with hotplug, neutral rearming, separate keyboard/pad
+release holds and controller overlay hints. Native grid/action policy is named
+explicitly; original craft/aircraft and full pad bindings remain open.
+Validation: 61 CPU /64 graphics CTests,233 Python tests, five ASan/UBSan checks,
+compileall and repository safety. New virtual SDL test covers build/type/kind,
+X/R2 release, factory cycling, focus/hot-unplug interruption and held restart.
+No proprietary bytes or private oracle tool committed. Details and hashes:
+docs/decomp/native-gamepad.md. Estimate89% toward first playable single-player
+mission (88% prior), not full-port/source coverage. Next: original craft consumer.

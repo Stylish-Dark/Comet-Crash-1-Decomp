@@ -43,3 +43,9 @@ the preview. Restart returns paused.
 This is a configurable native skirmish, using recovered simulation components
 and native preview rules. Original campaign/AI, player craft/aircraft, additional
 weapons, authentic economy/audio and complete original presentation remain open.
+
+GAMEPAD (SDL standardized labels)
+Left stick/D-pad: cursor; A: build; LB/RB: structure type; X/R2: hold release.
+Y: factory mode; L3: release type; R3: human player; Start: play/pause; Back: restart.
+B: cancel. Release buttons/center sticks after pause, reconnect or restart.
+Disconnect/focus loss pauses and cancels held input. One active controller.

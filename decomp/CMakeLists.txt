@@ -57,6 +57,7 @@ add_library(comet_native_recovery STATIC
     src/arena_weapon_target.cpp
     src/arena_cannon_runtime.cpp
 
+    src/native_gamepad_input.cpp
     src/native_deployment_input.cpp
     src/native_construction_scene.cpp
     src/arena_routes.cpp
@@ -234,6 +235,10 @@ if(COMET_NATIVE_VIEWER)
     add_executable(comet_native_skirmish_viewer_test tests/native_skirmish_viewer.cpp)
     target_link_libraries(comet_native_skirmish_viewer_test PRIVATE comet_native_viewer)
     add_test(NAME comet_native_skirmish_viewer_test COMMAND comet_native_skirmish_viewer_test)
+    add_executable(comet_native_gamepad_viewer_test tests/native_gamepad_viewer.cpp)
+    target_link_libraries(comet_native_gamepad_viewer_test PRIVATE comet_native_viewer)
+    add_test(NAME comet_native_gamepad_viewer_test COMMAND comet_native_gamepad_viewer_test)
+    set_tests_properties(comet_native_gamepad_viewer_test PROPERTIES TIMEOUT 30 LABELS "graphics" ENVIRONMENT "SDL_VIDEODRIVER=offscreen")
     set_tests_properties(comet_native_skirmish_viewer_test PROPERTIES LABELS "graphics" ENVIRONMENT "SDL_VIDEODRIVER=offscreen")
     set_tests_properties(comet_native_viewer_tests PROPERTIES LABELS "graphics" ENVIRONMENT "SDL_VIDEODRIVER=offscreen")
 endif()
@@ -501,4 +506,15 @@ if(MSVC)
   target_compile_options(comet_native_skirmish_test PRIVATE /UNDEBUG)
 else()
   target_compile_options(comet_native_skirmish_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_native_gamepad_input_test tests/native_gamepad_input.cpp)
+target_link_libraries(comet_native_gamepad_input_test PRIVATE comet_native_recovery)
+add_test(NAME comet_native_gamepad_input_test COMMAND comet_native_gamepad_input_test)
+if(MSVC)
+ target_compile_options(comet_native_gamepad_input_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/native_gamepad_input.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_native_gamepad_input_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/native_gamepad_input.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()
