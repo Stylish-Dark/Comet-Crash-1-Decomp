@@ -36,6 +36,7 @@ add_library(comet_native_recovery STATIC
     src/arena_factory_control.cpp
     src/arena_construction_progress.cpp
     src/arena_construction_simulation.cpp
+    src/native_opponent.cpp
     src/arena_construction_config.cpp
     src/native_mission_outcome.cpp
     src/native_mission_playback.cpp
@@ -478,4 +479,13 @@ if(MSVC)
   target_compile_options(comet_arena_cannon_runtime_test PRIVATE /UNDEBUG)
 else()
   target_compile_options(comet_arena_cannon_runtime_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_native_opponent_test tests/native_opponent.cpp)
+target_link_libraries(comet_native_opponent_test PRIVATE comet_native_recovery)
+add_test(NAME comet_native_opponent_test COMMAND comet_native_opponent_test)
+if(MSVC)
+  target_compile_options(comet_native_opponent_test PRIVATE /UNDEBUG)
+else()
+  target_compile_options(comet_native_opponent_test PRIVATE -UNDEBUG)
 endif()

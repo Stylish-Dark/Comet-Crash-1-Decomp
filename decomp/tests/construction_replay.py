@@ -197,3 +197,18 @@ scenario = Path(__file__).resolve().parents[1] / "examples" / "cannon-combat.sce
 result = run(scenario.read_text())
 assert result.returncode == 0, (result.stdout, result.stderr)
 assert "cannon-projectile entity=" in result.stdout and "cannon-impact target=" in result.stdout
+
+# The opt-in preview opponent owns ordinary build/production/deployment controls.
+scenario = Path(__file__).resolve().parents[1] / "examples" / "native-opponent.scenario"
+result = run(scenario.read_text())
+assert result.returncode == 0, (result.stdout, result.stderr)
+for text in ("opponent 1\nopponent 1\n", "opponent 2\n", "opponent 4\n"):
+    result = run(scenario.read_text().replace("opponent 1\n", text))
+    assert result.returncode != 0
+for text in ("production 0\n", "transport 0\n", "unit-base 1 0\n", "unit-quota 1 0 0\n"):
+    key = text.split()[0]
+    lines = scenario.read_text().splitlines(keepends=True)
+    original = next(line for line in lines if line.startswith(key + " ") and
+                    (key not in ("unit-base", "unit-quota") or line.split()[1] == "1"))
+    result = run(scenario.read_text().replace(original, text))
+    assert result.returncode != 0

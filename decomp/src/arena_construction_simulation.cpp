@@ -54,6 +54,14 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
     if(!set_ground_deployment(owner,*c.ground_deployment[owner]))
       throw std::invalid_argument("invalid ground deployment control");
   }
+  for(unsigned owner=0;owner<4;++owner)if(c.native_opponents[owner]) {
+    if(owner>=c.players.size() || c.players[owner].route.inactive ||
+       !c.production_enabled || !c.ground_transport_enabled ||
+       !c.unit_base_available[owner] || !c.unit_quotas[owner].capacity ||
+       !c.tuning[26] || c.ground_deployment[owner])
+      throw std::invalid_argument("native opponent requires factory tuning, production, transport, base and quota; deployment is automatic");
+    config_.ground_deployment[owner]=ArenaGroundDeploymentControl{40,0};
+  }
   for(unsigned owner=0;owner<4;++owner)if(c.base_counters[owner]) {
     if(owner>=c.players.size() || *c.base_counters[owner]<0)
       throw std::invalid_argument("invalid base counter");
@@ -314,7 +322,8 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       if (owner >= players_.size())
         throw std::invalid_argument("invalid factory owner");
       if (advance_arena_factory_production(
-              next[i], elapsed, config_.production_enabled, quotas[owner]) ==
+              next[i], elapsed, config_.production_enabled &&
+                  (!config_.native_opponents[owner] || native_opponent_active(owner,statistics_)), quotas[owner]) ==
           ArenaFactoryProduction::Reserved)
         tick.production_reservations.push_back(static_cast<std::uint16_t>(i));
     }
@@ -343,6 +352,17 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
                          config_.base_counters[p].has_value() && config_.unit_base_available[p]};
         visibility_bits[p]=static_cast<std::uint8_t>(routes_[p].team);
       }
+      // Native preview opponents restrict both new and rebound ground targets.
+      // Read staged counters afresh: an earlier unit can eliminate a base this tick.
+      auto opponent_targets=[&](unsigned owner) {
+        auto filtered=targets;
+        if(owner<players_.size() && config_.native_opponents[owner])
+          for(unsigned p=0;p<players_.size();++p)
+            filtered[p].base_available=targets[p].base_available && !routes_[p].inactive &&
+              routes_[p].team!=routes_[owner].team &&
+              (!config_.base_counters[p] || next_statistics[p][88]!=0 || next_statistics[p][89]!=0);
+        return filtered;
+      };
       if(config_.ground_transport_enabled)for (std::size_t i = 0; i < transported.banks[0].size(); ++i) {
         const auto &unit = transported.banks[0][i];
         if (!(unit[15] == 62 || unit[15] == 40 || unit[15] == 41 ||
@@ -382,9 +402,10 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
             continue;
           }
           std::array<float,4> contact_impulse{};
+          const auto movement_targets=opponent_targets(transported.banks[0][i][0x33]>>5);
           const auto result = transport_stopped ? ArenaGroundTransport::Blocked : transport_arena_ground_unit(
               transported, static_cast<std::uint16_t>(i), delta,
-              std::span(targets.data(), players_.size()), grid_, next_random,
+              std::span(movement_targets.data(), players_.size()), grid_, next_random,
               std::span(bases.data(),players_.size()),
               std::span(visibility_bits.data(),players_.size()),
               config_.ground_dynamics_enabled, config_.ground_contacts_enabled,
@@ -487,13 +508,15 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       for(unsigned owner=0;owner<players_.size();++owner){
         const auto control=config_.ground_deployment[owner];
         if(!control || !config_.unit_base_available[owner])continue;
+        if(config_.native_opponents[owner] && !native_opponent_active(owner,next_statistics))continue;
         const auto gate=advance_arena_ground_deployment(next_deployment_timers[owner],*control,elapsed);
         if(gate==ArenaGroundDeploymentGate::Invalid)throw std::invalid_argument("invalid ground deployment timer");
         if(gate!=ArenaGroundDeploymentGate::Ready)continue;
         const auto position=arena_ground_deployment_position(routes_[owner].base);
         if(!position)throw std::invalid_argument("invalid ground deployment base");
+        const auto deployment_targets=opponent_targets(owner);
         const auto spawned=spawn_reserved_arena_ground_unit(transported,next_statistics[owner],control->kind,
-            static_cast<std::uint8_t>(owner),*position,std::span(targets).first(players_.size()),grid_,next_random);
+            static_cast<std::uint8_t>(owner),*position,std::span(deployment_targets).first(players_.size()),grid_,next_random);
         if(spawned.status==ArenaUnitSpawnStatus::Invalid)throw std::invalid_argument("invalid ground deployment spawn");
         tick.ground_deployments.push_back({static_cast<std::uint8_t>(owner),control->kind,spawned});
         if(spawned.status==ArenaUnitSpawnStatus::Spawned){next_deployment_timers[owner]=0;next_impulses[*spawned.entity_index]={};}
@@ -580,6 +603,7 @@ ArenaConstructionTick ArenaConstructionSimulation::advance(float clock) {
       status = ArenaTimedStatus::Retried;
     }
   }
+  if(elapsed>0)advance_native_opponents();
   tick.construction = step();
   return tick;
 }

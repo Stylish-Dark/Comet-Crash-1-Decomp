@@ -1,0 +1,33 @@
+# Native preview opponent, synthetic economy; not original campaign AI/balance.
+# No queue, factory, deploy or spawn commands are needed for owner 1.
+world 16 4
+player 1 1 0 400 400 0
+player 6 1 1 400 400 0
+tuning 26 100 50 10 20 7.5
+production 1
+transport 1
+unit-base 0 1
+unit-base 1 1
+unit-quota 1 0 2
+base-counter 0 2
+base-counter 1 2
+opponent 1
+run
+advance .1
+advance 2
+advance 4
+advance 6
+advance 8
+advance 10
+advance 12
+advance 14
+advance 16
+advance 18
+advance 20
+advance 22
+advance 24
+advance 26
+advance 28
+advance 30
+expect-base-counter 0 0
+expect-base-counter 1 2

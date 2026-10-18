@@ -1,25 +1,25 @@
 # Active gameplay continuation
 
-Latest milestone: kind-21 cannon tracking/firing -> kind-3 rounds -> designated
-ordinary-ground collision -> deferred kinetic impulse. Scene projection, capacity
-retirement and restart checkpoints are integrated. Direct health delta is zero.
-See `docs/decomp/native-cannon-combat.md` and the public cannon-combat scenario.
-Estimate: **84% toward a first playable single-player mission** (82% prior), a
-capability judgment rather than source coverage. Continue from the latest active
-PR above the Tesla branch; main remains behind the gameplay stack.
+Latest milestone: opt-in native preview opponent builds an ordinary factory,
+produces default fighters and automatically deploys against surviving enemies.
+All actions use existing funds/quotas/placement/routes/production/movement paths.
+Restart includes decision deadlines and rejected-placement cursors. This is native
+preview policy, not recovery of original enemy AI. See
+`docs/decomp/native-opponent.md` and `decomp/examples/native-opponent.scenario`.
+Estimate: **86% toward a first playable single-player mission** (84% prior), a
+capability judgment rather than source coverage or full-port completion.
+Continue from the latest PR stacked above #50; main remains behind the stack.
 
-- Next combat recovery: original source terrain/occlusion observer, additional
-  damaging projectile families and towers, structure/air targets, effects and
-  attribution. Cannon rounds and Tesla beams now operate natively.
-- Highest broader playability gap: autonomous enemy decisions using recovered
-  construction/production/deployment controls. Moving craft/input and aircraft,
-  original mission objectives/progression/rewards and authentic economy remain.
-- Finish full stun/cooldown motion, composite weapon rendering, original
-  tombstone/output scheduling, HUD and audio.
-- Validation: 58 headless / 59 graphics native checks, 233 Python tests, eight
-  focused ASan/UBSan checks and original-asset render smoke pass. Full projectile
-  instruction comparison remains blocked by an unsupported private interpreter
-  opcode; no complete battle/scheduling parity is claimed.
+- Recover original enemy decisions/adaptive strategy and economy.
+- Recover additional damaging weapons, terrain/occlusion, structure/air targets,
+  successful effects, composite weapon parts and original output scheduling.
+- Moving player craft/controller input, aircraft, authentic HUD/audio and original
+  mission objectives/progression/rewards remain major gaps.
+- Native preview opponent is deliberately limited to one ordinary factory and
+  default fighters; original adaptive strategy remains unrecovered.
+- Validation: 59 headless CTests, 233 Python tests, compileall/repository safety,
+  focused ASan/UBSan; existing CI covers Linux graphics/Windows. No fresh original
+  asset or original AI instruction comparison is claimed in this milestone.
 
 # WORK QUEUE
 
