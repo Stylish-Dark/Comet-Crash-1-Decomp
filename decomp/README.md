@@ -61,3 +61,12 @@ towers target opposing ground units and create visible kind-5 beam previews.
 Run `comet_construction_replay < decomp/examples/tesla-combat.scenario` for
 automatic acquisition, damage and death. See
 [evidence and limits](../docs/decomp/native-tesla-combat.md).
+
+
+## Native preview opponent
+
+`opponent OWNER` before `run` enables ordinary factory construction, default
+fighter production and automatic release through the existing simulation controls.
+Run `comet_construction_replay < decomp/examples/native-opponent.scenario` for
+an asset-free encounter ending in base depletion. This is a native preview policy;
+original AI recovery remains open. See [behavior and validation](../docs/decomp/native-opponent.md).

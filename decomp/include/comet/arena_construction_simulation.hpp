@@ -28,6 +28,8 @@ struct ArenaConstructionSimulationConfig {
   // Explicit native bootstrap; absent means base impacts are disabled.
   std::array<std::optional<std::int16_t>,4> base_counters{};
   std::array<std::optional<ArenaGroundDeploymentControl>,4> ground_deployment{};
+  // Native preview policy; this does not reproduce original enemy AI.
+  std::array<bool,4> native_opponents{};
   bool production_enabled = false;
   bool tesla_enabled = false;
   bool cannon_enabled = false;
@@ -92,6 +94,11 @@ class ArenaConstructionSimulation {
   std::vector<ArenaPlayer> players_;
   ArenaRandom random_;
   float clock_ = 0;
+  std::array<float,4> opponent_decision_times_{};
+  std::array<std::size_t,4> opponent_build_cursors_{};
+  void advance_native_opponents();
+  bool native_opponent_active(std::size_t owner,
+      const std::array<std::array<std::uint8_t,128>,4>& statistics) const;
   std::array<float,4> deployment_timers_{};
   // Native-owned replacement for the health lane of each original accumulator.
   // Consumed once when the active ground simulation next advances.

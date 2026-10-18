@@ -65,6 +65,11 @@ read_arena_construction_config(std::istream &in, std::size_t &line) {
       if (a.resource < 0 || a.resource > a.resource_max)
         throw std::invalid_argument("invalid balance");
       c.players.push_back(a);
+    } else if (w[0] == "opponent" && w.size()==2 && world) {
+      const auto owner=bounded(w[1],3);
+      if(owner>=c.players.size() || c.native_opponents[owner])
+        throw std::invalid_argument("invalid or duplicate native opponent");
+      c.native_opponents[owner]=true;
     } else if (w[0] == "cannon" && w.size()==2 && world) {
       if(cannon_seen)throw std::invalid_argument("duplicate cannon flag");
       cannon_seen=true;c.cannon_enabled=bounded(w[1],1);
