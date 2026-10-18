@@ -79,3 +79,8 @@ This builds a native two-sided battle from configuration and uses original model
 no campaign map extraction is required. The Windows package includes a drag-and-drop
 `OPEN_SKIRMISH.cmd` launcher. Player controls skip AI owners and start at the human
 base. See [controls, validation and limits](../docs/decomp/native-skirmish.md).
+
+## Gamepad controls
+
+SDL controllers now support the interactive skirmish build/release loop. See
+[bindings, recovered stick evidence and limits](../docs/decomp/native-gamepad.md).

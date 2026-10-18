@@ -1,24 +1,24 @@
 # Active gameplay continuation
 
-Latest milestone: interactive native skirmish startup through `--skirmish-config`,
-visible bases, original model/texture rendering and human/AI input ownership.
-The Windows package includes OPEN_SKIRMISH.cmd and a tested two-sided config.
-Fixed a steering adapter metadata/W-lane bug that froze velocity-dynamics units
-at enemy-base cell entry. The exact shipped encounter now reaches base depletion.
-See `docs/decomp/native-skirmish.md` and `decomp/examples/native-skirmish.cfg`.
-Estimate: **88% toward a first playable single-player mission** (86% prior), a
-capability judgment rather than source coverage or full-port completion.
-Continue from the latest PR stacked above #51; main remains behind the stack.
+Latest milestone: recovered unsigned-byte stick normalization and SDL native
+skirmish gamepad controls. First controller supports cursor/build/factory/release,
+owner/kind selection, pause/restart, hotplug and neutral rearming after canceled
+input. Details/evidence/limits: `docs/decomp/native-gamepad.md`.
+Estimate: **89% toward a first playable single-player mission** (88% prior),
+a capability judgment rather than source coverage/full-port completion.
+Continue from the latest PR stacked above #52; main remains behind the stack.
 
-- Recover original craft/controller input and aircraft.
-- Recover original adaptive AI, authentic economy, additional weapons/targets,
-  terrain/occlusion, successful effects, composite rendering and scheduling.
+- Next: recover original player craft motion/action state from the pad consumer;
+  only the scalar axis decoder is recovered so far. Aircraft remain open.
+- Further: original adaptive AI, authentic economy, additional weapons/targets,
+  terrain/occlusion, effects/composite rendering and scheduling.
 - Finish original mission objectives/progression/rewards, authentic HUD/audio.
-- Preview skirmish uses native rules, one-factory/default-scout opponent policy,
-  synthetic funds/counters, and existing development construction controls.
-- Validation: 60 headless / 62 graphics CTests, 233 Python tests, focused sanitizers,
-  compileall/repository safety; existing CI covers Windows and cross-builds.
-  No new original-asset or instruction-oracle comparison is claimed.
+- Native preview bindings/grid repeat and one-factory/scout opponent are explicit
+  replacement policies, not recovered full-game behavior.
+- Validation: 61 headless /64 graphics native CTests, 233 Python tests, five focused
+  ASan/UBSan tests, compileall/repository safety. Private original-instruction
+  oracle covers all256 axis bytes; no fresh original-asset render or physical
+  controller validation. Windows and cross-build checks run in repository CI.
 
 # WORK QUEUE
 

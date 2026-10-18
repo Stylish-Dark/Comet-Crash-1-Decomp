@@ -47,3 +47,21 @@ See docs/decomp/native-skirmish.md for validation and explicit native boundaries
 Estimate 88% toward a first playable single-player mission (86% prior), not source
 coverage/full-port completion. Original craft/aircraft, adaptive AI, additional
 weapons and original economy/mission/campaign/presentation remain open.
+
+
+## 2026-10-19 — Recovered stick normalization and native gamepad controls
+
+Continued PR #52 after its native/Windows and regression workflows succeeded.
+Recovered the four-axis scalar normalization sequence at PPU F1728..F1868 from
+pinned original ELF. Private subset interpreter and public all256-input fixture
+agree, including deadzone boundaries, positive endpoint and float rounding.
+SDL first-controller input now drives existing native build/factory/deployment
+and mission controls, with hotplug, neutral rearming, separate keyboard/pad
+release holds and controller overlay hints. Native grid/action policy is named
+explicitly; original craft/aircraft and full pad bindings remain open.
+Validation: 61 CPU /64 graphics CTests,233 Python tests, five ASan/UBSan checks,
+compileall and repository safety. New virtual SDL test covers build/type/kind,
+X/R2 release, factory cycling, focus/hot-unplug interruption and held restart.
+No proprietary bytes or private oracle tool committed. Details and hashes:
+docs/decomp/native-gamepad.md. Estimate89% toward first playable single-player
+mission (88% prior), not full-port/source coverage. Next: original craft consumer.
