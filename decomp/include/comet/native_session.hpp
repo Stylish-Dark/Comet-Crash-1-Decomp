@@ -1,5 +1,6 @@
 #pragma once
 #include "comet/arena_assets.hpp"
+#include "comet/arena_construction_simulation.hpp"
 #include "comet/arena_state.hpp"
 #include "comet/arena_render_targets.hpp"
 #include "comet/level_map.hpp"
@@ -21,6 +22,7 @@ struct NativeSessionConfig {
     ArenaLoadConfig arena;
 };
 struct NativeSession {
+    bool skirmish = false;
     NativeSessionConfig config;
     std::uint32_t current_level_id = 0;
     LevelMapData level;
@@ -39,5 +41,9 @@ struct NativeSessionResult {
 NativeSessionResult initialize_native_session(
     const NativeSessionConfig& config, std::uint32_t level_id,
     NativeSession& session);
+// Native preview arena built from explicit config; does not load campaign maps.
+NativeSessionResult initialize_native_skirmish(
+    const NativeSessionConfig&, const ArenaConstructionSimulationConfig&,
+    NativeSession&);
 NativeSessionResult change_native_level(std::uint32_t level_id, NativeSession& session);
 } // namespace comet::decomp

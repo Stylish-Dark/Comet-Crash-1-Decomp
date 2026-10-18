@@ -70,3 +70,12 @@ fighter production and automatic release through the existing simulation control
 Run `comet_construction_replay < decomp/examples/native-opponent.scenario` for
 an asset-free encounter ending in base depletion. This is a native preview policy;
 original AI recovery remains open. See [behavior and validation](../docs/decomp/native-opponent.md).
+
+
+## Interactive skirmish launch
+
+Launch with `--assets GAME_DATA --skirmish-config decomp/examples/native-skirmish.cfg --arena`.
+This builds a native two-sided battle from configuration and uses original models;
+no campaign map extraction is required. The Windows package includes a drag-and-drop
+`OPEN_SKIRMISH.cmd` launcher. Player controls skip AI owners and start at the human
+base. See [controls, validation and limits](../docs/decomp/native-skirmish.md).

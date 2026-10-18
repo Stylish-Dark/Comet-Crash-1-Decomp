@@ -17,6 +17,7 @@ public:
  std::size_t owner() const { return owner_; }
  std::uint8_t kind() const { return kinds_[owner_]; }
  bool held() const { return held_; }
+ bool controllable() const;
  void cycle_kind(int direction);
  void next_owner();
  void press();

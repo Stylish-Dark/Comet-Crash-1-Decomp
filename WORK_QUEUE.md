@@ -1,25 +1,24 @@
 # Active gameplay continuation
 
-Latest milestone: opt-in native preview opponent builds an ordinary factory,
-produces default fighters and automatically deploys against surviving enemies.
-All actions use existing funds/quotas/placement/routes/production/movement paths.
-Restart includes decision deadlines and rejected-placement cursors. This is native
-preview policy, not recovery of original enemy AI. See
-`docs/decomp/native-opponent.md` and `decomp/examples/native-opponent.scenario`.
-Estimate: **86% toward a first playable single-player mission** (84% prior), a
+Latest milestone: interactive native skirmish startup through `--skirmish-config`,
+visible bases, original model/texture rendering and human/AI input ownership.
+The Windows package includes OPEN_SKIRMISH.cmd and a tested two-sided config.
+Fixed a steering adapter metadata/W-lane bug that froze velocity-dynamics units
+at enemy-base cell entry. The exact shipped encounter now reaches base depletion.
+See `docs/decomp/native-skirmish.md` and `decomp/examples/native-skirmish.cfg`.
+Estimate: **88% toward a first playable single-player mission** (86% prior), a
 capability judgment rather than source coverage or full-port completion.
-Continue from the latest PR stacked above #50; main remains behind the stack.
+Continue from the latest PR stacked above #51; main remains behind the stack.
 
-- Recover original enemy decisions/adaptive strategy and economy.
-- Recover additional damaging weapons, terrain/occlusion, structure/air targets,
-  successful effects, composite weapon parts and original output scheduling.
-- Moving player craft/controller input, aircraft, authentic HUD/audio and original
-  mission objectives/progression/rewards remain major gaps.
-- Native preview opponent is deliberately limited to one ordinary factory and
-  default fighters; original adaptive strategy remains unrecovered.
-- Validation: 59 headless CTests, 233 Python tests, compileall/repository safety,
-  focused ASan/UBSan; existing CI covers Linux graphics/Windows. No fresh original
-  asset or original AI instruction comparison is claimed in this milestone.
+- Recover original craft/controller input and aircraft.
+- Recover original adaptive AI, authentic economy, additional weapons/targets,
+  terrain/occlusion, successful effects, composite rendering and scheduling.
+- Finish original mission objectives/progression/rewards, authentic HUD/audio.
+- Preview skirmish uses native rules, one-factory/default-scout opponent policy,
+  synthetic funds/counters, and existing development construction controls.
+- Validation: 60 headless / 62 graphics CTests, 233 Python tests, focused sanitizers,
+  compileall/repository safety; existing CI covers Windows and cross-builds.
+  No new original-asset or instruction-oracle comparison is claimed.
 
 # WORK QUEUE
 

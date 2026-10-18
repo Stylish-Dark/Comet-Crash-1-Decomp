@@ -37,4 +37,26 @@ int main(){
  auto configured=std::make_unique<NativeConstructionScene>(arena,c);
  {NativeDeploymentInput input(*configured);assert(input.kind()==45);input.cancel();assert(configured->simulation().ground_deployment()[0]->strength==.5f);}
  assert(configured->simulation().ground_deployment()[0]->strength==.5f);
+ // Native opponents are not available to manual deployment/player selection.
+ c.native_opponents[1]=true;c.production_enabled=true;
+ c.tuning[26]=ArenaStructureTableValues{100,50,10,20,7.5f};
+ c.unit_quotas[1].capacity=2;
+ auto opponent=std::make_unique<NativeConstructionScene>(arena,c);
+ {
+  NativeDeploymentInput input(*opponent);
+  input.next_owner();assert(input.owner()==0);
+  input.press();input.next_owner();assert(input.owner()==0 && !input.held());
+  opponent->advance(.1f);
+  const auto ai_control=opponent->simulation().ground_deployment()[1];
+  input.cancel();assert(opponent->simulation().ground_deployment()[1]->strength==ai_control->strength);
+ }
+ // If player zero is an AI, select the first human instead.
+ c.native_opponents[1]=false;c.native_opponents[0]=true;c.ground_deployment[0].reset();
+ auto ai_first=std::make_unique<NativeConstructionScene>(arena,c);
+ {NativeDeploymentInput input(*ai_first);assert(input.owner()==1);}
+ // All-AI previews remain inspectable; manual input cannot mutate either side.
+ c.native_opponents[1]=true;
+ auto observer=std::make_unique<NativeConstructionScene>(arena,c);
+ {NativeDeploymentInput input(*observer);input.press();assert(!input.held());}
+
 }

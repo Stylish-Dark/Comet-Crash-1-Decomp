@@ -207,7 +207,9 @@ ArenaGroundTransport transport_arena_ground_unit(
   if(!bases.empty()) {
     ArenaGroundSteeringQuery query;
     for(unsigned axis=0;axis<4;++axis) {
-      query.position[axis]=scalar(slot,4*axis);
+      // +0C is packed index/radius/kind, not a spatial W component.
+      // Target-cell steering subtracts all four lanes; keep position W zero.
+      query.position[axis]=axis<3?scalar(slot,4*axis):0.f;
       query.orientation[axis]=scalar(storage.banks[storage.read_bank][index],0x20+4*axis);
     }
     query.owner=static_cast<std::uint8_t>(owner);query.target=slot[0x7e];

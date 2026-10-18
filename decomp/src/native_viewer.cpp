@@ -98,7 +98,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool manual_tick=false,focused=true;
         std::unique_ptr<NativeDeploymentInput> deployment;
         std::unique_ptr<NativeMissionPlayback> mission;
-        if(config.construction){mission=std::make_unique<NativeMissionPlayback>(*config.construction);deployment=std::make_unique<NativeDeploymentInput>(*config.construction);}
+        if(config.construction){mission=std::make_unique<NativeMissionPlayback>(*config.construction);deployment=std::make_unique<NativeDeploymentInput>(*config.construction);owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});}
         auto last_counter=SDL_GetPerformanceCounter();
         auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, Q/E: release type, hold D: release, U: spawn pending ground unit, M: transport, N: dynamics, C: contacts, T: tick, P: play, F5..F9: factory mode | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(mission->playing()?" playing":mission->finished()?" finished - F2 restart":" paused")+(config.construction->simulation().ground_transport_enabled()?" transport on":" transport off")+(config.construction->simulation().ground_dynamics_enabled()?" dynamics on":" dynamics off")+(config.construction->simulation().ground_contacts_enabled()?" contacts on":" contacts off");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";if(entity.production_mode)text+=" factory mode "+std::to_string(*entity.production_mode)+" timer "+std::to_string(*entity.production_elapsed)+"/"+std::to_string(*entity.production_period)+" pending units "+std::to_string(config.construction->simulation().unit_quotas()[entity.owner].pending);}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         while(!quit){
@@ -119,7 +119,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                             deployment.reset();
                             mission->restart();
                             deployment=std::make_unique<NativeDeploymentInput>(*config.construction);
-                            owner=0;cursor={};opcode=20;manual_tick=false;
+                            owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});opcode=20;manual_tick=false;
                             last_counter=SDL_GetPerformanceCounter();title();continue;
                         }
                         if(key==SDLK_RIGHT&&cursor.x+1u<arena->extent)++cursor.x;
@@ -127,15 +127,15 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                         if(key==SDLK_DOWN&&cursor.z+1u<arena->extent)++cursor.z;
                         if(key==SDLK_UP&&cursor.z)--cursor.z;
                         if(key>=SDLK_1&&key<=SDLK_8){constexpr unsigned types[]={20,21,22,23,24,25,26,28};opcode=types[key-SDLK_1];}
-                        if(key==SDLK_TAB){deployment->next_owner();owner=static_cast<unsigned>(deployment->owner());}
+                        if(key==SDLK_TAB){deployment->next_owner();owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});}
                         if(key==SDLK_q)deployment->cycle_kind(-1);
                         if(key==SDLK_e)deployment->cycle_kind(1);
                         // Inspection/camera remain available; finished matches reject mutations.
                         if(mission->finished() && key!=SDLK_w && key!=SDLK_r){title();continue;}
                         if(key==SDLK_d)deployment->press();
-                        if(key==SDLK_b||key==SDLK_SPACE){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';if(result==ArenaConstructionSubmit::Queued)manual_tick=true;}
-                        if(key>=SDLK_F5&&key<=SDLK_F9){auto result=config.construction->select_factory(owner,cursor,static_cast<std::uint8_t>(4+key-SDLK_F5));std::cout<<"Factory selection: "<<static_cast<unsigned>(result)<<'\n';}
-                        if(key==SDLK_u){
+                        if(deployment->controllable()&&(key==SDLK_b||key==SDLK_SPACE)){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';if(result==ArenaConstructionSubmit::Queued)manual_tick=true;}
+                        if(deployment->controllable()&&key>=SDLK_F5&&key<=SDLK_F9){auto result=config.construction->select_factory(owner,cursor,static_cast<std::uint8_t>(4+key-SDLK_F5));std::cout<<"Factory selection: "<<static_cast<unsigned>(result)<<'\n';}
+                        if(deployment->controllable()&&key==SDLK_u){
                             const auto &quota=config.construction->simulation().unit_quotas()[owner];
                             for(unsigned kind=40;kind<=47;++kind){if(kind==42||!quota.by_type[kind-40])continue;const auto result=config.construction->spawn_reserved_ground_unit(static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(kind),cursor);std::cout<<"Unit spawn: "<<static_cast<unsigned>(result.status)<<'\n';break;}
                         }
