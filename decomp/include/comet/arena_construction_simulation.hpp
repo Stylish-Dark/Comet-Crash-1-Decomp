@@ -138,6 +138,7 @@ public:
   const auto &deployment_timers() const { return deployment_timers_; }
   const auto &player_statistics() const { return statistics_; }
   const auto &unit_quotas() const { return config_.unit_quotas; }
+  const auto &native_opponents() const { return config_.native_opponents; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }
   const auto &grid() const { return grid_; }

@@ -1,6 +1,6 @@
-COMET CRASH - NATIVE MODEL VIEWER
+COMET CRASH - NATIVE VIEWER AND SKIRMISH PREVIEW
 
-This is a real native C++/OpenGL asset viewer, not a playable game yet.
+Includes a native C++/OpenGL model viewer and a limited skirmish preview.
 It contains no Comet Crash game files.
 
 Extract the ZIP, then drag your extracted NPEB00142 game folder onto
@@ -25,3 +25,21 @@ initialization or an original asset load fails.
 Gameplay, missions, HUD, original material shaders, audio, saves and multiplayer
 remain to be recovered and connected. This executable must not be described
 as a finished Comet Crash port.
+
+NATIVE PREVIEW SKIRMISH
+----------------------
+The same package now includes OPEN_SKIRMISH.cmd and native-skirmish.cfg.
+Drag your extracted game folder onto OPEN_SKIRMISH.cmd. No original map
+extraction is needed for this mode. Original model/texture assets are required.
+
+The preview starts paused with a human player and an automatic opponent.
+The cursor starts on your base. Press Right, 7, B to build a nearby factory.
+Press P to run, and hold D to release produced units. Press 3 to select Tesla
+construction, then B on an empty nearby cell to build a working defense.
+Arrows move the build cursor. Tab cycles human players only. F2 restores the
+launch checkpoint. Base-counter depletion produces victory/defeat and freezes
+the preview. Restart returns paused.
+
+This is a configurable native skirmish, using recovered simulation components
+and native preview rules. Original campaign/AI, player craft/aircraft, additional
+weapons, authentic economy/audio and complete original presentation remain open.

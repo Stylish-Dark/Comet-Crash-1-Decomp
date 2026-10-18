@@ -49,6 +49,8 @@ jobs:
           Copy-Item build-native/Release/comet_native.exe native-delivery/
           Copy-Item native-deps/bin/SDL2.dll native-delivery/
           Copy-Item scripts/open_native_viewer.cmd native-delivery/OPEN_VIEWER.cmd
+          Copy-Item scripts/open_native_skirmish.cmd native-delivery/OPEN_SKIRMISH.cmd
+          Copy-Item decomp/examples/native-skirmish.cfg native-delivery/native-skirmish.cfg
           Copy-Item docs/decomp/native-viewer-windows.txt native-delivery/README.txt
       - uses: actions/upload-artifact@v4
         with:
