@@ -11,6 +11,7 @@ enum NativePadButton : std::uint32_t {
 struct NativeGamepadSample {bool connected=false;std::int16_t x=0,z=0;std::uint32_t buttons=0;};
 struct NativeGamepadActions {
  int dx=0,dz=0,build_delta=0;
+ float move_x=0,move_z=0;
  bool build=false,cancel=false,release_held=false,factory=false,next_kind=false,
       next_owner=false,pause=false,restart=false;
 };

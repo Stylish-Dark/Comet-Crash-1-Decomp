@@ -4,7 +4,20 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — 2026-10-19
+## Latest continuation — pilot preview
+
+PR #53 passed Linux graphics, Windows build/package and regression CI. Added
+an opt-in F3 continuous pilot preview using the original slot-0 ship model and
+a portable implementation of the original input-vector cap at PPU F2DB4..F2E90.
+The build cell follows the ship; pause/focus/disconnect stop held input and F2
+restores the base cursor. Six-unit speed, heading and bounds are native preview
+policy. Original craft dynamics, collisions and gameplay actions remain open;
+this is not an original craft simulation. See docs/decomp/native-pilot.md.
+Estimate remains **89% toward the first playable single-player mission**: the
+preview is more usable, but the original craft-physics milestone is still open.
+Continue from the PR above #53 rather than main.
+
+## Prior continuation — 2026-10-19
 
 Continued PR #52 after both workflows passed. Added recovered scalar stick
 normalization plus SDL gamepad controls for native skirmish navigation, build,

@@ -84,3 +84,5 @@ base. See [controls, validation and limits](../docs/decomp/native-skirmish.md).
 
 SDL controllers now support the interactive skirmish build/release loop. See
 [bindings, recovered stick evidence and limits](../docs/decomp/native-gamepad.md).
+
+F3 enables the [continuous pilot preview](../docs/decomp/native-pilot.md).
