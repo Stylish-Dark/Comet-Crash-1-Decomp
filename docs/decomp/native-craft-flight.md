@@ -86,3 +86,9 @@ Estimate: **91% toward a first playable single-player mission**, from89%, using
 the existing capability yardstick. This is not source coverage/full-game parity.
 Next is original collision/attachment/action gating around the now-verified step,
 then craft combat/economy integration and aircraft. Campaign/HUD/audio remain open.
+
+
+Follow-up: [original craft containment](native-craft-containment.md) recovers the
+10548 -> 7DD0 boundary call and replaces NativePilot clipping with the original
+motion response between integration and velocity response. The exclusions above
+describe this milestone's original scope; the whole controller remains open.

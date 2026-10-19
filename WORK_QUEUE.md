@@ -1,25 +1,27 @@
 # Active gameplay continuation
 
-Latest milestone: original selected craft free-flight position/velocity arithmetic
-replaces the fixed-six preview. Original instruction comparison10,000 cases/all8
-words exact;16 numeric fixtures committed. Details: native-craft-flight.md.
-Estimate **91% toward the first playable single-player mission** (89% prior), a
-capability judgment, not full-game/source coverage. Continue the PR above #54.
-PR #54 native-source-port (Linux/Windows) and regression workflows passed.
+Latest milestone: original craft six-plane arena containment integrated between
+position integration and velocity response, replacing NativePilot's X/Z clamp.
+Details: docs/decomp/native-craft-containment.md. Original instruction comparison:
+10,000 queries/all120,000 floatwords and10,000hitreturns exact;24 public fixtures.
+Estimate **92% toward the first playable single-player mission** (91% prior),
+a capability judgment, not full-port/source coverage. Continue above PR #55.
+PR #55 regression and native-source-port Linux/Windows workflows passed.
 
-- Next bounded recovery: original gates/collision/attachment around FE5D8 10290.
-  Wrapper12B88 calls9A70 (stage),10290 (craft),6578 (commit). Ordinary leaf
-  104E0,10500..10544,105B0..1060C,113A8..113DC and11DB0..11DC0 now proven.
+- Validation:63 headless/66 graphics CTests,233 Python regressions,four focused
+  sanitizers,compileall/safety and clean independent review. Existing keyboard
+  timing flake failed once, then unchanged focused/full reruns passed.
+- Next bounded recovery: original craft size/material initialization or original
+  3238 query / entity-terrain collision around FE5D8 10290. Do not infer the
+  original craft's radii/restitution from NativePilot's .5/100 preview defaults.
+- 10548 -> 7DD0 -> 7A50 world containment is now integrated/proven. Optional
+  sphere points, lifecycle/effect callbacks and full collision preparation remain
+  excluded. State gate entity+51 mask1C, attachment/action and angular paths open.
 - PPU DAD04..DAD78 snapshots player+10/+14 at root+2F50; snapshotbase root+A00
-  gives+2550 with64-byte owner stride. Original mode flag snapshot+28D4 is PPU
-  root+32D4; its gameplay meaning remains unnamed. Native adapter selects1.
-- Recover entity+51 flag mask1C gate, 3238/7DD0 world queries and attachment state
-  before claiming complete physics; do not bypass those paths silently.
+  gives+2550 with64-byte owner stride. Mode snapshot+28D4 has unnamed gameplay
+  meaning; NativePilot selects1. 7DD0 reads extentX/Z from+28D8/+28DC.
 - Aircraft, carrying/economy/combat integration, richer AI, original mission/
   campaign rules, HUD/audio and full presentation remain open.
-- Validation:63 headless/66 graphics CTests,233 Python tests, five focused
-  sanitizers, compileall/safety. Rendering synthetic/virtual pad; fresh original
-  assets/physical pad not tested. Private job/oracle bytes remain outside Git.
 
 # WORK QUEUE
 

@@ -87,4 +87,4 @@ SDL controllers now support the interactive skirmish build/release loop. See
 
 F3 enables the [continuous pilot preview](../docs/decomp/native-pilot.md).
 
-The pilot now uses [recovered original free-flight arithmetic](../docs/decomp/native-craft-flight.md), including inertial start/stop.
+The pilot now uses [recovered original free-flight arithmetic](../docs/decomp/native-craft-flight.md), including inertial start/stop, and [original arena containment](../docs/decomp/native-craft-containment.md) in flight-update order.

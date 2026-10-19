@@ -21,15 +21,22 @@ int main(){
  p.advance(1,1,.1f,true);assert(p.position().x>before.x && p.position().z>before.z);
  float norm=0;for(float v:p.orientation())norm+=v*v;assert(std::abs(norm-1)<1e-6f);
  for(unsigned i=0;i<100;++i)p.advance(-1,-1,.25f,true);
- assert(p.position().x==.5f && p.position().z==.5f);
+ assert(p.position().x>.5f && p.position().x<.51f && p.position().z>.5f && p.position().z<.51f);
  for(unsigned i=0;i<100;++i)p.advance(1,1,.25f,true);
- assert(p.position().x==23.5f && p.position().z==23.5f);
+ assert(p.position().x<23.5f && p.position().x>23.49f && p.position().z<23.5f && p.position().z>23.49f); // original epsilon correction, not a clamp
+ const auto edge=p.position();
  bool rejected=false;try{p.advance(0,0,std::numeric_limits<float>::quiet_NaN(),true);}catch(const std::invalid_argument&){rejected=true;}
- assert(rejected && p.position().x==23.5f);
+ assert(rejected && p.position().x==edge.x);
  rejected=false;try{p.reset({24,0},24);}catch(const std::invalid_argument&){rejected=true;}
- assert(rejected && p.position().x==23.5f);
+ assert(rejected && p.position().x==edge.x);
  rejected=false;try{arena_player_stick(1.01f,0);}catch(const std::invalid_argument&){rejected=true;}assert(rejected);
  p.reset({2,3},24);assert(p.position().x==2.5f && p.position().z==3.5f && p.orientation()[3]==1);
+ // Degenerate one-cell arena remains navigable without invalid cursor cells.
+ p.reset({0,0},1);for(unsigned i=0;i<100;++i)p.advance(1,1,.25f,true);
+ assert(p.cursor()==(ArenaGridPosition{0,0}));
+ p.reset({0,0},2);for(unsigned i=0;i<100;++i)p.advance(1,0,.1f,true);
+ const float east=p.position().x;for(unsigned i=0;i<10;++i)p.advance(-1,0,.1f,true);
+ assert(p.position().x<east && p.cursor().x<2);
  NativeGamepadInput pad;NativeGamepadSample s;s.connected=true;pad.advance(s,.01f,true);s.x=32767;
  auto action=pad.advance(s,.01f,true);assert(action.move_x>.9f && action.move_z==0);
  pad.cancel();assert(pad.advance(s,.01f,true).move_x==0);

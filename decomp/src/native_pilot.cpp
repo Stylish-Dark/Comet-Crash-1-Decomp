@@ -1,6 +1,5 @@
 #include "comet/native_pilot.hpp"
 #include "comet/arena_craft_flight.hpp"
-#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 namespace comet::decomp {
@@ -19,9 +18,10 @@ void NativePilot::advance(float x,float z,float elapsed,bool enabled){
  const auto stick=arena_player_stick(x,z);
  if(!enabled){stop();return;}
  ArenaCraftFlightState state{{position_.x,position_.y,position_.z,0},velocity_};
- // Select original mode-flag=1 free flight. Arena clipping/heading stay preview policy.
- advance_arena_craft_flight(state,stick.x,stick.z,elapsed,true,false);
- position_={std::clamp(state.position[0],.5f,extent_-.5f),state.position[1],std::clamp(state.position[2],.5f,extent_-.5f)};
+ // Mode, collision size/material and heading remain explicit preview policy.
+ ArenaCraftBounds bounds;bounds.width=bounds.depth=extent_;
+ advance_arena_craft_in_arena(state,stick.x,stick.z,elapsed,bounds,true,false);
+ position_={state.position[0],state.position[1],state.position[2]};
  velocity_=state.velocity;
  if(velocity_[0]!=0||velocity_[2]!=0){const float half=.5f*std::atan2(velocity_[0],velocity_[2]);orientation_={0,std::sin(half),0,std::cos(half)};}
 

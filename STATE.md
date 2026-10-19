@@ -4,7 +4,22 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — recovered craft free-flight arithmetic
+## Latest continuation — original craft arena containment
+
+Continued published PR #55 after both CI workflows passed. Traced original call
+10548 -> 7DD0 -> 7A50; composed old-velocity position integration, six-plane
+containment and contact-adjusted velocity response. NativePilot now uses this
+path instead of its X/Z clamp. Private original-instruction comparison:10,000
+queries,120,000 floatwords and10,000 boundary-hit returns exact;24 public numeric
+fixtures. Shape/material defaults (.5 radii,100 restitution,movable) remain
+explicit native preview choices until craft initialization is recovered.
+Original terrain/entity collision, attachment/action gates, angular motion and
+combat/carrying/economy ownership remain open. Details and validation:
+docs/decomp/native-craft-containment.md. Estimate **92% toward the first playable
+single-player mission** (91% prior), not source coverage/full-port completion.
+Continue the new PR stacked above #55, not main.
+
+## Prior continuation — recovered craft free-flight arithmetic
 
 Continued PR #54 after both regression/native-source-port CI workflows passed.
 Recovered the movement-command consumer in FE5D8 10290, reached through12B88.
