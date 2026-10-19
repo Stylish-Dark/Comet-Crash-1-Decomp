@@ -1029,3 +1029,26 @@ attachment/action gates and combat/carrying remain open. Validation63CPU/66graph
 CTests,233 Python tests, five sanitizer cases, compileall/safety and code review.
 Estimate91% toward first playable single-player mission (89% prior), not fullport.
 Details and next boundaries: docs/decomp/native-craft-flight.md.
+
+
+## 2026-10-19 — Original craft world containment
+
+PR #55 Linux/Windows/native and regression workflows passed. Traced craft10548
+through7DD0 to existing7A50/7510 response. Added atomic integrate-contain-respond
+composition while retaining the collision-free leaf API. F3 pilot now uses source
+boundary motion instead of native clipping; .5 radii,100 restitution/movable and
+mode choices remain explicitly native pending original initialization recovery.
+Private untouched instruction comparison seed71956:10,000 queries,120,000 float
+words plus10,000hitreturns exact,8,442hits; outputSHA256
+4c7de4493c7928cc16548051d89a674eac00543ae73a254b103f7c37dcc4573e.
+Twenty-four public numeric fixtures; original inputs/harness remain private.
+New pilot epsilon-wall assertion failed against old clamp before implementation.
+Details: docs/decomp/native-craft-containment.md. Remaining craft constructor,
+terrain/entity collision, state/attachment/actions and combat/carrying integration
+are explicit. Estimate92% toward first playable single-player mission (91% prior),
+not full-port/source coverage. Continue new PR above #55; do not merge the stack.
+
+Validation:63CPU/66graphics CTests,233Python regressions,four focused ASan/UBSan,
+compileall/safety/diff checks and clean independent review. An initial existing
+keyboard-construction timing assertion failed; unchanged focused and complete
+66-test reruns passed. Timing sensitivity is documented, not claimed fixed.
