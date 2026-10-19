@@ -4,7 +4,23 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — original craft body initializer and collision profile
+## Latest continuation — original ordinary craft movement-facing
+
+PR #57 both CI workflows passed. Recovered command-facing branch10668/11558
+through1A118: strict.01 target-speed gate, refined normalization, original yaw
+step delta*bits41490FDA, negative-Z convention, angle wrap and zero pitch.
+Preserved visible prior / pending next quaternion exchange11300/1139C; NativePilot
+now replaces instantaneous velocity atan2 with this source branch. Private10,000
+cases/all90,000words exact, including1000neutralcases;24 public numericfixtures.
+ExactZ-aligned axes use inherited finite analytic limits, explicitly excluded
+from SPU bit-parity. Source3238 is a flag8000 kind7 request/queue path, not proven
+terrain collision; 1162C peer contact remains gated by entity+51mask1C. Do not
+inject ordinary terrain contacts from the earlier misleading world-query label.
+Details: docs/decomp/native-craft-facing.md. Estimate remains **92% toward the
+first playable single-player mission**, not source coverage/full-port completion.
+Continue new PR above #57, not main.
+
+## Prior continuation — original craft body initializer and collision profile
 
 PR #56 passed both CI workflows. Proved type1 -> SPU12B88 dispatch and the PPU
 CFADC -> CA514 -> player+220 body link. Recovered CFAB8..CFB88 slot writes,

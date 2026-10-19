@@ -1,26 +1,27 @@
 # Active gameplay continuation
 
-Latest milestone: original type-1 craft body initialization and its .24 collision
-profile replace NativePilot's assumed .5 radius. PPU CFAB8..CFB88 plus FECFC are
-recovered; allocation/registration/player links remain excluded. Private original
-instruction comparison1000cases/all256000bytes exact;16 public full-slot numeric
-fingerprints. Details: docs/decomp/native-player-craft-initialization.md.
-Estimate remains **92% toward first playable single-player mission**; this is
-source fidelity/entity-integration groundwork, not a new mission interaction.
-Continue new PR above #56. PR #56 both CI workflows passed Linux/Windows checks.
+Latest milestone: ordinary original movement-facing replaces NativePilot velocity
+atan2, with source turn limit/angle wrap, strict.01 gate, command retention and
+visible/pending quaternion delay. Private10000cases/all90000words exact;24public
+numericfixtures. AlignedZ uses inherited finite analytic limits, not hardware
+parity. Details: docs/decomp/native-craft-facing.md. Continue above PR #57;
+#57 Linux graphics/Windows build-package and regression CI passed.
+Estimate stays **92% toward first playable single-player mission**; no carrying/
+combat interaction completion is counted.
 
-- Validation:64headless/67graphics CTests,233Python regressions,five focused
-  sanitizers,compileall/safety/diff checks and clean independent review.
-- Next bounded recovery: original craft3238 world query, terrain/entity contacts,
-  then attachment/action/angular and +51mask1C state gates around FE5D8 10290.
-- Type1 maps to12B88 at SPU26980+4. PPU CFADC initializes it with radius24,
-  restitution100 and flagsC006; CFB8C registers it and CFBC8 saves player+220.
-  These latter links are evidence, not yet native craft registration code.
-- Model byte40 belongs to the simulation body; F3 still renders slot0 and keeps
-  native initialheight/mode/heading/lifecycle choices. Do not insert the body into
-  combat without recovering its player links and update/ownership transitions.
-- Original carrying/economy/combat integration, aircraft, richer AI, mission/
-  campaign rules, HUD/audio/save and full presentation remain open.
+- Validation:65headless/68graphics CTests,233Python regressions,four focused
+  ASan/UBSan,compileall/safety/diff and clean independent review.
+- Corrected label:3238 is flag8000-gated kind7 request/queue construction through
+  2DF8/2058/2198, not proven terrain/contact querying. Preserve this evidence.
+- Next bounded recovery: entity+51mask1C meaning and attached-peer11618/7E40 path,
+  player links/body registration or original carrying/action branches. Do not
+  apply peer/terrain contacts unconditionally to ordinary free flight.
+- Movement-facing11558/1A118 and delayed11300/1139C commits are now proven;
+  controller+3F target-facing branch, banking and other angular state remain open.
+- Source radius.24/material and selected ordinary flight remain integrated.
+  Initialheight/mode/inputlifecycle and render/control ownership remain native.
+- Aircraft, carrying/economy/combat ownership, original AI/mission/campaign rules,
+  HUD/audio/save and full presentation remain open.
 
 # WORK QUEUE
 

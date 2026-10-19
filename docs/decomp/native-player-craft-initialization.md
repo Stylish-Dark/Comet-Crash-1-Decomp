@@ -119,3 +119,7 @@ Estimate stays **92% toward the first playable single-player mission**. Removing
 an unproven physical parameter and recovering the packed initializer improves
 source fidelity and prepares entity integration; it does not complete a new
 mission interaction. This estimate is not source coverage or full-port progress.
+
+
+Follow-up: [ordinary craft facing](native-craft-facing.md) recovers movement-facing
+and the display delay, and corrects the earlier `3238` world-query label.
