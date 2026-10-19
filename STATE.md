@@ -4,7 +4,21 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — original craft arena containment
+## Latest continuation — original craft body initializer and collision profile
+
+PR #56 passed both CI workflows. Proved type1 -> SPU12B88 dispatch and the PPU
+CFADC -> CA514 -> player+220 body link. Recovered CFAB8..CFB88 slot writes,
+including shared FECFC: original radius bytes24, restitution100 and movable
+flags. NativePilot now derives bounds from this body instead of assuming .5;
+its radius is source-backed .24. Private decoded-original comparison1000 cases,
+all256000bytes exact;16 public full-slot fingerprints. Unwritten reused bytes
+and packed W metadata are preserved. Allocation/player links and combat entity
+registration remain outside the initializer. Details:
+docs/decomp/native-player-craft-initialization.md. Estimate stays **92% toward
+first playable single-player mission**; no new interaction milestone is claimed.
+Continue the new PR above #56, not main.
+
+## Prior continuation — original craft arena containment
 
 Continued published PR #55 after both CI workflows passed. Traced original call
 10548 -> 7DD0 -> 7A50; composed old-velocity position integration, six-plane

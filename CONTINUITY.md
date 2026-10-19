@@ -127,3 +127,25 @@ Validation:63CPU/66graphics CTests,233Python regressions,four focused ASan/UBSan
 compileall/safety/diff checks and clean independent review. An initial existing
 keyboard-construction timing assertion failed; unchanged focused and complete
 66-test reruns passed. Timing sensitivity is documented, not claimed fixed.
+
+
+## 2026-10-19 — Original player-craft body initialization
+
+PR #56 regression/native Linux/Windows CI passed. Proved SPU type1dispatch12B88,
+PPU CFADC body construction, CFB8C registration and CFBC8 player+220 index link.
+Recovered bounded CFAB8..CFB88 slot writes including FECFC, preserving reused
+bytes. Radius24/rest100/flagsC006 now derive NativePilot's physical profile;
+the assumed .5 radius becomes source-backed .24. Native height/mode/heading and
+lifecycle remain policy; body allocation/registration/player/combat links are
+not implemented by this initializer. Private decoded-original evaluator seed57019
+matched1000cases/all256000bytes; outputSHA256
+ dc342eca7a66bebbbc6b328d9fe2bd8784e93b9ca2262ebf0dda41790b83dba0.
+Sixteen public full-slot numeric fingerprints. Pilot radius test failed on the
+old profile then passed; independent review found no actionable issues.
+Details: docs/decomp/native-player-craft-initialization.md. Estimate remains92%
+toward first playable single-player mission; no new mission interaction credit.
+Continue new PR above #56; original world queries/contacts/actions remain next.
+
+Validation:64headless/67graphics CTests,233Python regressions,five focused
+ASan/UBSan,compileall/safety/diff checks pass. Review reran craft/pilot tests.
+Graphics first run green; no physical pad/fresh original-asset render claim.
