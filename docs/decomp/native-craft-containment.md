@@ -96,3 +96,8 @@ Capability estimate: **92% toward the first playable single-player mission**,
 from 91%. This is a subjective capability estimate, not source coverage or
 full-port completion. The increase credits integrated original boundary motion;
 it does not credit unrecovered craft actions or original campaign behavior.
+
+
+Follow-up: [original player-craft initialization](native-player-craft-initialization.md)
+replaces the pilot radius/material assumptions with recovered type-1 body values.
+The generic bounds defaults remain unchanged.

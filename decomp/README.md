@@ -88,3 +88,5 @@ SDL controllers now support the interactive skirmish build/release loop. See
 F3 enables the [continuous pilot preview](../docs/decomp/native-pilot.md).
 
 The pilot now uses [recovered original free-flight arithmetic](../docs/decomp/native-craft-flight.md), including inertial start/stop, and [original arena containment](../docs/decomp/native-craft-containment.md) in flight-update order.
+
+The pilot collision profile now comes from the [original craft body initializer](../docs/decomp/native-player-craft-initialization.md), replacing its assumed half-cell radius.

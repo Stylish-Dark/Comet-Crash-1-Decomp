@@ -11,16 +11,15 @@ ArenaPlayerStick arena_player_stick(float x,float z){
 }
 void NativePilot::reset(ArenaGridPosition cell,unsigned extent){
  if(extent<1||extent>24||cell.x>=extent||cell.z>=extent)throw std::invalid_argument("invalid pilot start");
- extent_=extent;position_={cell.x+.5f,.85f,cell.z+.5f};orientation_={0,0,0,1};stop();
+ bounds_=arena_player_craft_bounds(extent,extent);position_={cell.x+.5f,.85f,cell.z+.5f};orientation_={0,0,0,1};stop();
 }
 void NativePilot::advance(float x,float z,float elapsed,bool enabled){
  if(!std::isfinite(elapsed)||elapsed<0||elapsed>.25f)throw std::invalid_argument("invalid pilot elapsed");
  const auto stick=arena_player_stick(x,z);
  if(!enabled){stop();return;}
  ArenaCraftFlightState state{{position_.x,position_.y,position_.z,0},velocity_};
- // Mode, collision size/material and heading remain explicit preview policy.
- ArenaCraftBounds bounds;bounds.width=bounds.depth=extent_;
- advance_arena_craft_in_arena(state,stick.x,stick.z,elapsed,bounds,true,false);
+ // Original constructor radii/material; mode and heading remain preview policy.
+ advance_arena_craft_in_arena(state,stick.x,stick.z,elapsed,bounds_,true,false);
  position_={state.position[0],state.position[1],state.position[2]};
  velocity_=state.velocity;
  if(velocity_[0]!=0||velocity_[2]!=0){const float half=.5f*std::atan2(velocity_[0],velocity_[2]);orientation_={0,std::sin(half),0,std::cos(half)};}

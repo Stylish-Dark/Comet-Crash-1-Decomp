@@ -1,27 +1,26 @@
 # Active gameplay continuation
 
-Latest milestone: original craft six-plane arena containment integrated between
-position integration and velocity response, replacing NativePilot's X/Z clamp.
-Details: docs/decomp/native-craft-containment.md. Original instruction comparison:
-10,000 queries/all120,000 floatwords and10,000hitreturns exact;24 public fixtures.
-Estimate **92% toward the first playable single-player mission** (91% prior),
-a capability judgment, not full-port/source coverage. Continue above PR #55.
-PR #55 regression and native-source-port Linux/Windows workflows passed.
+Latest milestone: original type-1 craft body initialization and its .24 collision
+profile replace NativePilot's assumed .5 radius. PPU CFAB8..CFB88 plus FECFC are
+recovered; allocation/registration/player links remain excluded. Private original
+instruction comparison1000cases/all256000bytes exact;16 public full-slot numeric
+fingerprints. Details: docs/decomp/native-player-craft-initialization.md.
+Estimate remains **92% toward first playable single-player mission**; this is
+source fidelity/entity-integration groundwork, not a new mission interaction.
+Continue new PR above #56. PR #56 both CI workflows passed Linux/Windows checks.
 
-- Validation:63 headless/66 graphics CTests,233 Python regressions,four focused
-  sanitizers,compileall/safety and clean independent review. Existing keyboard
-  timing flake failed once, then unchanged focused/full reruns passed.
-- Next bounded recovery: original craft size/material initialization or original
-  3238 query / entity-terrain collision around FE5D8 10290. Do not infer the
-  original craft's radii/restitution from NativePilot's .5/100 preview defaults.
-- 10548 -> 7DD0 -> 7A50 world containment is now integrated/proven. Optional
-  sphere points, lifecycle/effect callbacks and full collision preparation remain
-  excluded. State gate entity+51 mask1C, attachment/action and angular paths open.
-- PPU DAD04..DAD78 snapshots player+10/+14 at root+2F50; snapshotbase root+A00
-  gives+2550 with64-byte owner stride. Mode snapshot+28D4 has unnamed gameplay
-  meaning; NativePilot selects1. 7DD0 reads extentX/Z from+28D8/+28DC.
-- Aircraft, carrying/economy/combat integration, richer AI, original mission/
-  campaign rules, HUD/audio and full presentation remain open.
+- Validation:64headless/67graphics CTests,233Python regressions,five focused
+  sanitizers,compileall/safety/diff checks and clean independent review.
+- Next bounded recovery: original craft3238 world query, terrain/entity contacts,
+  then attachment/action/angular and +51mask1C state gates around FE5D8 10290.
+- Type1 maps to12B88 at SPU26980+4. PPU CFADC initializes it with radius24,
+  restitution100 and flagsC006; CFB8C registers it and CFBC8 saves player+220.
+  These latter links are evidence, not yet native craft registration code.
+- Model byte40 belongs to the simulation body; F3 still renders slot0 and keeps
+  native initialheight/mode/heading/lifecycle choices. Do not insert the body into
+  combat without recovering its player links and update/ownership transitions.
+- Original carrying/economy/combat integration, aircraft, richer AI, mission/
+  campaign rules, HUD/audio/save and full presentation remain open.
 
 # WORK QUEUE
 

@@ -21,9 +21,9 @@ int main(){
  p.advance(1,1,.1f,true);assert(p.position().x>before.x && p.position().z>before.z);
  float norm=0;for(float v:p.orientation())norm+=v*v;assert(std::abs(norm-1)<1e-6f);
  for(unsigned i=0;i<100;++i)p.advance(-1,-1,.25f,true);
- assert(p.position().x>.5f && p.position().x<.51f && p.position().z>.5f && p.position().z<.51f);
+ assert(p.position().x>.239f && p.position().x<.25f && p.position().z>.239f && p.position().z<.25f);
  for(unsigned i=0;i<100;++i)p.advance(1,1,.25f,true);
- assert(p.position().x<23.5f && p.position().x>23.49f && p.position().z<23.5f && p.position().z>23.49f); // original epsilon correction, not a clamp
+ assert(p.position().x<23.761f && p.position().x>23.75f && p.position().z<23.761f && p.position().z>23.75f); // original epsilon correction, not a clamp
  const auto edge=p.position();
  bool rejected=false;try{p.advance(0,0,std::numeric_limits<float>::quiet_NaN(),true);}catch(const std::invalid_argument&){rejected=true;}
  assert(rejected && p.position().x==edge.x);
