@@ -4,7 +4,22 @@
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — pilot preview
+## Latest continuation — recovered craft free-flight arithmetic
+
+Continued PR #54 after both regression/native-source-port CI workflows passed.
+Recovered the movement-command consumer in FE5D8 10290, reached through12B88.
+Selected free flight integrates old velocity first, then applies source mode10/40,
+4.6*delta response or immediate response, optional .7 reduction, and zero newY.
+NativePilot uses this arithmetic with retained velocity in place of its fixed-six
+cursor speed. Ten thousand private untouched-original instruction cases match
+all8 output words;16 numeric fixtures are public. Pause/focus/cancel stop velocity
+as native lifecycle policy. Bounds/heading remain native; original collision,
+attachment/action gates and combat/economy ownership remain open.
+See docs/decomp/native-craft-flight.md. Estimate **91% toward a first playable
+single-player mission**, from89%; not source coverage or full-game parity.
+Continue the new PR above #54.
+
+## Prior continuation — pilot preview
 
 PR #53 passed Linux graphics, Windows build/package and regression CI. Added
 an opt-in F3 continuous pilot preview using the original slot-0 ship model and

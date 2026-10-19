@@ -52,4 +52,5 @@ Disconnect/focus loss pauses and cancels held input. One active controller.
 
 F3: opt-in pilot preview. P/Start runs; IJKL or left stick moves the ship.
 The build cell follows the ship. F2 returns it to the human base.
-Preview speed/bounds are native rules; original craft physics remains open.
+Pilot position/velocity uses recovered free-flight arithmetic; bounds and heading
+remain native preview rules. Original collision/action gates remain open.

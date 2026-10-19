@@ -1,26 +1,25 @@
 # Active gameplay continuation
 
-Latest milestone: F3 opt-in continuous pilot preview. Visible ship uses modelslot0;
-left stick/IJKL movement drives the build cursor while playing. Original input
-consumer F2350 at F2DB4..F2E90 caps left-stick vectors to unit length. The portable
-semantic cap is recovered; preview speed/heading/bounds are native policy and
-no bit-exact VMX/original craft physics claim is made. See native-pilot.md.
+Latest milestone: original selected craft free-flight position/velocity arithmetic
+replaces the fixed-six preview. Original instruction comparison10,000 cases/all8
+words exact;16 numeric fixtures committed. Details: native-craft-flight.md.
+Estimate **91% toward the first playable single-player mission** (89% prior), a
+capability judgment, not full-game/source coverage. Continue the PR above #54.
+PR #54 native-source-port (Linux/Windows) and regression workflows passed.
 
-Estimate remains **89% toward a first playable single-player mission**, unchanged:
-continuous control improves the preview, but authentic craft dynamics remain open.
-Continue from the latest PR above #53. PR #53's Linux/Windows/regression CI passed.
-
-- Next bounded recovery: downstream consumer of player +10/+14 movement command,
-  including original position/velocity update. F2350 consumes pad subobject+150;
-  normalized leftX/Z live at player+1F8/+1FC. Its right-stick side also controls
-  build/selection; do not label the whole routine craft physics.
-- FE5D8 C730 is the base/controller update and A270 common entity advancement;
-  neither was established as the player craft motion consumer in this milestone.
-- Original aircraft, adaptive AI/economy, remaining weapons/targets,
-  mission/campaign objectives, HUD/audio and composite presentation remain open.
-- Validation: 62 headless/65 graphics CTests, 233 Python tests, five focused
-  ASan/UBSan tests, compileall/repo safety. Synthetic geometry/virtual controller;
-  no fresh original-asset render or physical controller comparison.
+- Next bounded recovery: original gates/collision/attachment around FE5D8 10290.
+  Wrapper12B88 calls9A70 (stage),10290 (craft),6578 (commit). Ordinary leaf
+  104E0,10500..10544,105B0..1060C,113A8..113DC and11DB0..11DC0 now proven.
+- PPU DAD04..DAD78 snapshots player+10/+14 at root+2F50; snapshotbase root+A00
+  gives+2550 with64-byte owner stride. Original mode flag snapshot+28D4 is PPU
+  root+32D4; its gameplay meaning remains unnamed. Native adapter selects1.
+- Recover entity+51 flag mask1C gate, 3238/7DD0 world queries and attachment state
+  before claiming complete physics; do not bypass those paths silently.
+- Aircraft, carrying/economy/combat integration, richer AI, original mission/
+  campaign rules, HUD/audio and full presentation remain open.
+- Validation:63 headless/66 graphics CTests,233 Python tests, five focused
+  sanitizers, compileall/safety. Rendering synthetic/virtual pad; fresh original
+  assets/physical pad not tested. Private job/oracle bytes remain outside Git.
 
 # WORK QUEUE
 
