@@ -7,10 +7,10 @@ Existing build/type/factory/release actions operate on that cell. F3 requires a
 human owner and loaded ship model (original model slot 0). The default remains
 grid mode, so existing keyboard and controller workflows are unchanged.
 
-The ship is a native control/render cursor, not a registered combat entity.
+The ship is a control/render cursor using the [recovered free-flight step](native-craft-flight.md), not a registered combat entity.
 It cannot take damage, carry resources or deploy from its position. Ground-unit
-release still originates at the configured base. This is a usable pilot preview,
-not recovered original craft physics or a completed playable original mission.
+release still originates at the configured base. The selected position/velocity arithmetic is now recovered; collision/actions and
+the completed original mission remain open.
 
 ## Original evidence and portable boundary
 
@@ -36,9 +36,11 @@ this evidence alone does not establish original acceleration, speed or collision
 
 ## Explicit native preview policy
 
-- Six grid units per real second; frame input delta capped at .25 seconds.
+- Recovered mode-flag1 free flight: target speed10, response4.6*elapsed; frame
+  input delta capped at .25 seconds. The mode selection is native adapter policy.
 - Position clamped to cell-center bounds .5 through extent-.5, fixed Y .85.
-- Heading follows the input direction; no acceleration, inertia or collision.
+- Heading follows velocity; no collision. Acceleration/deceleration and the
+  old-velocity position order use the recovered step.
 - Keyboard direction takes precedence over analog input while a pilot key is held.
 - Movement runs only when focused, playing, unfinished and human-controlled.
 - Pause/focus loss/disconnect/cancel clear held keys and require neutral pad input
@@ -50,7 +52,7 @@ this evidence alone does not establish original acceleration, speed or collision
 ## Validation and remaining work
 
 The CPU test covers all 65,536 pairs of decoded byte-axis values, preservation
-inside the unit circle, unit-length diagonal cap, constant speed, disabled input,
+inside the unit circle, unit-length diagonal cap, inertial start/stop, disabled input,
 bounds, unit orientation, reset and invalid-input rollback. Existing gamepad edge,
 neutral-rearm and exact scalar-axis tests continue to pass.
 The offscreen SDL test switches F3, flies a virtual controller to the east edge,
@@ -61,8 +63,7 @@ production/release, focus loss, unplug and held restart. It uses synthetic model
 geometry; physical-controller and fresh original-asset render validation remain
 open. Fixed-duration synthetic input pulses remain a slow-host test limitation.
 
-Original craft dynamics/action gates, aircraft, richer AI, authentic economy,
-remaining weapons, original mission/campaign rules and HUD/audio remain open.
-Capability estimate: **89% toward a first playable single-player mission** (unchanged), a judgment of the existing capability yardstick, not full-port/source
-coverage. The preview movement policy must be replaced as original physics is
-recovered.
+Original craft collision/action gates, aircraft, richer AI, authentic economy,
+remaining weapons, mission/campaign rules and HUD/audio remain open. See
+[native-craft-flight.md](native-craft-flight.md) for the current recovery boundary,
+original-instruction comparison and capability estimate.

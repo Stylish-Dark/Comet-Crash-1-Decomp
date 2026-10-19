@@ -57,6 +57,7 @@ add_library(comet_native_recovery STATIC
     src/arena_weapon_target.cpp
     src/arena_cannon_runtime.cpp
 
+    src/arena_craft_flight.cpp
     src/native_pilot.cpp
     src/native_gamepad_input.cpp
     src/native_deployment_input.cpp
@@ -527,4 +528,15 @@ if(MSVC)
  target_compile_options(comet_native_pilot_test PRIVATE /UNDEBUG)
 else()
  target_compile_options(comet_native_pilot_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_craft_flight_test tests/arena_craft_flight.cpp)
+target_link_libraries(comet_arena_craft_flight_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_craft_flight_test COMMAND comet_arena_craft_flight_test)
+if(MSVC)
+ target_compile_options(comet_arena_craft_flight_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_craft_flight.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_craft_flight_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_craft_flight.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

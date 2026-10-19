@@ -14,9 +14,11 @@ int main(){
   if(std::hypot(ax,az)<=1)assert(a.x==ax && a.z==az);
  }
  NativePilot p;p.reset({1,1},24);assert(p.cursor()==(ArenaGridPosition{1,1}));
- p.advance(1,0,.25f,true);assert(p.position().x==3 && p.position().z==1.5f);
- const auto before=p.position();p.advance(1,1,.25f,false);assert(p.position().x==before.x);
- p.advance(1,1,.25f,true);assert(std::abs(std::hypot(p.position().x-before.x,p.position().z-before.z)-1.5f)<1e-5f);
+ p.advance(1,0,.1f,true);assert(p.position().x==1.5f); // old-velocity position order
+ p.advance(1,0,.1f,true);assert(p.position().x>1.95f && p.position().x<1.97f);
+ const auto before=p.position();p.advance(1,1,.1f,false);assert(p.position().x==before.x);
+ p.advance(1,1,.1f,true);assert(p.position().x==before.x); // disabled input cleared velocity
+ p.advance(1,1,.1f,true);assert(p.position().x>before.x && p.position().z>before.z);
  float norm=0;for(float v:p.orientation())norm+=v*v;assert(std::abs(norm-1)<1e-6f);
  for(unsigned i=0;i<100;++i)p.advance(-1,-1,.25f,true);
  assert(p.position().x==.5f && p.position().z==.5f);

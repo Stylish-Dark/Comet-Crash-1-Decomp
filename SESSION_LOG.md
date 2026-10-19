@@ -1009,3 +1009,23 @@ compileall and repository safety. All65536 decoded stick pairs covered natively.
 No new original-instruction comparison, original-asset render or physical pad test.
 Estimate stays89% toward first playable single-player mission: preview usability
 improved, while original craft dynamics remain open. Details: native-pilot.md.
+
+
+## 2026-10-19 — Original selected craft free-flight recovery
+
+PR #54 native Linux/Windows package and regression CI passed. Found PPU player
+snapshot bridge DAD04..DAD78 and FE5D8 10290 consumer, called from12B88. Recovered
+selected source velocity target10/40,4.6*delta response or instant response,
+optional .7 reduction, old-velocity-first position integration and newY clearing.
+NativePilot now retains source velocity and uses this leaf. Pausing/cancel/focus/
+unplug explicitly stop it; clipping/heading/mode choice remain native policy.
+Private untouched-instruction interpreter comparisons (a2c20108), seed71955:
+10,000 cases all8 floatwords exact; outputSHA256
+14f1c988338819b370b32bda410450c9f2360593650f69f0cc3ca361500f835f.
+Sixteen synthetic/numeric fixtures committed; no proprietary instructions/harness.
+Native tests add atomic numeric-domain/overflow rejection, RZ restoration, native
+subnormal policy and inertial pilot lifecycle. Full original craft collision,
+attachment/action gates and combat/carrying remain open. Validation63CPU/66graphics
+CTests,233 Python tests, five sanitizer cases, compileall/safety and code review.
+Estimate91% toward first playable single-player mission (89% prior), not fullport.
+Details and next boundaries: docs/decomp/native-craft-flight.md.
