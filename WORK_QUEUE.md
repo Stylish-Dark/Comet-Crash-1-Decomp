@@ -1,24 +1,26 @@
 # Active gameplay continuation
 
-Latest milestone: recovered unsigned-byte stick normalization and SDL native
-skirmish gamepad controls. First controller supports cursor/build/factory/release,
-owner/kind selection, pause/restart, hotplug and neutral rearming after canceled
-input. Details/evidence/limits: `docs/decomp/native-gamepad.md`.
-Estimate: **89% toward a first playable single-player mission** (88% prior),
-a capability judgment rather than source coverage/full-port completion.
-Continue from the latest PR stacked above #52; main remains behind the stack.
+Latest milestone: F3 opt-in continuous pilot preview. Visible ship uses modelslot0;
+left stick/IJKL movement drives the build cursor while playing. Original input
+consumer F2350 at F2DB4..F2E90 caps left-stick vectors to unit length. The portable
+semantic cap is recovered; preview speed/heading/bounds are native policy and
+no bit-exact VMX/original craft physics claim is made. See native-pilot.md.
 
-- Next: recover original player craft motion/action state from the pad consumer;
-  only the scalar axis decoder is recovered so far. Aircraft remain open.
-- Further: original adaptive AI, authentic economy, additional weapons/targets,
-  terrain/occlusion, effects/composite rendering and scheduling.
-- Finish original mission objectives/progression/rewards, authentic HUD/audio.
-- Native preview bindings/grid repeat and one-factory/scout opponent are explicit
-  replacement policies, not recovered full-game behavior.
-- Validation: 61 headless /64 graphics native CTests, 233 Python tests, five focused
-  ASan/UBSan tests, compileall/repository safety. Private original-instruction
-  oracle covers all256 axis bytes; no fresh original-asset render or physical
-  controller validation. Windows and cross-build checks run in repository CI.
+Estimate remains **89% toward a first playable single-player mission**, unchanged:
+continuous control improves the preview, but authentic craft dynamics remain open.
+Continue from the latest PR above #53. PR #53's Linux/Windows/regression CI passed.
+
+- Next bounded recovery: downstream consumer of player +10/+14 movement command,
+  including original position/velocity update. F2350 consumes pad subobject+150;
+  normalized leftX/Z live at player+1F8/+1FC. Its right-stick side also controls
+  build/selection; do not label the whole routine craft physics.
+- FE5D8 C730 is the base/controller update and A270 common entity advancement;
+  neither was established as the player craft motion consumer in this milestone.
+- Original aircraft, adaptive AI/economy, remaining weapons/targets,
+  mission/campaign objectives, HUD/audio and composite presentation remain open.
+- Validation: 62 headless/65 graphics CTests, 233 Python tests, five focused
+  ASan/UBSan tests, compileall/repo safety. Synthetic geometry/virtual controller;
+  no fresh original-asset render or physical controller comparison.
 
 # WORK QUEUE
 

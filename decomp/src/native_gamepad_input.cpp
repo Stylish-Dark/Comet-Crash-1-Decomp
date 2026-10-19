@@ -22,13 +22,14 @@ NativeGamepadActions NativeGamepadInput::advance(NativeGamepadSample s,float ela
  if(!enabled || !s.connected){cancel();return a;}
  auto axis=[](std::int16_t value){
   const auto raw=static_cast<std::uint8_t>(((int(value)+32768)*255+32767)/65535);
-  const float decoded=decode_arena_pad_axis(raw);
-  return decoded<0?-1:decoded>0?1:0;
+  return decode_arena_pad_axis(raw);
  };
- int dx=axis(s.x),dz=axis(s.z);
+ const float mx=axis(s.x),mz=axis(s.z);
+ int dx=mx<0?-1:mx>0?1:0,dz=mz<0?-1:mz>0?1:0;
  if(s.buttons&(PadLeft|PadRight))dx=int(bool(s.buttons&PadRight))-int(bool(s.buttons&PadLeft));
  if(s.buttons&(PadUp|PadDown))dz=int(bool(s.buttons&PadDown))-int(bool(s.buttons&PadUp));
  if(!armed_){if(!s.buttons && !dx && !dz)armed_=true;return a;}
+ a.move_x=mx;a.move_z=mz;
  const auto pressed=s.buttons&~previous_;previous_=s.buttons;
  a.build=pressed&PadBuild;a.cancel=pressed&PadCancel;a.factory=pressed&PadFactory;
  a.next_kind=pressed&PadNextKind;a.next_owner=pressed&PadNextOwner;

@@ -49,3 +49,7 @@ Left stick/D-pad: cursor; A: build; LB/RB: structure type; X/R2: hold release.
 Y: factory mode; L3: release type; R3: human player; Start: play/pause; Back: restart.
 B: cancel. Release buttons/center sticks after pause, reconnect or restart.
 Disconnect/focus loss pauses and cancels held input. One active controller.
+
+F3: opt-in pilot preview. P/Start runs; IJKL or left stick moves the ship.
+The build cell follows the ship. F2 returns it to the human base.
+Preview speed/bounds are native rules; original craft physics remains open.

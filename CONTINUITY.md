@@ -65,3 +65,22 @@ X/R2 release, factory cycling, focus/hot-unplug interruption and held restart.
 No proprietary bytes or private oracle tool committed. Details and hashes:
 docs/decomp/native-gamepad.md. Estimate89% toward first playable single-player
 mission (88% prior), not full-port/source coverage. Next: original craft consumer.
+
+
+## 2026-10-19 — Continuous pilot preview and original input-vector cap
+
+PR #53 Linux graphics, Windows build/package and regression CI succeeded.
+Traced pad+150 into F2350: F2DB4..F2E90 caps left-stick X/Z to unit magnitude
+and stores commands at player+10/+14. Implemented a portable semantic cap using
+hypot/divide; original VMX estimate/refinement bits are not reproduced or tested.
+Added opt-in F3 slot0 ship preview; IJKL/left stick move continuously while playing
+and the build cursor follows. Speed/heading/bounds are explicit native policy,
+not recovered craft physics. Unit release remains at its configured base.
+Pause/focus/unplug clear held keys; F2 and human-owner changes reset position.
+Review caught arrow navigation bypassing the pilot movement gate; arrows are now
+ignored in pilot mode. Added SDL paused-input/arrow suppression and restart tests.
+Validation: 62 headless/65 graphics CTests,233 Python tests, five ASan/UBSan cases,
+compileall and repository safety. All65536 decoded stick pairs covered natively.
+No new original-instruction comparison, original-asset render or physical pad test.
+Estimate stays89% toward first playable single-player mission: preview usability
+improved, while original craft dynamics remain open. Details: native-pilot.md.

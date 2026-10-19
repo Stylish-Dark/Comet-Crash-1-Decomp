@@ -71,3 +71,5 @@ The first-playable-mission capability estimate is **89%**, up from 88%.
 This is a judgment of the existing milestone checklist, not measured source
 coverage or full-game completion. Original craft/aircraft, richer AI, further
 weapons/targets, authentic economy/HUD/audio and campaign objectives remain.
+
+See [F3 pilot preview and its native-policy limits](native-pilot.md).
