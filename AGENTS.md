@@ -39,6 +39,33 @@ remains unrecovered. Do not promise whole-game exactness based on isolated tests
 - A bounded unit is done when the original path is implemented, its material
   behavior is checked, and remaining uncertainty is explicit. Then move forward.
 
+## Completion mandate and required reporting — owner clarification 2026-10-20
+
+The standing objective is to finish the faithful PC port. Bounded milestones are
+checkpoints within that objective, not a reason to end work or request another
+"continue". Advance to the next authorized highest-value original-code task while
+execution capacity remains. Stop for a real blocker, an execution/access limit,
+a needed user decision, or a user instruction to stop; checkpoint work for recovery.
+
+The owner requires percentages in substantive progress reports. Restore a useful
+rounded overall completion estimate with an explicit, consistent definition of
+100%: the complete original game faithfully recovered, integrated and usable on
+PC with mouse-capable controls. Base the estimate on completed and remaining
+original-game work, with plausible effort weights and a short uncertainty range.
+Do not require an exhaustive calculation each turn or use uncertainty as a blanket
+excuse to omit progress reporting. Do not make up weights or claim an estimate is
+measured coverage. If the evidence cannot yet support a credible overall number,
+perform the missing baseline assessment and state its limits, rather than inventing
+a number to satisfy the reporting format.
+
+Track measured decompilation coverage separately when an explicit original-code
+inventory and recovery ledger support it. Keep the scope/denominator fixed, avoid
+double-counting partial recovery and distinguish PPU, SPU and native integration.
+Neither function-count coverage nor byte coverage is a percentage of time elapsed
+or remaining. Never silently replace overall project completion with a playable
+preview, one mission, test totals or an unrelated coverage statistic. Explain any
+scope/estimate revision; do not carry forward the withdrawn92% figure.
+
 ## Evidence and progress
 
 - Retain original addresses, source evidence and supported names. Distinguish
