@@ -1,5 +1,24 @@
 # DECISIONS
 
+## D031 — Faithful original-game recovery is the completion criterion (2026-10-20)
+
+Owner-confirmed: recover the original game calculations, decisions, state changes
+and update ordering, then adapt platform interfaces for native PC including mouse
+controls. Similar gameplay is not an acceptable substitute. Focus now on missing
+original code paths, not expansion/refinement of the preview. AGENTS.md governs
+work selection, proportionate verification and honest coverage reporting.
+
+All earlier subjective completion percentages are withdrawn, including92%.
+Preview playability, test counts, selected output matching and function counts
+must not be reported as overall completion or remaining effort. Record scoped
+recovery, integration, replacement rules and unresolved fidelity differences.
+
+This supersedes conflicting historical priorities below. D001's final-runtime
+choice was already superseded by the 2026-09-26 semantic-decompilation pivot.
+Legacy runtime gates apply to oracle work, not to claims of source recovery.
+The native opponent/skirmish are test scaffolding, not recovered original AI or
+missions. Preserve useful code; do not silently promote substitutes to parity.
+
 ## D001 — Static recompilation is the implementation path
 
 Use `ps3recomp` as the native-port foundation. RPCS3 is a behavioral/reference baseline, not the shipped runtime.

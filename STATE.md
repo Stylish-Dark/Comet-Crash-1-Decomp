@@ -1,5 +1,40 @@
 # STATE
 
+## Governing objective — corrected 2026-10-20
+
+Faithfully recover the original Comet Crash NPEB00142 v1.00 game into readable
+C/C++ and adapt it to native Windows, including mouse-capable controls. Preserve
+original calculations, decisions, state transitions and update ordering. A similar
+game or synthetic skirmish is not the requested finished port.
+
+**Focus now: decompilation of missing original game paths.** Follow AGENTS.md and
+[the fidelity inventory](docs/decomp/fidelity-status.md). Existing source-backed
+subsystems remain useful. Preview replacements do not count as recovered logic.
+
+**All prior subjective completion percentages, including 92%, are withdrawn.**
+Neither full recovery coverage nor remaining effort has been measured adequately.
+Do not infer overall completion from test counts or isolated bit-exact fixtures.
+
+## Current boundary and next work
+
+Latest game-code head before this correction: PR #58, commit
+37b19261be8c1dfdfc3fee7259a6839ea1430657, branch
+`work/native-craft-attitude-20261019`. The PR stack remains unmerged.
+This correction updates instructions and documentation only; it adds no recovered
+gameplay and claims no increase in game completion.
+
+Next: recover the original player-craft registration/player links and connected
+stage/controller/commit state path, then original action/carry/release behavior.
+Use existing source evidence; do not spend another milestone polishing ordinary
+turning while these interactions are absent. See WORK_QUEUE.md for the boundary.
+Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
+and complete presentation remain substantial open areas. Overall effort unknown.
+
+## Historical state entries — superseded priorities and withdrawn estimates
+
+The following preserves provenance. Any current-target wording or percentage in
+these older entries is historical and subordinate to the correction above.
+
 ## Current objective
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.

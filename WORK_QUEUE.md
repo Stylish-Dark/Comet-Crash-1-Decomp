@@ -1,3 +1,42 @@
+# Active recovery queue — corrected 2026-10-20
+
+Follow AGENTS.md. The deliverable is the original game adapted to PC, including
+mouse controls. All historical subjective percentages below are withdrawn.
+
+## Next coherent original-code milestone
+
+Recover the original player-craft entity lifecycle and player/world linkage.
+Existing evidence: CFAB8..CFB88 slot initializer; CFADC construction;
+CFB8C ->CA514 registration; CFBC8 player+220 link; type-1 SPU wrapper12B88 calls
+9A70 ->10290 ->6578. Only selected controller leaves are currently recovered.
+
+- Trace the original creation/registration/player-link writes and caller state.
+- Recover their connected stage/update/commit contract in readable C/C++, reusing
+  proven entity storage and craft leaves without inventing flag meanings.
+- Establish the original state/action/carry branch boundaries needed next.
+- Check material side effects and ordering against the pinned original. Mark any
+  missing caller/scheduling/state evidence explicitly; do not claim a complete
+  original craft from isolated math comparisons.
+- Integrate only where the source contract is established. Stop after meaningful
+  focused verification, document the remaining blocker, then advance.
+
+Do not substitute another radius/turning refinement or preview feature for this
+missing gameplay connection. If source dependencies prevent it, recover the
+blocking original dependency and explain the evidence.
+
+## Following recovery areas
+
+Original action/carry/release paths; original AI and mission/economy/campaign
+logic; remaining entity and weapon paths; complete presentation, audio and
+persistence; faithful PC input adaptation including mouse controls. Ordering is
+based on source dependencies and reduction of remaining faithful-port work.
+See docs/decomp/fidelity-status.md for current known substitutions and exclusions.
+
+## Historical queue — not active instructions
+
+Older targets and capability percentages are retained as history only. They do
+not supersede the recovery queue above or establish completion/effort estimates.
+
 # Active gameplay continuation
 
 Latest milestone: ordinary original movement-facing replaces NativePilot velocity

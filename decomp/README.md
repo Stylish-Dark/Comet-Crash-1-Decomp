@@ -1,5 +1,12 @@
 # Native source-recovery tree
 
+**Project contract, corrected 2026-10-20:** faithfully recover the original
+game and adapt it to PC with mouse-capable controls. Current focus is original
+code recovery, not expansion of replacement preview behavior. All previous
+subjective progress percentages are withdrawn; overall effort remaining is
+unknown. See [AGENTS.md](../AGENTS.md) and [fidelity status](../docs/decomp/fidelity-status.md).
+
+
 This directory is the new primary implementation track for the Comet Crash PC port.
 
 The goal is **not** to ship the mechanically recompiled PS3 executable behind a large compatibility runtime. The goal is to recover the game's own logic into readable C/C++, assign stable semantics and types, replace PS3-facing subsystems with native PC equivalents, and compile that recovered source as an ordinary Windows program.

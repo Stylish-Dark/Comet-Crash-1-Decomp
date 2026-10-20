@@ -1,5 +1,17 @@
 # SESSION LOG
 
+## 2026-10-20 — Owner correction: faithful decompilation governs
+
+The owner requires the original game adapted to PC, including mouse-capable
+controls, not a similar recreation. Focus now on recovering missing original
+code paths; preserve original calculations, control flow and update order.
+All previous subjective completion percentages, including92%, are withdrawn.
+Current governing instructions: AGENTS.md, STATE.md, WORK_QUEUE.md and
+docs/decomp/fidelity-status.md. Preview replacements remain incomplete recovery.
+This is a documentation/instruction correction, not new game-code recovery.
+Historical targets below must not override it.
+
+
 ## 2026-09-22 — Advanced checkpoint recovered and first-boot diagnostics hardened
 
 - Received `Comet-Crash-1-Decomp-checkpoint.zip` containing a clean Git repository whose HEAD was original commit `3250838` (`Fix Comet RSX report completion paths`).
