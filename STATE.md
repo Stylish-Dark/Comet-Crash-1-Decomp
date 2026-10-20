@@ -1,10 +1,61 @@
 # STATE
 
+## Governing objective — corrected 2026-10-20
+
+Faithfully recover the original Comet Crash NPEB00142 v1.00 game into readable
+C/C++ and adapt it to native Windows, including mouse-capable controls. Preserve
+original calculations, decisions, state transitions and update ordering. A similar
+game or synthetic skirmish is not the requested finished port.
+
+**Focus now: decompilation of missing original game paths.** Follow AGENTS.md and
+[the fidelity inventory](docs/decomp/fidelity-status.md). Existing source-backed
+subsystems remain useful. Preview replacements do not count as recovered logic.
+
+**All prior subjective completion percentages, including 92%, are withdrawn.**
+Neither full recovery coverage nor remaining effort has been measured adequately.
+Do not infer overall completion from test counts or isolated bit-exact fixtures.
+
+## Current boundary and next work
+
+Latest game-code head before this correction: PR #58, commit
+37b19261be8c1dfdfc3fee7259a6839ea1430657, branch
+`work/native-craft-attitude-20261019`. The PR stack remains unmerged.
+This correction updates instructions and documentation only; it adds no recovered
+gameplay and claims no increase in game completion.
+
+Next: recover the original player-craft registration/player links and connected
+stage/controller/commit state path, then original action/carry/release behavior.
+Use existing source evidence; do not spend another milestone polishing ordinary
+turning while these interactions are absent. See WORK_QUEUE.md for the boundary.
+Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
+and complete presentation remain substantial open areas. Overall effort unknown.
+
+## Historical state entries — superseded priorities and withdrawn estimates
+
+The following preserves provenance. Any current-target wording or percentage in
+these older entries is historical and subordinate to the correction above.
+
 ## Current objective
 
 Recover **Comet Crash (NPEB00142 v1.00)** into readable game-domain C/C++ and rebuild it as a normal native Windows game. Static recompilation is retained only as a reverse-engineering/runtime oracle.
 
-## Latest continuation — original craft body initializer and collision profile
+## Latest continuation — original ordinary craft movement-facing
+
+PR #57 both CI workflows passed. Recovered command-facing branch10668/11558
+through1A118: strict.01 target-speed gate, refined normalization, original yaw
+step delta*bits41490FDA, negative-Z convention, angle wrap and zero pitch.
+Preserved visible prior / pending next quaternion exchange11300/1139C; NativePilot
+now replaces instantaneous velocity atan2 with this source branch. Private10,000
+cases/all90,000words exact, including1000neutralcases;24 public numericfixtures.
+ExactZ-aligned axes use inherited finite analytic limits, explicitly excluded
+from SPU bit-parity. Source3238 is a flag8000 kind7 request/queue path, not proven
+terrain collision; 1162C peer contact remains gated by entity+51mask1C. Do not
+inject ordinary terrain contacts from the earlier misleading world-query label.
+Details: docs/decomp/native-craft-facing.md. Estimate remains **92% toward the
+first playable single-player mission**, not source coverage/full-port completion.
+Continue new PR above #57, not main.
+
+## Prior continuation — original craft body initializer and collision profile
 
 PR #56 passed both CI workflows. Proved type1 -> SPU12B88 dispatch and the PPU
 CFADC -> CA514 -> player+220 body link. Recovered CFAB8..CFB88 slot writes,

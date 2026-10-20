@@ -1,5 +1,12 @@
 # Comet Crash 1 PC Port
 
+**Project contract, corrected 2026-10-20:** faithfully recover the original
+game and adapt it to PC with mouse-capable controls. Current focus is original
+code recovery, not expansion of replacement preview behavior. All previous
+subjective progress percentages are withdrawn; overall effort remaining is
+unknown. See [AGENTS.md](AGENTS.md) and [fidelity status](docs/decomp/fidelity-status.md).
+
+
 Native PC source-recovery project for **Comet Crash** (PS3, NPEB00142 v1.00).
 
 The project is now explicitly a **decompilation/native rewrite**, not a static-recompilation runtime as the final product. The objective is to recover the game's own logic into readable C/C++, reconstruct its data structures and subsystem boundaries, replace PS3-specific interfaces with native PC implementations, and compile the result as an ordinary Windows game.

@@ -1,5 +1,17 @@
 # CONTINUITY
 
+## 2026-10-20 — Owner correction: faithful decompilation governs
+
+The owner requires the original game adapted to PC, including mouse-capable
+controls, not a similar recreation. Focus now on recovering missing original
+code paths; preserve original calculations, control flow and update order.
+All previous subjective completion percentages, including92%, are withdrawn.
+Current governing instructions: AGENTS.md, STATE.md, WORK_QUEUE.md and
+docs/decomp/fidelity-status.md. Preview replacements remain incomplete recovery.
+This is a documentation/instruction correction, not new game-code recovery.
+Historical targets below must not override it.
+
+
 This file is retained for compatibility with older project handoffs.
 
 **Authoritative current state: read `STATE.md` first.**
@@ -149,3 +161,25 @@ Continue new PR above #56; original world queries/contacts/actions remain next.
 Validation:64headless/67graphics CTests,233Python regressions,five focused
 ASan/UBSan,compileall/safety/diff checks pass. Review reran craft/pilot tests.
 Graphics first run green; no physical pad/fresh original-asset render claim.
+
+
+## 2026-10-19 — Original ordinary craft movement-facing
+
+PR #57 regression/native Linux/Windows CI passed. Recovered10668/11558->1A118
+movement-facing and11300/1139C visible/pending quaternion exchange. NativePilot
+replaces velocity atan2 with command-facing/source turn rate, retains neutral
+facing and delays its displayed quaternion one update. Private original SPU
+comparisonseed11558:10,000cases/90,000words exact,including1000neutralcases;
+outputSHA256953b1db273c3861cfd0a1718519d4986b21b6ffb75d42dbac82c44d37ee4427f.
+Twenty-four public numericfixtures. ExactZ-aligned axes use inherited finite
+analytic limits, explicitly excluded from hardware/bit-parity claims.
+Corrected3238 label:flag8000 kind7 request/queue path, not demonstrated terrain
+query. Peer contact1162C/7E40 remains gatedbyentity+51mask1C; do not inject it
+unconditionally. Carry/action/body ownership/target-facing/banking remain open.
+Details:docs/decomp/native-craft-facing.md. Estimate stays92% toward first playable
+single-player mission. Continue new PR above #57; no auto-merge.
+
+Validation:65headless/68graphics CTests,233Python regressions,four focused
+ASan/UBSan,compileall/safety/diff pass. Independent review found no actionable
+issues; optional +/-Z yaw-direction assertions were added and all final suites
+passed. Synthetic/virtual-controller graphics only; no hardware parity claim.

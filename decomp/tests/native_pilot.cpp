@@ -16,7 +16,9 @@ int main(){
  NativePilot p;p.reset({1,1},24);assert(p.cursor()==(ArenaGridPosition{1,1}));
  p.advance(1,0,.1f,true);assert(p.position().x==1.5f); // old-velocity position order
  p.advance(1,0,.1f,true);assert(p.position().x>1.95f && p.position().x<1.97f);
- const auto before=p.position();p.advance(1,1,.1f,false);assert(p.position().x==before.x);
+ assert(p.orientation()[1]<0 && p.orientation()[1]>-.6f); // original negative-Z facing, delayed turn
+ const auto before=p.position();const auto heading_before=p.orientation();
+ p.advance(1,1,.1f,false);assert(p.position().x==before.x && p.orientation()==heading_before);
  p.advance(1,1,.1f,true);assert(p.position().x==before.x); // disabled input cleared velocity
  p.advance(1,1,.1f,true);assert(p.position().x>before.x && p.position().z>before.z);
  float norm=0;for(float v:p.orientation())norm+=v*v;assert(std::abs(norm-1)<1e-6f);
@@ -37,6 +39,10 @@ int main(){
  p.reset({0,0},2);for(unsigned i=0;i<100;++i)p.advance(1,0,.1f,true);
  const float east=p.position().x;for(unsigned i=0;i<10;++i)p.advance(-1,0,.1f,true);
  assert(p.position().x<east && p.cursor().x<2);
+ p.reset({1,1},24);p.advance(-1,0,.1f,true);assert(p.orientation()==(std::array<float,4>{0,0,0,1}));
+ p.advance(-1,0,.1f,true);assert(p.orientation()[1]>0 && p.orientation()[1]<.6f);
+ const auto moving=p.position();const auto direction=p.orientation();p.advance(0,0,.1f,true);
+ assert(p.position().x<moving.x && p.orientation()[1]>=direction[1]); // coast while facing retained command
  NativeGamepadInput pad;NativeGamepadSample s;s.connected=true;pad.advance(s,.01f,true);s.x=32767;
  auto action=pad.advance(s,.01f,true);assert(action.move_x>.9f && action.move_z==0);
  pad.cancel();assert(pad.advance(s,.01f,true).move_x==0);
