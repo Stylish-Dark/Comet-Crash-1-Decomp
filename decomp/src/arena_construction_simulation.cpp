@@ -150,6 +150,16 @@ ArenaConstructionSimulation::ArenaConstructionSimulation(
       throw std::invalid_argument("map import failed");
   }
 }
+ArenaCraftRegistration ArenaConstructionSimulation::create_player_craft(
+    std::uint8_t owner,const std::array<float,4>& spawn,
+    const ArenaEntitySlot& reused_slot,const ArenaCraftAuxiliaryStart& auxiliary) {
+  if(owner>=players_.size() || spawn[1]!=0)return ArenaCraftRegistration::Invalid;
+  const auto resolved=resolve_arena_player_craft_spawn(owner,storage_.width,
+      storage_.height,spawn[0],spawn[2],spawn[3]);
+  if(!resolved)return ArenaCraftRegistration::Invalid;
+  return register_arena_player_craft(storage_,players_[owner],craft_registry_,
+      owner,*resolved,reused_slot,auxiliary);
+}
 ArenaConstructionContext
 ArenaConstructionSimulation::context_for(ArenaConstructionRequest r) const {
   auto flat = r.grid_z * 24 + r.grid_x;

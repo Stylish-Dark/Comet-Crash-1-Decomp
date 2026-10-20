@@ -99,3 +99,10 @@ The pilot now uses [recovered original free-flight arithmetic](../docs/decomp/na
 The pilot collision profile now comes from the [original craft body initializer](../docs/decomp/native-player-craft-initialization.md), replacing its assumed half-cell radius.
 
 The pilot now uses [original ordinary movement-facing](../docs/decomp/native-craft-facing.md): command-based turning, the source turn limit, and one-update quaternion delay.
+
+## Original player-craft creation
+
+The simulation exposes recovered configured/center spawn ->body initialization
+->both-bank registration ->player/root links ->ordered audio requests. It requires
+an explicit audio boundary and does not automatically enable the F3 preview as a
+fully simulated craft. See [source evidence and remaining work](../docs/decomp/original-craft-registration.md).

@@ -3,26 +3,23 @@
 Follow AGENTS.md. The deliverable is the original game adapted to PC, including
 mouse controls. All historical subjective percentages below are withdrawn.
 
+## Completed connected boundary — original craft creation
+
+Recovered configured-X / missing-X center arrangement, constructor ->CA514 both
+banks/cells/FIFO ->player+220/root+3224+2owner ->ordered1326C0 requests and retained
+player+228/+22C words. The simulation API exposes this real body/player linkage.
+Audio is an explicit dependency, not fabricated success. F3 remains separate.
+See docs/decomp/original-craft-registration.md. No completion percentage assigned.
+
 ## Next coherent original-code milestone
 
-Recover the original player-craft entity lifecycle and player/world linkage.
-Existing evidence: CFAB8..CFB88 slot initializer; CFADC construction;
-CFB8C ->CA514 registration; CFBC8 player+220 link; type-1 SPU wrapper12B88 calls
-9A70 ->10290 ->6578. Only selected controller leaves are currently recovered.
-
-- Trace the original creation/registration/player-link writes and caller state.
-- Recover their connected stage/update/commit contract in readable C/C++, reusing
-  proven entity storage and craft leaves without inventing flag meanings.
-- Establish the original state/action/carry branch boundaries needed next.
-- Check material side effects and ordering against the pinned original. Mark any
-  missing caller/scheduling/state evidence explicitly; do not claim a complete
-  original craft from isolated math comparisons.
-- Integrate only where the source contract is established. Stop after meaningful
-  focused verification, document the remaining blocker, then advance.
-
-Do not substitute another radius/turning refinement or preview feature for this
-missing gameplay connection. If source dependencies prevent it, recover the
-blocking original dependency and explain the evidence.
+Recover original craft9A70 preparation,10290 controller state/action/carry paths
+and6578 commit, using the now-available original body/player registration.
+Trace caller/snapshot/state dependencies and preserve original side effects and
+update order. Recover the blocking original dependency if any path cannot yet be
+connected; do not invent flags or silently wire selected arithmetic as the whole
+controller. The outer spawn mode/configuration selection and real audio also
+remain incomplete. Use proportionate checks, then advance.
 
 ## Following recovery areas
 

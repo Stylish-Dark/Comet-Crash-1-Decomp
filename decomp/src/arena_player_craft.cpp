@@ -41,4 +41,58 @@ ArenaCraftBounds arena_player_craft_bounds(unsigned width,unsigned depth){
  result.movable=(flags&0x4000)!=0;result.floor_uses_lateral_radius=(flags&0x02000000)!=0;
  return result;
 }
+std::optional<std::array<float,4>> resolve_arena_player_craft_spawn(
+ std::uint8_t owner,unsigned width,unsigned depth,float x,float z,float w) {
+ if(owner>=4 || width<1 || width>24 || depth<1 || depth>24)return {};
+ for(float f:{x,z,w})if(!std::isfinite(f) || std::abs(f)>1000000)return {};
+ if(x<0) {
+  // CFFC8..D001C: signed owner division/remainder (native owners are 0..3),
+  // unsigned extent halves, -1, float conversion, then source f22=.5.
+  x=float(int(width/2)+int(owner%2)-1)+.5f;
+  z=float(int(depth/2)+int(owner/2)-1)+.5f;
+ }
+ return std::array<float,4>{x,0,z,w};
+}
+ArenaCraftRegistration register_arena_player_craft(ArenaEntityStorage& storage,
+ ArenaPlayer& player,ArenaPlayerCraftRegistry& registry,std::uint8_t owner,
+ const std::array<float,4>& spawn,const ArenaEntitySlot& reused_slot,
+ const ArenaCraftAuxiliaryStart& auxiliary) {
+ // Native API admission, outside the original successful bootstrap path.
+ if(owner>=4 || storage.read_bank>1 || !storage.width || !storage.height ||
+    storage.width>24 || storage.height>24 || spawn[1]!=0)
+  return ArenaCraftRegistration::Invalid;
+ for(float f:spawn)if(!std::isfinite(f) || std::abs(f)>1000000)
+  return ArenaCraftRegistration::Invalid;
+ if(spawn[0]<0 || spawn[0]>=storage.width || spawn[2]<0 || spawn[2]>=storage.height)
+  return ArenaCraftRegistration::Invalid;
+ if(player.craft_entity_index || registry.indices[owner])
+  return ArenaCraftRegistration::AlreadyLinked;
+ if(!auxiliary)return ArenaCraftRegistration::MissingAuxiliary;
+ const ArenaGridPosition cell{static_cast<std::uint8_t>(spawn[0]),
+                              static_cast<std::uint8_t>(spawn[2])};
+ const auto flat=cell.z*24u+cell.x;
+ if(storage.free_indices.empty() || storage.cells[0][flat].size()>=126 ||
+    storage.cells[1][flat].size()>=126)return ArenaCraftRegistration::NoCapacity;
+ const auto next=storage.free_indices.front();
+ if(next>65535 || next>=storage.banks[0].size() || next>=storage.banks[1].size())
+  return ArenaCraftRegistration::Invalid;
+ // CFA54..CFA78: truncate source X/Z and issue category6/flag1/scalar0.
+ // This return is deliberately ignored by the original caller.
+ ArenaCraftAuxiliaryRequest request{6,cell.x,cell.z,1,0};
+ auxiliary(request);
+ // CFA80..CFB88 plus CA514 at CFB8C: shared scratch bytes are preserved,
+ // then the body receives FIFO identity and ordered entries in both banks.
+ auto slot=reused_slot;
+ initialize_arena_player_craft_entity(slot,owner,spawn[0],spawn[2],spawn[3]);
+ const auto index=insert_arena_entity(storage,cell,slot);
+ if(!index)throw std::logic_error("craft registration changed during auxiliary call");
+ // CFBC8 precedes CFBD8, and both precede the retained auxiliary calls.
+ player.craft_entity_index=*index;
+ registry.indices[owner]=*index;
+ // CFBDC/CFBE8 and CFC00/CFC0C: retain even -1; do not invent audio success.
+ player.craft_auxiliary_handles[0]=auxiliary(request);
+ request.category=5;
+ player.craft_auxiliary_handles[1]=auxiliary(request);
+ return ArenaCraftRegistration::Registered;
+}
 }

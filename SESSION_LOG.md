@@ -1,5 +1,18 @@
 # SESSION LOG
 
+## 2026-10-20 — Original craft spawn, registration and player linkage
+
+Continued PR #58 at7379aa5. Source-traced configured/center spawn selection and
+CFA30..CFC0C creation: original initializer, CA514 real banks/cells/FIFO, player
++220 and root+3224+2owner, ordered1326C0 requests and player+228/+22C returns.
+Simulation create_player_craft exposes the connected recovered path. Audio is
+a required explicit callback and preserves -1, not a silent successful stub.
+No F3 auto-enable, full controller/action/carry or new hardware-parity claim.
+See docs/decomp/original-craft-registration.md. Next original9A70/10290/6578
+state/update/commit, action/carry and source scheduling. Overall effort unknown.
+Release native build and66 headless checks passed (two launch-permission fixes);
+focused source review found no material issue. No new hardware-parity claim.
+
 ## 2026-10-20 — Owner correction: faithful decompilation governs
 
 The owner requires the original game adapted to PC, including mouse-capable
