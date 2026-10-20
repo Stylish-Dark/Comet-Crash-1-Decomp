@@ -50,6 +50,10 @@ struct ArenaPendingCommand {
                source_flag = 0;
 };
 struct ArenaPlayer {
+  // PPU CFBC8 (+220), CFBE8 (+228), CFC0C (+22C). Optionality is native
+  // admission state; the original writes a zero-extended u16 entity index.
+  std::optional<std::uint16_t> craft_entity_index;
+  std::array<std::int32_t,2> craft_auxiliary_handles{-1,-1};
   std::optional<ArenaGridPosition> start_grid;
   ArenaEventQueue events;
   // Proven dispatch gates: player +0x23B and +0x4C respectively.

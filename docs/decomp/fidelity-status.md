@@ -1,15 +1,14 @@
 # Original-game recovery status — 2026-10-20
 
 This is a scoped starting inventory, not a complete function audit or a completion
-percentage. Prior subjective percentages, including 92%, are withdrawn. Source: the existing recovery documents and PRs #49–58. No new game
-behavior was recovered during this correction. Overall effort remaining is unknown.
+percentage. Prior subjective percentages, including 92%, are withdrawn. Source: the existing recovery documents and PRs #49–58. The initial correction recovered no game code; the later creation milestone below does. Overall effort remaining is unknown.
 
 | Area | Evidence-backed work available | What prevents claiming original-game completion |
 | --- | --- | --- |
 | Assets and rendering | Original data loaders, model/texture rendering and recovered renderer structures | Complete original scene composition, effects, menus and HUD are not established |
 | Construction and ground simulation | Recovered construction, production, movement, contact, capture, base impact and death paths | Full original callers, scheduling, lifecycle and all entity paths remain incomplete |
 | Weapons | Selected Tesla, cannon and area-effect paths | Remaining weapon/target families, scheduling and effects remain incomplete; cannon has numeric fallbacks and unproven full-update parity |
-| Player craft | Original body slot initialization, selected flight arithmetic, arena containment and ordinary movement-facing | Full constructor registration/player links, controller state/action/carry paths and interaction with the original world remain incomplete |
+| Player craft | Original configured/center spawn, body creation/registration/player links, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry/commit and original scheduling remain incomplete; audio requests require an explicit implementation |
 | Craft numerical fidelity | Scoped instruction comparisons and public fixtures | Input cap uses portable math; exact aligned-Z facing and subnormal/hardware behavior are excluded from matching claims |
 | Craft caller policy | Preview moves and renders a ship using recovered leaves | Initial height, mode choice, input lifecycle and control/render ownership contain native policy; deployment remains at the base |
 | AI | Working native preview opponent | Original decisions and strategy are not recovered by the preview opponent |
@@ -19,22 +18,15 @@ behavior was recovered during this correction. Overall effort remaining is unkno
 
 ## First recovery priority
 
-Close the original player-craft lifecycle and gameplay connection before further
-ordinary-flight refinements. Existing evidence links the PPU constructor
-CFAB8..CFB88, registration via CA514 and player+220, and SPU type-1 wrapper12B88
-through9A70 ->10290 ->6578. The native body initializer does not perform those
-registration/player links, and the whole10290 controller is not recovered.
+The original craft creation path is now recovered and exposed through the actual
+simulation storage/player registry; see original-craft-registration.md. Next close
+the original9A70 staging, full10290 state/action/carry controller and6578 commit
+with source caller/scheduling semantics. Creation alone does not connect the F3
+preview or complete craft gameplay. Original audio and outer bootstrap gates
+remain unresolved; do not silently substitute them.
 
-Start with the original registration/player-link and stage/update/commit state
-contract so subsequent action/carry branches operate on the actual recovered
-entity rather than an independent preview object. Recover the reachable original
-logic and preserve ordering/side effects; record unresolved branches explicitly.
-Do not fabricate a gameplay meaning for flags just to integrate the preview.
-
-Then recover original action/carry/release paths and their callers; connect them
-to the recovered world. Original AI and mission/economy/campaign recovery remain
-major subsequent work, not optional polish. Adjust ordering only when actual
-source dependencies show a more consequential blocker.
+Then complete original action/carry/release integration and the remaining original
+AI, mission/economy/campaign paths. These are essential recovery, not polish.
 
 ## Evidence boundaries that must survive
 

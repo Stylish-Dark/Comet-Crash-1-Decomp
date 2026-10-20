@@ -10,6 +10,7 @@
 #include "comet/arena_unit_spawn.hpp"
 #include "comet/arena_ground_transport.hpp"
 #include "comet/arena_ground_deployment.hpp"
+#include "comet/arena_player_craft.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -90,6 +91,7 @@ class ArenaConstructionSimulation {
   ArenaConstructionQueue queue_;
   ArenaRoutingGrid grid_;
   ArenaEntityStorage storage_;
+  ArenaPlayerCraftRegistry craft_registry_;
   std::vector<ArenaRoutePlayer> routes_;
   std::vector<ArenaPlayer> players_;
   ArenaRandom random_;
@@ -141,6 +143,13 @@ public:
   const auto &native_opponents() const { return config_.native_opponents; }
   const auto &accounts() const { return config_.players; }
   const auto &players() const { return players_; }
+  const auto &craft_registry() const { return craft_registry_; }
+  // Explicit recovered creation boundary. No guessed spawn positions, audio
+  // success, or partial-controller simulation are enabled by the preview.
+  // Negative configured X selects the recovered center arrangement.
+  ArenaCraftRegistration create_player_craft(std::uint8_t owner,
+      const std::array<float,4>& spawn, const ArenaEntitySlot& reused_slot,
+      const ArenaCraftAuxiliaryStart&);
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }
