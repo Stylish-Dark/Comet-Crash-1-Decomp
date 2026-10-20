@@ -2,7 +2,7 @@
 
 ## Current recovery direction — 2026-10-20
 
-The active source-recovery work is on [work/native-craft-attitude-20261019](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/native-craft-attitude-20261019/STATE.md), through PR #58. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+The active source-recovery work is on [work/original-craft-registration-20261020](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-craft-registration-20261020/STATE.md), through PR #59. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
 
 The owner requires the original Comet Crash adapted to PC with mouse controls. All former subjective completion percentages are withdrawn. Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
 
