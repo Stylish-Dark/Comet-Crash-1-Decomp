@@ -1,5 +1,12 @@
 # Comet Crash 1 PC Port
 
+## Current recovery direction — 2026-10-20
+
+The active source-recovery work is on [work/native-craft-attitude-20261019](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/native-craft-attitude-20261019/STATE.md), through PR #58. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+
+The owner requires the original Comet Crash adapted to PC with mouse controls. All former subjective completion percentages are withdrawn. Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
+
+
 Native PC source-recovery project for **Comet Crash** (PS3, NPEB00142 v1.00).
 
 The project is now explicitly a **decompilation/native rewrite**, not a static-recompilation runtime as the final product. The objective is to recover the game's own logic into readable C/C++, reconstruct its data structures and subsystem boundaries, replace PS3-specific interfaces with native PC implementations, and compile the result as an ordinary Windows game.
