@@ -1,5 +1,23 @@
 # SESSION LOG
 
+## 2026-10-21 — Original preparation completion and counted requests
+
+Continued PR #61 atfd733966 after both CI workflows passed. Restored private
+reference from existing owner upload after workspace cleanup; exact hashes match.
+Recovered9EC8..A268 health/impulse/owner/counter/statistics continuation, then3510
+counted model72/73/74 requests and optional76. Source1E090 publication is a required
+explicit sink with reused descriptor; missing dependency preserves inputs and
+consumed results for completion resumption. Actual registered-body API completes
+prepared state without inventing controller or preview policies.5D0 uses relative
+work offset80 rather than a truncated host pointer.10,000 full9A70 type1 cases
+match complete contexts and counted requests at the defined cached-accumulator/
+publication boundaries. Eight new public full-context fingerprints and connected
+reserved-record integration. Release build and all70 native CTests passed;
+one local test launch permission was restored and only that launch retried.
+Repository safety/diff checks passed. Source review found no material issue. Next full10290
+actions/carry, actual source publication/scheduler. Baseline remains about25%
+(plausible15–35%); no matching-compilation/whole-game/hardware claim.
+
 ## 2026-10-21 — Continued through original accumulator consumption
 
 Recovered complete1AD8..2050, called at9EC4 with workcontext+300. Original pending

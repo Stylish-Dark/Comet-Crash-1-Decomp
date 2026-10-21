@@ -15,6 +15,8 @@ add_library(comet_native_recovery STATIC
     src/arena_entity_core.cpp
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
+    src/arena_counter_emission.cpp
+    src/arena_preparation_effects.cpp
     src/arena_entity_accumulator.cpp
     src/arena_entity_preparation.cpp
     src/arena_entity_finalization.cpp
@@ -608,4 +610,15 @@ if(MSVC)
 else()
  target_compile_options(comet_arena_entity_accumulator_test PRIVATE -UNDEBUG)
  set_source_files_properties(src/arena_entity_accumulator.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_preparation_effects_test tests/arena_preparation_effects.cpp)
+target_link_libraries(comet_arena_preparation_effects_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_preparation_effects_test COMMAND comet_arena_preparation_effects_test)
+if(MSVC)
+ target_compile_options(comet_arena_preparation_effects_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_preparation_effects.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_preparation_effects_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_preparation_effects.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()
