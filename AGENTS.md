@@ -4,9 +4,9 @@ Confirmed by the project owner on 2026-10-20. This governs all subsequent work.
 
 ## Current recovery direction — 2026-10-21
 
-The active source-recovery work is on [work/original-craft-preparation-20261021](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-craft-preparation-20261021/STATE.md), through PR #61. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+The active source-recovery work is on [work/original-preparation-effects-20261021](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-preparation-effects-20261021/STATE.md), through PR #62. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
 
-The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-craft-preparation-20261021/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
+The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-preparation-effects-20261021/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
 
 ## Deliverable
 
