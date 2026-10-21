@@ -18,25 +18,24 @@ This is not measured decompilation coverage or an elapsed/remaining-time ratio.
 
 ## Current boundary and next work
 
-Active branch: `work/original-craft-preparation-20261021`, stacked above PR #60
-at3fb077a. Recovered original9A70..9EC0 state staging before accumulator consumption:
-packed state, quaternion forward vector, radii/health, owner/stage, grid and tile
-visibility. The simulation stages its actual registered player body with an explicit
-original snapshot and reused work context. Private original-instruction comparison:
-10,000 cases, all16,640,000 context bytes exact. No compiler/hardware matching claim.
-See docs/decomp/original-entity-preparation.md.
+Active branch: `work/original-preparation-effects-20261021`, stacked above PR #61
+atfd733966. Recovered9EC8..A268 consumed-effect continuation and3510..387C counted
+request construction. Original health cap/suppression, impulse cap/mass/percent,
+owner-state/radius, counter emission, relative extension reference and statistics
+gates now follow existing staging/consumption. The actual simulation exposes
+registered-body completion; it does not auto-enable the preview/controller.
 
-Also recovered the complete1AD8..2050 consumer: original pending gate, fresh
-reserved snapshot, exact shared clear mask, conditional-write retry and local
-consumed-data restoration. consume_arena_prepared_accumulator operates on+300;
-required platform reservation callbacks are explicit. Another10,000 private
-original-instruction cases match local/shared records and all outputs, with0..3
-failed writes. Native automatic scheduler/record ownership remains open.
+Private10,000 full9A70 type1 cases match complete context and counted requests,
+including previously blocked counter-emission cases. Source1E090 publication is
+an explicit required sink; the full-routine comparison uses cached accumulator
+consumption, while reservation/retry behavior was compared in PR #61. Details:
+docs/decomp/original-preparation-effects.md. No compiler/hardware matching claim.
 
-Next blocking path:9EC8..A268 preparation continuation and its3510 death dependency,
-then full10290 controller/action/carry.6578 commit/removal remains available from
-PR #60;3940 effects/6260 spatial work and original source scheduling/audio/bootstrap
-remain open. F3 is separate. Do not treat staging/consumption as the full update.
+Next: full10290 player controller/state/actions/carry, actual source1E090 entity
+publication and original snapshot/reservation/job scheduling.3510 is now identified
+as a counter-to-counted-request producer; the earlier "death path" label did not
+establish the full death lifecycle.3940 effects/6260 spatial work, numeric exclusions
+and source audio/bootstrap remain open. F3 is separate from recovered world code.
 
 Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
 and complete presentation remain substantial open areas.

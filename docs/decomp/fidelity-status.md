@@ -11,7 +11,7 @@ entity-finalization/preparation milestones.
 | Assets and rendering | Original data loaders, model/texture rendering and recovered renderer structures | Complete original scene composition, effects, menus and HUD are not established |
 | Construction and ground simulation | Recovered construction, production, movement, contact, capture, base impact and death paths | Full original callers, scheduling, lifecycle and all entity paths remain incomplete |
 | Weapons | Selected Tesla, cannon and area-effect paths | Remaining weapon/target families, scheduling and effects remain incomplete; cannon has numeric fallbacks and unproven full-update parity |
-| Player craft | Original configured/center spawn, body creation/registration/player links, original9A70 state staging, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
+| Player craft | Original configured/center spawn, body creation/registration/player links, original9A70 preparation with explicit emission/transport boundaries, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
 | Craft numerical fidelity | Scoped instruction comparisons and public fixtures | Input cap uses portable math; exact aligned-Z facing and subnormal/hardware behavior are excluded from matching claims |
 | Craft caller policy | Preview moves and renders a ship using recovered leaves | Initial height, mode choice, input lifecycle and control/render ownership contain native policy; deployment remains at the base |
 | AI | Working native preview opponent | Original decisions and strategy are not recovered by the preview opponent |
@@ -21,15 +21,15 @@ entity-finalization/preparation milestones.
 
 ## First recovery priority
 
-Original craft creation,9A70..9EC0 state staging and shared6578 finalization now
-have actual storage/player APIs. See original-entity-preparation.md and earlier
-creation/finalization notes. Staging matches full context output across10,000
-private original-instruction cases; it stops BEFORE1AD8. The complete1AD8 consumer is now recovered separately: pending gate, fresh
-reservation, clear/retry/local restore, with another10,000 original-instruction
-comparisons. Platform reservation callbacks remain required; automatic record
-binding/job ownership is open. Next9EC8..A268 continuation and3510, then full10290
-controller/action/carry and source scheduling.
-3940/6260 effects/spatial branches, audio and bootstrap remain open; F3 is separate.
+Original craft creation,9A70 staging/consumption/completion and shared6578
+finalization have actual storage/player APIs. See original-preparation-effects.md
+and earlier preparation/creation notes.10,000 full9A70 type1 cases match context
+and counted requests at the explicit1E090 publication boundary. Reservation/retry
+behavior is separately covered in PR #61. Full10290 controller/actions/carry,
+actual entity publication, snapshot/job ownership and scheduling remain next.
+Numeric exclusions,3940/6260, audio/bootstrap and full death lifecycle remain open.
+F3 remains separate.3510 constructs counted requests; it is not a complete death
+handler. Output comparisons do not establish matching compilation/hardware parity.
 
 Then complete original action/carry/release integration and the remaining original
 AI, mission/economy/campaign paths. These are essential recovery, not polish.

@@ -104,11 +104,10 @@ normal/zero health and impulse XYZ and normal/zero finite norm intermediates;
 this is not SPU extended-exponent/hardware matching. Other returned lanes remain
 raw bits. PS3 concurrent DMA scheduling is not claimed by synchronous comparisons.
 
-## Next dependency
+## Continuation recovered in the next milestone
 
-Finish9EC8..A268 preparation continuation: consume these returned health/impulse
-values through the original cap, owner/activity and death/statistics gates, then
-connect full10290 controller/action/carry with6578 finalization. The complete
-3510 death path and actual source job snapshot production/reservation ownership/
-scheduling, audio and full-game integration remain open. Do not replace unknown
-branches with zero effects or guessed policies to label preparation complete.
+See original-preparation-effects.md:9EC8..A268 and3510 counted requests are now
+recovered, including the registered-body completion API.3510's earlier broad
+"death path" label is corrected there. Full10290 controller/actions/carry, actual
+entity publication and source scheduling remain open; numeric/transport limits
+remain explicit.

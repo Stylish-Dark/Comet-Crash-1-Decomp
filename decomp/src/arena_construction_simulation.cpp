@@ -177,6 +177,27 @@ bool ArenaConstructionSimulation::stage_player_craft_preparation(
   if(!stage_arena_entity_preparation(next,snapshot))return false;
   context=next;return true;
 }
+ArenaPreparationCompletion ArenaConstructionSimulation::complete_player_craft_preparation(
+    std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,
+    const ArenaAccumulatorConsumption& consumed,ArenaEntityWorkContext& context,
+    ArenaEmissionDescriptor* scratch,const ArenaCounterEmissionSink& emitter) {
+  if(owner>=players_.size() || storage_.read_bank>1 ||
+     !players_[owner].craft_entity_index ||
+     players_[owner].craft_entity_index!=craft_registry_.indices[owner] ||
+     context[15]!=1 || (context[0x33]>>5)!=owner ||
+     (unsigned(context[0x542])<<8|context[0x543])!=owner)
+    return ArenaPreparationCompletion::Invalid;
+  const auto index=*players_[owner].craft_entity_index;
+  if(index>=storage_.banks[storage_.read_bank].size() ||
+     storage_.banks[storage_.read_bank][index][15]!=1 ||
+     (unsigned(context[12])<<8|context[13])!=index)
+    return ArenaPreparationCompletion::Invalid;
+  auto read=[&](unsigned o){return std::uint32_t(snapshot[o])<<24|
+      std::uint32_t(snapshot[o+1])<<16|std::uint32_t(snapshot[o+2])<<8|snapshot[o+3];};
+  if(read(0x28d8)!=storage_.width || read(0x28dc)!=storage_.height)
+    return ArenaPreparationCompletion::Invalid;
+  return complete_arena_entity_preparation(context,snapshot,consumed,statistics_[owner],scratch,emitter);
+}
 ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
     std::uint8_t owner,const ArenaEntitySlot& updated,
     const ArenaEntityFinalizationContext& context,std::uint32_t frame) {

@@ -13,6 +13,7 @@
 #include "comet/arena_player_craft.hpp"
 #include "comet/arena_entity_finalization.hpp"
 #include "comet/arena_entity_preparation.hpp"
+#include "comet/arena_preparation_effects.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -157,6 +158,12 @@ public:
   bool stage_player_craft_preparation(std::uint8_t owner,
       std::span<const std::uint8_t,0x2900> snapshot,
       ArenaEntityWorkContext&) const;
+  // Complete staged/consumed preparation for the linked original craft.
+  // Missing emission leaves inputs intact; retain consumption for resumption.
+  ArenaPreparationCompletion complete_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,const ArenaAccumulatorConsumption&,
+      ArenaEntityWorkContext&,ArenaEmissionDescriptor* reused_descriptor=nullptr,
+      const ArenaCounterEmissionSink& emitter={});
   // Explicit source-controller output commit; no guessed input, physics or
   // render-frame counter is generated here. Effects boundaries remain visible.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,

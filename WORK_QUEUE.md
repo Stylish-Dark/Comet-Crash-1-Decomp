@@ -5,28 +5,26 @@ mouse controls. All historical subjective percentages below are withdrawn.
 
 ## Completed connected boundaries
 
-Original craft creation/player registration (PR #59), shared6578 finalization and
-delayed removal (PR #60), then9A70..9EC0 original state staging. Actual simulation
-storage now supplies a registered craft body to this staging API. Full-context
-original-instruction comparison covers10,000 cases. Details:
-original-entity-preparation.md. Staging stops before1AD8; its complete consumer is now separately recovered,
-including original pending/clear/retry/local-restore behavior and explicit required
-platform reservation transport. Another10,000 original-instruction cases compare
-local/shared records and all returned values. No effect consumer stub.
+Creation/player registration (PR #59),6578 finalization/delayed removal (PR #60),
+9A70 staging and1AD8 consumption (PR #61), then consumed-effect continuation and
+3510 counted request construction. Actual registered-body APIs cover preparation
+through completion; required original publication/reservation dependencies remain
+explicit.10,000 full9A70 type1 cases matched context and counted requests.
+See original-preparation-effects.md for numeric/provenance/transport scope.
 
 ## Next coherent original-code milestone
 
-Connect recovered1AD8 outputs through9EC8..A268 preparation continuation, including
-original impulse cap, owner/activity and health/death/statistics gates. Recover
-3510 death behavior where required. Bind actual original accumulator records and
-reservation ownership into the source job scheduler. Existing preview health/
-impulse vectors are not a complete record binding. Then full10290 actions/carry.
-Keep3940/6260 branches explicit. No fabricated zero effects, job serial from render
-frames, or replacement preview policies. Check changed paths, then move ahead.
+Recover full10290 player controller, state transitions and action/carry branches.
+Trace its prepared-context/body-extension and player snapshot dependencies rather
+than wiring selected arithmetic as the whole controller. Recover source1E090
+entity publication and original snapshot/reservation/job ownership where needed.
+3510 emits counted kind15 descriptors; it is not the complete death lifecycle.
+Keep3940/6260 and numeric boundaries explicit. No fabricated zero effects, render
+frame serials, guessed scheduler or replacement preview policy. Check changed
+paths proportionately, then move forward.
 
-Overall full-port planning baseline remains about25%, plausible15–35%; see
-completion-assessment.md. This milestone does not justify a fractional overall
-increase or a measured decompilation percentage.
+Full-port planning baseline remains about25%, plausible15–35%; see
+completion-assessment.md. Do not invent a fractional gain for individual functions.
 
 ## Following recovery areas
 
