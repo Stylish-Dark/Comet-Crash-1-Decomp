@@ -5,24 +5,28 @@ mouse controls. All historical subjective percentages below are withdrawn.
 
 ## Completed connected boundaries
 
-Original craft creation/registration/player links (PR #59), then shared6578
-commit/removal and original3400 tombstones/exact-serial collection. The actual
-simulation now accepts a registered craft's staged movement through this commit
-boundary. Explicit job completion returns FIFO identities and preserves reused
-slot memory. See original-entity-finalization.md; this does not complete10290.
+Original craft creation/player registration (PR #59), shared6578 finalization and
+delayed removal (PR #60), then9A70..9EC0 original state staging. Actual simulation
+storage now supplies a registered craft body to this staging API. Full-context
+original-instruction comparison covers10,000 cases. Details:
+original-entity-preparation.md. Staging stops before1AD8; its complete consumer is now separately recovered,
+including original pending/clear/retry/local-restore behavior and explicit required
+platform reservation transport. Another10,000 original-instruction cases compare
+local/shared records and all returned values. No effect consumer stub.
 
 ## Next coherent original-code milestone
 
-Recover original9A70 preparation and10290 controller state/action/carry paths
-using the registered body and finalization boundary. Trace caller snapshot/state
-and preserve side effects/order. Recover3940 change effects and6260 spatial
-updates when their caller branch is reached; these currently return explicit
-recovery boundaries without writes. Recover original job dispatch/completion
-ordering before making this an automatic simulation loop. Do not infer a frame
-serial from rendering or silently substitute preview input/AI/action policies.
+Connect recovered1AD8 outputs through9EC8..A268 preparation continuation, including
+original impulse cap, owner/activity and health/death/statistics gates. Recover
+3510 death behavior where required. Bind actual original accumulator records and
+reservation ownership into the source job scheduler. Existing preview health/
+impulse vectors are not a complete record binding. Then full10290 actions/carry.
+Keep3940/6260 branches explicit. No fabricated zero effects, job serial from render
+frames, or replacement preview policies. Check changed paths, then move ahead.
 
-Overall full-port planning baseline: about 25%, plausible 15–35%; see
-completion-assessment.md. Keep this separate from measured source coverage.
+Overall full-port planning baseline remains about25%, plausible15–35%; see
+completion-assessment.md. This milestone does not justify a fractional overall
+increase or a measured decompilation percentage.
 
 ## Following recovery areas
 

@@ -12,6 +12,7 @@
 #include "comet/arena_ground_deployment.hpp"
 #include "comet/arena_player_craft.hpp"
 #include "comet/arena_entity_finalization.hpp"
+#include "comet/arena_entity_preparation.hpp"
 namespace comet::decomp {
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
@@ -151,6 +152,11 @@ public:
   ArenaCraftRegistration create_player_craft(std::uint8_t owner,
       const std::array<float,4>& spawn, const ArenaEntitySlot& reused_slot,
       const ArenaCraftAuxiliaryStart&);
+  // Stage the actual registered body through original9A70..9EC0. Caller owns
+  // the original job snapshot and reused work context; no accumulator consumed.
+  bool stage_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,
+      ArenaEntityWorkContext&) const;
   // Explicit source-controller output commit; no guessed input, physics or
   // render-frame counter is generated here. Effects boundaries remain visible.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,

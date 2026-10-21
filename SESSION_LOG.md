@@ -1,5 +1,35 @@
 # SESSION LOG
 
+## 2026-10-21 — Continued through original accumulator consumption
+
+Recovered complete1AD8..2050, called at9EC4 with workcontext+300. Original pending
+gate, fresh GETLLAR snapshot, exact clear mask, PUTLLC retry and local consumed
+snapshot restoration. Required reservation callbacks expose the platform boundary;
+no fake success or zero effects. Private10,000 original-instruction cases match
+all local128/shared128/output48 bytes including idle/no-target/0..3 retries.
+Eight public full-result fingerprints plus real shared-record/retry integration.
+Focused source review found no mapping issue. Release build and all69 headless
+CTests passed; local launch permissions were restored and only failed launches
+retried. Repository safety/diff checks passed. Next9EC8..A268 continuation,3510,
+full10290 controller/actions/carry and source scheduler/record binding.
+
+## 2026-10-21 — Original state preparation before player control
+
+Continued PR #60 at3fb077a after both GitHub workflows passed. Restored owner-uploaded
+reference after workspace pruning; canonical ELF/job hashes match. Recovered
+9A70..9EC0: packed state/orientation, radii/health, owner/stage, grid/visibility,
+resets and snapshot vectors. Actual registered-body simulation API stages caller
+work context without mutating world/effects.10,000 private original-instruction
+cases match all16,640,000 context bytes;8 public synthetic-input fingerprints.
+Focused source review found no mapping/linkage issue; numeric underflow domain
+is explicitly rejected. This is not compiler matching. Complete1AD8 consumption
+and9EC8..A268 remain next, then full10290/controller/actions/carry and scheduling.
+Planning estimate stays about25% (plausible15–35%); no fractional progress claim.
+Release native build and all68 headless CTests passed (launch permissions
+restored for affected local binaries; only failed launches retried). Broader
+platform checks are delegated to existing GitHub CI, not repeated locally.
+Details: docs/decomp/original-entity-preparation.md.
+
 ## 2026-10-21 — Shared original entity finalization and delayed removal
 
 Continued PR #59 at6a79b4b. Recovered6578 ordinary commit/removal,3400/2DF8 fixed
