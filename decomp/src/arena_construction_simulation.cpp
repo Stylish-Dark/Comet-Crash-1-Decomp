@@ -160,6 +160,20 @@ ArenaCraftRegistration ArenaConstructionSimulation::create_player_craft(
   return register_arena_player_craft(storage_,players_[owner],craft_registry_,
       owner,*resolved,reused_slot,auxiliary);
 }
+ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
+    std::uint8_t owner,const ArenaEntitySlot& updated,
+    const ArenaEntityFinalizationContext& context,std::uint32_t frame) {
+  if(owner>=players_.size() || context.statistics_owner_542!=owner ||
+     !players_[owner].craft_entity_index ||
+     players_[owner].craft_entity_index!=craft_registry_.indices[owner] ||
+     updated[15]!=1 || (updated[0x33]>>5)!=owner)
+    return ArenaEntityFinalization::Invalid;
+  const auto index=*players_[owner].craft_entity_index;
+  if(index>=storage_.banks[storage_.read_bank].size() ||
+     storage_.banks[storage_.read_bank][index][15]!=1)
+    return ArenaEntityFinalization::Invalid;
+  return finalize_arena_entity_update(storage_,index,updated,statistics_[owner],context,frame);
+}
 ArenaConstructionContext
 ArenaConstructionSimulation::context_for(ArenaConstructionRequest r) const {
   auto flat = r.grid_z * 24 + r.grid_x;

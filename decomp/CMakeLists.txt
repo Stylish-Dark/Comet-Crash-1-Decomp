@@ -15,6 +15,7 @@ add_library(comet_native_recovery STATIC
     src/arena_entity_core.cpp
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
+    src/arena_entity_finalization.cpp
     src/arena_construction_runtime.cpp
     src/arena_factory_production.cpp
     src/arena_unit_entity.cpp
@@ -572,4 +573,15 @@ if(MSVC)
  target_compile_options(comet_arena_craft_registration_test PRIVATE /UNDEBUG)
 else()
  target_compile_options(comet_arena_craft_registration_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_entity_finalization_test tests/arena_entity_finalization.cpp)
+target_link_libraries(comet_arena_entity_finalization_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_entity_finalization_test COMMAND comet_arena_entity_finalization_test)
+if(MSVC)
+ target_compile_options(comet_arena_entity_finalization_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_entity_finalization.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_entity_finalization_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_entity_finalization.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

@@ -11,27 +11,29 @@ game or synthetic skirmish is not the requested finished port.
 [the fidelity inventory](docs/decomp/fidelity-status.md). Existing source-backed
 subsystems remain useful. Preview replacements do not count as recovered logic.
 
-**All prior subjective completion percentages, including 92%, are withdrawn.**
-Neither full recovery coverage nor remaining effort has been measured adequately.
-Do not infer overall completion from test counts or isolated bit-exact fixtures.
+**Earlier subjective estimates, including 92%, remain withdrawn.** The new
+full-deliverable planning baseline is **about 25%, plausible range 15–35%**.
+See [the assessment and its limits](docs/decomp/completion-assessment.md).
+This is not measured decompilation coverage or an elapsed/remaining-time ratio.
 
 ## Current boundary and next work
 
-Active branch: `work/original-craft-registration-20261020`, stacked above PR #58
-at7379aa5. Recovered original configured/center-fallback spawn selection and
-CFA30..CFC0C body creation/registration/player-root links/ordered audio requests.
-The simulation exposes this actual storage-backed creation boundary, with an
-explicit required audio callback; no preview auto-enable or fabricated audio.
-See docs/decomp/original-craft-registration.md for provenance and limits.
+Active branch: `work/original-entity-finalization-20261021`, stacked above PR #59
+at6a79b4b. Original6578 ordinary live/removal finalization now connects staged
+XYZ/velocity output to registered storage. Removal uses48C8 and3400/2DF8 fixed
+kind63 records, retains original cells, collects only at the exact frame+3 serial,
+and exposes explicit completed-job FIFO identity release while preserving reused
+slot bytes. The actual simulation exposes finalize_player_craft for registered
+bodies. See docs/decomp/original-entity-finalization.md for source and boundaries.
 
-Next: original9A70 preparation, complete10290 controller/action/carry paths and
-6578 commit, plus source scheduling and actual audio. The root/mode selection of
-which configured spawn pair to supply and surrounding bootstrap gates remain
-caller inputs. F3 is still a separate preview object; creation is not full craft
-simulation. Do not credit this as completing carrying/combat/missions.
+Next: original9A70 preparation and10290 controller/action/carry dependencies.
+3940 change effects and6260 spatial branch are explicit unrecovered results;
+full source job scheduling/audio/bootstrap remain open. F3 is still a separate
+preview object. This milestone is a shared commit/lifecycle dependency, not a
+complete controller or integrated original gameplay loop.
 
 Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
-and complete presentation remain substantial open areas. Overall effort unknown.
+and complete presentation remain substantial open areas.
 
 ## Historical state entries — superseded priorities and withdrawn estimates
 

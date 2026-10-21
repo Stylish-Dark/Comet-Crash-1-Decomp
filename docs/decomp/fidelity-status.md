@@ -1,14 +1,17 @@
-# Original-game recovery status — 2026-10-20
+# Original-game recovery status — 2026-10-21
 
-This is a scoped starting inventory, not a complete function audit or a completion
-percentage. Prior subjective percentages, including 92%, are withdrawn. Source: the existing recovery documents and PRs #49–58. The initial correction recovered no game code; the later creation milestone below does. Overall effort remaining is unknown.
+This is a scoped inventory, not a complete function audit or measured coverage.
+Prior subjective percentages, including92%, remain withdrawn. The new overall
+planning estimate is about 25% (plausible 15–35%); see completion-assessment.md for
+its basis and limits. Source: recovery documents, PRs #49–59 and the shared
+entity-finalization milestone.
 
 | Area | Evidence-backed work available | What prevents claiming original-game completion |
 | --- | --- | --- |
 | Assets and rendering | Original data loaders, model/texture rendering and recovered renderer structures | Complete original scene composition, effects, menus and HUD are not established |
 | Construction and ground simulation | Recovered construction, production, movement, contact, capture, base impact and death paths | Full original callers, scheduling, lifecycle and all entity paths remain incomplete |
 | Weapons | Selected Tesla, cannon and area-effect paths | Remaining weapon/target families, scheduling and effects remain incomplete; cannon has numeric fallbacks and unproven full-update parity |
-| Player craft | Original configured/center spawn, body creation/registration/player links, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry/commit and original scheduling remain incomplete; audio requests require an explicit implementation |
+| Player craft | Original configured/center spawn, body creation/registration/player links, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
 | Craft numerical fidelity | Scoped instruction comparisons and public fixtures | Input cap uses portable math; exact aligned-Z facing and subnormal/hardware behavior are excluded from matching claims |
 | Craft caller policy | Preview moves and renders a ship using recovered leaves | Initial height, mode choice, input lifecycle and control/render ownership contain native policy; deployment remains at the base |
 | AI | Working native preview opponent | Original decisions and strategy are not recovered by the preview opponent |
@@ -18,12 +21,14 @@ percentage. Prior subjective percentages, including 92%, are withdrawn. Source: 
 
 ## First recovery priority
 
-The original craft creation path is now recovered and exposed through the actual
-simulation storage/player registry; see original-craft-registration.md. Next close
-the original9A70 staging, full10290 state/action/carry controller and6578 commit
-with source caller/scheduling semantics. Creation alone does not connect the F3
-preview or complete craft gameplay. Original audio and outer bootstrap gates
-remain unresolved; do not silently substitute them.
+Original craft creation and shared6578 movement/removal finalization are now
+available through actual storage/player registration. See original-craft-registration.md
+and original-entity-finalization.md. Tombstones use the original fixed constructor,
+exact serial admission and explicit completed-phase pool release. Original3940
+change effects and6260 spatial branches are visible recovery boundaries. Next
+close9A70 staging and10290 state/action/carry controller, then source scheduling.
+This does not connect F3 or complete craft gameplay. Audio and outer bootstrap
+remain unresolved.
 
 Then complete original action/carry/release integration and the remaining original
 AI, mission/economy/campaign paths. These are essential recovery, not polish.
