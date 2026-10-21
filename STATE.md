@@ -18,27 +18,25 @@ This is not measured decompilation coverage or an elapsed/remaining-time ratio.
 
 ## Current boundary and next work
 
-Active branch: `work/original-preparation-effects-20261021`, stacked above PR #61
-atfd733966. Recovered9EC8..A268 consumed-effect continuation and3510..387C counted
-request construction. Original health cap/suppression, impulse cap/mass/percent,
-owner-state/radius, counter emission, relative extension reference and statistics
-gates now follow existing staging/consumption. The actual simulation exposes
-registered-body completion; it does not auto-enable the preview/controller.
+Active branch: `work/original-request-publication-20261021`, stacked above PR #62
+atd9c130409. Original9A70 preparation is recovered through counted requests;
+now1E090 publication and2AD8 FIFO allocation are recovered too. Preparation can
+publish into the caller-owned native record pool with original batch32/reserve128,
+partial exhaustion, identity metadata and continuous phase distribution. Original
+queue lock/DMA become explicit caller-serialized synchronous native operations.
+No queue bootstrap, downstream consumption or scheduling policy is invented.
 
-Private10,000 full9A70 type1 cases match complete context and counted requests,
-including previously blocked counter-emission cases. Source1E090 publication is
-an explicit required sink; the full-routine comparison uses cached accumulator
-consumption, while reservation/retry behavior was compared in PR #61. Details:
-docs/decomp/original-preparation-effects.md. No compiler/hardware matching claim.
+10,000 complete original publisher/allocator cases match whole synthetic shared
+images, including untouched bytes, shuffled FIFO order, wrapping, exhaustion and
+both phase modes. Three public original-output fingerprints cover odd counts.
+See [publication scope](docs/decomp/original-request-publication.md). This is
+serial original-output parity, not matching compilation or hardware concurrency.
 
-Next: full10290 player controller/state/actions/carry, actual source1E090 entity
-publication and original snapshot/reservation/job scheduling.3510 is now identified
-as a counter-to-counted-request producer; the earlier "death path" label did not
-establish the full death lifecycle.3940 effects/6260 spatial work, numeric exclusions
-and source audio/bootstrap remain open. F3 is separate from recovered world code.
-
-Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
-and complete presentation remain substantial open areas.
+Next: full10290 player controller/state/actions/carry and original downstream
+request consumption, bootstrap and snapshot/job ownership. Use recovered9A70,
+publication and6578 as connected dependencies; do not mistake selected preview
+arithmetic for a completed controller. Keep3940/6260 and numeric exclusions
+explicit. Full-port planning baseline remains about25%, plausible15–35%.
 
 ## Historical state entries — superseded priorities and withdrawn estimates
 

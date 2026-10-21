@@ -1,5 +1,23 @@
 # SESSION LOG
 
+## 2026-10-21 — Original request publication and FIFO allocation
+
+Continued above PR #62. Recovered1E090..1E47C plus2AD8 allocation: ordered FIFO
+identities, batch32/reserve128, partial exhaustion, full128-byte descriptors,
+16-bit identities, continuous optional phase distribution and all four source
+availability lanes. Caller-owned serialized native pool writes replace original
+lock/DMA interfaces; no bootstrap, consumer or scheduler is fabricated. Actual
+preparation emitter is connected to the publisher in tests.10,000 full original
+publisher/allocator instruction cases match entire synthetic shared images,
+including7,481 exhausted and472 wrapped cases. Three public odd-count phase
+fingerprints plus focused exhaustion/integration cases. Review found no logic
+blockers; CMake source/test/strict-FP registration verified near the library.
+Next full10290 actions/carry, original consumers/bootstrap and job ownership.
+Release native build and all71 CTests passed. One local test launch permission
+was restored and only that launch retried. Safety/diff checks passed.
+Full-port estimate remains about25% (plausible15–35%); not compiler matching,
+hardware concurrency or a completed controller.
+
 ## 2026-10-21 — Original preparation completion and counted requests
 
 Continued PR #61 atfd733966 after both CI workflows passed. Restored private

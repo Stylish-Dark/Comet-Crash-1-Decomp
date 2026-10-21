@@ -1,4 +1,5 @@
 #include "comet/arena_preparation_effects.hpp"
+#include "comet/arena_request_publication.hpp"
 #include "comet/arena_player_craft.hpp"
 #include "comet/arena_construction_simulation.hpp"
 #include <algorithm>
@@ -28,6 +29,14 @@ int main(){
   [&](const ArenaCounterEmissionRequest& r){requests.push_back(r);})==ArenaPreparationCompletion::Prepared);
  assert(requests.size()==1 && requests[0].count==1 && requests[0].descriptor[15]==72);
  assert(death[0x34]==0 && death[0x35]==0);
+ // Bind the recovered publisher, rather than stopping at captured requests.
+ ArenaRequestPublicationQueue publication;publication.records.resize(160);
+ publication.free_ring.resize(160);publication.available=160;
+ for(unsigned i=0;i<160;++i)publication.free_ring[i]=i;
+ death=death_before;
+ assert(complete_arena_entity_preparation(death,s,effects,statistics,&scratch,
+  [&](const ArenaCounterEmissionRequest& r){assert(publish_arena_request(publication,r).status==ArenaRequestPublicationStatus::Published);})==ArenaPreparationCompletion::Prepared);
+ assert(publication.available==159&&publication.head==1&&publication.records[0][15]==72);
 
  // Source3510 decomposition/order and full reused-byte handling.
  auto counter=before;counter[0x34]=0;counter[0x35]=27;scratch.fill(0x5a);requests.clear();
