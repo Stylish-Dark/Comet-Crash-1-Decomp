@@ -89,3 +89,10 @@ root are explicit NeedsNumericRecovery boundaries; zero mass is unsupported.
 Source snapshot production, actual1E090 entity publication, original reservation/
 job scheduling and full controller/actions/carry remain open. No approximate
 replacement is silently used for those dependencies.
+
+## Publication continuation
+
+[Original1E090/2AD8 publication](original-request-publication.md) now supplies the
+required sink using caller-owned native FIFO/pool storage. Queue bootstrap,
+downstream consumption and original scheduling remain open. The callback is no
+longer an unrecovered publication algorithm; its ownership/binding stays explicit.

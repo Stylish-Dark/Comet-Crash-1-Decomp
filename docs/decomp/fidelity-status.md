@@ -11,7 +11,7 @@ entity-finalization/preparation milestones.
 | Assets and rendering | Original data loaders, model/texture rendering and recovered renderer structures | Complete original scene composition, effects, menus and HUD are not established |
 | Construction and ground simulation | Recovered construction, production, movement, contact, capture, base impact and death paths | Full original callers, scheduling, lifecycle and all entity paths remain incomplete |
 | Weapons | Selected Tesla, cannon and area-effect paths | Remaining weapon/target families, scheduling and effects remain incomplete; cannon has numeric fallbacks and unproven full-update parity |
-| Player craft | Original configured/center spawn, body creation/registration/player links, original9A70 preparation with explicit emission/transport boundaries, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
+| Player craft | Original configured/center spawn, body creation/registration/player links, original9A70 preparation, counted requests and original1E090/2AD8 publication with explicit native ownership/transport boundaries, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
 | Craft numerical fidelity | Scoped instruction comparisons and public fixtures | Input cap uses portable math; exact aligned-Z facing and subnormal/hardware behavior are excluded from matching claims |
 | Craft caller policy | Preview moves and renders a ship using recovered leaves | Initial height, mode choice, input lifecycle and control/render ownership contain native policy; deployment remains at the base |
 | AI | Working native preview opponent | Original decisions and strategy are not recovered by the preview opponent |
@@ -26,7 +26,8 @@ finalization have actual storage/player APIs. See original-preparation-effects.m
 and earlier preparation/creation notes.10,000 full9A70 type1 cases match context
 and counted requests at the explicit1E090 publication boundary. Reservation/retry
 behavior is separately covered in PR #61. Full10290 controller/actions/carry,
-actual entity publication, snapshot/job ownership and scheduling remain next.
+original request consumption, queue bootstrap, snapshot/job ownership and
+scheduling remain next. Recovered1E090/2AD8 now supplies request publication.
 Numeric exclusions,3940/6260, audio/bootstrap and full death lifecycle remain open.
 F3 remains separate.3510 constructs counted requests; it is not a complete death
 handler. Output comparisons do not establish matching compilation/hardware parity.
@@ -48,3 +49,7 @@ AI, mission/economy/campaign paths. These are essential recovery, not polish.
 See native-player-craft-initialization.md, native-craft-flight.md,
 native-craft-facing.md, native-opponent.md, native-skirmish.md and
 native-cannon-combat.md in this directory for evidence and specific exclusions.
+
+Request publication is recovered through1E090/2AD8 with serial native FIFO/pool
+ownership; see [scope and evidence](original-request-publication.md). It leaves
+queue bootstrap, original downstream consumption and scheduling open.

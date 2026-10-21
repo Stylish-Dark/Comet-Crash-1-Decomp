@@ -6,18 +6,21 @@ mouse controls. All historical subjective percentages below are withdrawn.
 ## Completed connected boundaries
 
 Creation/player registration (PR #59),6578 finalization/delayed removal (PR #60),
-9A70 staging and1AD8 consumption (PR #61), then consumed-effect continuation and
-3510 counted request construction. Actual registered-body APIs cover preparation
-through completion; required original publication/reservation dependencies remain
-explicit.10,000 full9A70 type1 cases matched context and counted requests.
-See original-preparation-effects.md for numeric/provenance/transport scope.
+9A70 staging and1AD8 consumption (PR #61), consumed-effect continuation and3510
+counted request construction (PR #62), then1E090/2AD8 request publication and FIFO
+allocation. Actual preparation can publish into a native original-record pool.
+10,000 full9A70 cases matched context/requests;10,000 separate complete publisher
+cases matched entire synthetic shared images. See original-preparation-effects.md
+and original-request-publication.md for exact parity and platform scope.
 
 ## Next coherent original-code milestone
 
 Recover full10290 player controller, state transitions and action/carry branches.
 Trace its prepared-context/body-extension and player snapshot dependencies rather
-than wiring selected arithmetic as the whole controller. Recover source1E090
-entity publication and original snapshot/reservation/job ownership where needed.
+than wiring selected arithmetic as the whole controller. Recover original downstream request consumption, queue
+bootstrap and
+snapshot/reservation/job ownership where needed. Source1E090 publication is now
+available with caller-serialized native ownership; it does not supply scheduling.
 3510 emits counted kind15 descriptors; it is not the complete death lifecycle.
 Keep3940/6260 and numeric boundaries explicit. No fabricated zero effects, render
 frame serials, guessed scheduler or replacement preview policy. Check changed
