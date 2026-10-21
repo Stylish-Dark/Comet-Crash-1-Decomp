@@ -1,5 +1,18 @@
 # SESSION LOG
 
+## 2026-10-21 — Shared original entity finalization and delayed removal
+
+Continued PR #59 at6a79b4b. Recovered6578 ordinary commit/removal,3400/2DF8 fixed
+kind63 construction,790 marker/membership handling andE00..E84 exact frame-serial
+collection. Actual construction simulation exposes registered craft commit;
+completed-phase release returns FIFO identities without clearing original reused
+slot bytes.3940 effects/6260 spatial updates and original scheduler remain explicit
+unrecovered boundaries. Details: docs/decomp/original-entity-finalization.md.
+New overall planning baseline: about 25%, plausible 15–35%; see completion-assessment.md.
+Earlier 92% remains withdrawn. Release native build and all 67 headless CTests passed. Focused independent
+source review found one kind63 membership issue, fixed and covered by the test.
+No new compiler/hardware matching claim.
+
 ## 2026-10-20 — Original craft spawn, registration and player linkage
 
 Continued PR #58 at7379aa5. Source-traced configured/center spawn selection and

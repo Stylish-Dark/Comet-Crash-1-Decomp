@@ -3,23 +3,26 @@
 Follow AGENTS.md. The deliverable is the original game adapted to PC, including
 mouse controls. All historical subjective percentages below are withdrawn.
 
-## Completed connected boundary — original craft creation
+## Completed connected boundaries
 
-Recovered configured-X / missing-X center arrangement, constructor ->CA514 both
-banks/cells/FIFO ->player+220/root+3224+2owner ->ordered1326C0 requests and retained
-player+228/+22C words. The simulation API exposes this real body/player linkage.
-Audio is an explicit dependency, not fabricated success. F3 remains separate.
-See docs/decomp/original-craft-registration.md. No completion percentage assigned.
+Original craft creation/registration/player links (PR #59), then shared6578
+commit/removal and original3400 tombstones/exact-serial collection. The actual
+simulation now accepts a registered craft's staged movement through this commit
+boundary. Explicit job completion returns FIFO identities and preserves reused
+slot memory. See original-entity-finalization.md; this does not complete10290.
 
 ## Next coherent original-code milestone
 
-Recover original craft9A70 preparation,10290 controller state/action/carry paths
-and6578 commit, using the now-available original body/player registration.
-Trace caller/snapshot/state dependencies and preserve original side effects and
-update order. Recover the blocking original dependency if any path cannot yet be
-connected; do not invent flags or silently wire selected arithmetic as the whole
-controller. The outer spawn mode/configuration selection and real audio also
-remain incomplete. Use proportionate checks, then advance.
+Recover original9A70 preparation and10290 controller state/action/carry paths
+using the registered body and finalization boundary. Trace caller snapshot/state
+and preserve side effects/order. Recover3940 change effects and6260 spatial
+updates when their caller branch is reached; these currently return explicit
+recovery boundaries without writes. Recover original job dispatch/completion
+ordering before making this an automatic simulation loop. Do not infer a frame
+serial from rendering or silently substitute preview input/AI/action policies.
+
+Overall full-port planning baseline: about 25%, plausible 15–35%; see
+completion-assessment.md. Keep this separate from measured source coverage.
 
 ## Following recovery areas
 

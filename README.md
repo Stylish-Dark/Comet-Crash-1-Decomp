@@ -2,9 +2,9 @@
 
 **Project contract, corrected 2026-10-20:** faithfully recover the original
 game and adapt it to PC with mouse-capable controls. Current focus is original
-code recovery, not expansion of replacement preview behavior. All previous
-subjective progress percentages are withdrawn; overall effort remaining is
-unknown. See [AGENTS.md](AGENTS.md) and [fidelity status](docs/decomp/fidelity-status.md).
+code recovery, not expansion of replacement preview behavior. Earlier
+subjective progress percentages remain withdrawn. The full-port planning baseline
+is about 25% (plausible 15–35%); see [assessment](docs/decomp/completion-assessment.md). See [AGENTS.md](AGENTS.md) and [fidelity status](docs/decomp/fidelity-status.md).
 
 
 Native PC source-recovery project for **Comet Crash** (PS3, NPEB00142 v1.00).
