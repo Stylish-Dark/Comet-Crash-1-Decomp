@@ -4,14 +4,14 @@ This is a scoped inventory, not a complete function audit or measured coverage.
 Prior subjective percentages, including92%, remain withdrawn. The new overall
 planning estimate is about 25% (plausible 15–35%); see completion-assessment.md for
 its basis and limits. Source: recovery documents, PRs #49–59 and the shared
-entity-finalization milestone.
+entity-finalization/preparation milestones.
 
 | Area | Evidence-backed work available | What prevents claiming original-game completion |
 | --- | --- | --- |
 | Assets and rendering | Original data loaders, model/texture rendering and recovered renderer structures | Complete original scene composition, effects, menus and HUD are not established |
 | Construction and ground simulation | Recovered construction, production, movement, contact, capture, base impact and death paths | Full original callers, scheduling, lifecycle and all entity paths remain incomplete |
 | Weapons | Selected Tesla, cannon and area-effect paths | Remaining weapon/target families, scheduling and effects remain incomplete; cannon has numeric fallbacks and unproven full-update parity |
-| Player craft | Original configured/center spawn, body creation/registration/player links, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
+| Player craft | Original configured/center spawn, body creation/registration/player links, original9A70 state staging, selected flight arithmetic, arena containment and ordinary movement-facing | Outer bootstrap/configuration selection, full controller state/action/carry and original scheduling remain incomplete; audio requests require an explicit implementation |
 | Craft numerical fidelity | Scoped instruction comparisons and public fixtures | Input cap uses portable math; exact aligned-Z facing and subnormal/hardware behavior are excluded from matching claims |
 | Craft caller policy | Preview moves and renders a ship using recovered leaves | Initial height, mode choice, input lifecycle and control/render ownership contain native policy; deployment remains at the base |
 | AI | Working native preview opponent | Original decisions and strategy are not recovered by the preview opponent |
@@ -21,14 +21,15 @@ entity-finalization milestone.
 
 ## First recovery priority
 
-Original craft creation and shared6578 movement/removal finalization are now
-available through actual storage/player registration. See original-craft-registration.md
-and original-entity-finalization.md. Tombstones use the original fixed constructor,
-exact serial admission and explicit completed-phase pool release. Original3940
-change effects and6260 spatial branches are visible recovery boundaries. Next
-close9A70 staging and10290 state/action/carry controller, then source scheduling.
-This does not connect F3 or complete craft gameplay. Audio and outer bootstrap
-remain unresolved.
+Original craft creation,9A70..9EC0 state staging and shared6578 finalization now
+have actual storage/player APIs. See original-entity-preparation.md and earlier
+creation/finalization notes. Staging matches full context output across10,000
+private original-instruction cases; it stops BEFORE1AD8. The complete1AD8 consumer is now recovered separately: pending gate, fresh
+reservation, clear/retry/local restore, with another10,000 original-instruction
+comparisons. Platform reservation callbacks remain required; automatic record
+binding/job ownership is open. Next9EC8..A268 continuation and3510, then full10290
+controller/action/carry and source scheduling.
+3940/6260 effects/spatial branches, audio and bootstrap remain open; F3 is separate.
 
 Then complete original action/carry/release integration and the remaining original
 AI, mission/economy/campaign paths. These are essential recovery, not polish.

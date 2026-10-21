@@ -18,19 +18,25 @@ This is not measured decompilation coverage or an elapsed/remaining-time ratio.
 
 ## Current boundary and next work
 
-Active branch: `work/original-entity-finalization-20261021`, stacked above PR #59
-at6a79b4b. Original6578 ordinary live/removal finalization now connects staged
-XYZ/velocity output to registered storage. Removal uses48C8 and3400/2DF8 fixed
-kind63 records, retains original cells, collects only at the exact frame+3 serial,
-and exposes explicit completed-job FIFO identity release while preserving reused
-slot bytes. The actual simulation exposes finalize_player_craft for registered
-bodies. See docs/decomp/original-entity-finalization.md for source and boundaries.
+Active branch: `work/original-craft-preparation-20261021`, stacked above PR #60
+at3fb077a. Recovered original9A70..9EC0 state staging before accumulator consumption:
+packed state, quaternion forward vector, radii/health, owner/stage, grid and tile
+visibility. The simulation stages its actual registered player body with an explicit
+original snapshot and reused work context. Private original-instruction comparison:
+10,000 cases, all16,640,000 context bytes exact. No compiler/hardware matching claim.
+See docs/decomp/original-entity-preparation.md.
 
-Next: original9A70 preparation and10290 controller/action/carry dependencies.
-3940 change effects and6260 spatial branch are explicit unrecovered results;
-full source job scheduling/audio/bootstrap remain open. F3 is still a separate
-preview object. This milestone is a shared commit/lifecycle dependency, not a
-complete controller or integrated original gameplay loop.
+Also recovered the complete1AD8..2050 consumer: original pending gate, fresh
+reserved snapshot, exact shared clear mask, conditional-write retry and local
+consumed-data restoration. consume_arena_prepared_accumulator operates on+300;
+required platform reservation callbacks are explicit. Another10,000 private
+original-instruction cases match local/shared records and all outputs, with0..3
+failed writes. Native automatic scheduler/record ownership remains open.
+
+Next blocking path:9EC8..A268 preparation continuation and its3510 death dependency,
+then full10290 controller/action/carry.6578 commit/removal remains available from
+PR #60;3940 effects/6260 spatial work and original source scheduling/audio/bootstrap
+remain open. F3 is separate. Do not treat staging/consumption as the full update.
 
 Original AI, mission/campaign rules, remaining entities/weapons, audio/persistence
 and complete presentation remain substantial open areas.

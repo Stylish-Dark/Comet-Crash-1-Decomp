@@ -160,6 +160,23 @@ ArenaCraftRegistration ArenaConstructionSimulation::create_player_craft(
   return register_arena_player_craft(storage_,players_[owner],craft_registry_,
       owner,*resolved,reused_slot,auxiliary);
 }
+bool ArenaConstructionSimulation::stage_player_craft_preparation(
+    std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,
+    ArenaEntityWorkContext& context) const {
+  if(owner>=players_.size() || storage_.read_bank>1 ||
+     !players_[owner].craft_entity_index ||
+     players_[owner].craft_entity_index!=craft_registry_.indices[owner])return false;
+  const auto index=*players_[owner].craft_entity_index;
+  if(index>=storage_.banks[storage_.read_bank].size())return false;
+  const auto& body=storage_.banks[storage_.read_bank][index];
+  if(body[15]!=1 || (body[0x33]>>5)!=owner)return false;
+  auto read=[&](unsigned o){return std::uint32_t(snapshot[o])<<24|
+      std::uint32_t(snapshot[o+1])<<16|std::uint32_t(snapshot[o+2])<<8|snapshot[o+3];};
+  if(read(0x28d8)!=storage_.width || read(0x28dc)!=storage_.height)return false;
+  auto next=context;std::copy(body.begin(),body.end(),next.begin());
+  if(!stage_arena_entity_preparation(next,snapshot))return false;
+  context=next;return true;
+}
 ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
     std::uint8_t owner,const ArenaEntitySlot& updated,
     const ArenaEntityFinalizationContext& context,std::uint32_t frame) {
