@@ -1,5 +1,21 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-22 — Connected original ordinary player controller
+
+Active branch: `work/original-player-control-20261022`, above completion-plan PR #64.
+P1 now executes ordinary mode0 original10290 through registered entity-bank commit
+and renderer-facing scene projection. P3 ordinary containment/facing and P6 commit
+integration advanced; full P1 and G1 are not complete. Source position/quaternion
+update delays, pending allocation failure and owner-timer emission are preserved.
+9,983 accepted original comparisons match full contexts/scratch/callbacks;11
+contact-effect boundaries and6 numeric-domain exclusions are explicit. See
+[scope, remaining branch ledger and effort forecast](docs/decomp/original-player-control.md).
+Release build and all72 CTests pass (one pruned zero-byte executable was relinked);
+repository safety and diff checks pass. Next: connected action/carry and required pending transport; then remaining
+controller/lifecycle/scheduling/input. G1 forecast16/32/64 focused hours remaining
+is provisional/low confidence; no full-game completion date. Overall estimate
+about25%, plausible15–35%; no playable gate accepted by this checkpoint.
+
 Follow AGENTS.md. The deliverable is the original game adapted to PC, including
 mouse controls. All historical subjective percentages below are withdrawn.
 
@@ -26,7 +42,7 @@ allocation. Actual preparation can publish into a native original-record pool.
 cases matched entire synthetic shared images. See original-preparation-effects.md
 and original-request-publication.md for exact parity and platform scope.
 
-## Next coherent original-code milestone
+## Parent milestone (now partially implemented)
 
 Recover full10290 player controller, state transitions and action/carry branches.
 Trace its prepared-context/body-extension and player snapshot dependencies rather

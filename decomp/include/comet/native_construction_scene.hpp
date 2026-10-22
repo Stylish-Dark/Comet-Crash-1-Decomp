@@ -20,6 +20,27 @@ public:
   ArenaConstructionSubmit enqueue(ArenaConstructionRequest);
   ArenaConstructionSimulationStep step();
   ArenaConstructionTick advance(float);
+  ArenaCraftRegistration create_player_craft(std::uint8_t owner,
+      const std::array<float,4>& spawn,const ArenaEntitySlot& reused,
+      const ArenaCraftAuxiliaryStart&);
+  bool stage_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,ArenaEntityWorkContext& work) const {
+    return simulation_.stage_player_craft_preparation(owner,snapshot,work);
+  }
+  ArenaPreparationCompletion complete_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,const ArenaAccumulatorConsumption& effects,
+      ArenaEntityWorkContext& work,ArenaEmissionDescriptor* scratch=nullptr,
+      const ArenaCounterEmissionSink& emit={}) {
+    return simulation_.complete_player_craft_preparation(owner,snapshot,effects,work,scratch,emit);
+  }
+  ArenaPlayerCraftControlStep advance_prepared_player_craft(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaEntityWorkContext&,
+      std::uint32_t original_frame,ArenaPlayerControlScratch* scratch=nullptr,
+      const ArenaPlayerPendingTransport& pending={},const ArenaCounterEmissionSink& emitter={});
+  // Resume retained controller output without replaying request callbacks.
+  ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
+      const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,
+      std::uint32_t original_frame);
   bool set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl control) { return simulation_.set_ground_deployment(owner,control); }
   void set_ground_contacts(bool enabled) { simulation_.set_ground_contacts(enabled); }
   void set_ground_dynamics(bool enabled) { simulation_.set_ground_dynamics(enabled); }

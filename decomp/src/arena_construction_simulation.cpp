@@ -212,6 +212,38 @@ ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
     return ArenaEntityFinalization::Invalid;
   return finalize_arena_entity_update(storage_,index,updated,statistics_[owner],context,frame);
 }
+ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player_craft(
+    std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+    ArenaEntityWorkContext& work,std::uint32_t frame,ArenaPlayerControlScratch* scratch,
+    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter){
+  ArenaPlayerCraftControlStep result;
+  auto read=[&](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
+      std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
+  if(owner>=players_.size()||storage_.read_bank>1||!players_[owner].craft_entity_index||
+     players_[owner].craft_entity_index!=craft_registry_.indices[owner]||
+     work[15]!=1||(work[0x33]>>5)!=owner||
+     (unsigned(work[0x542])<<8|work[0x543])!=owner||
+     read(snapshot,0x28d8)!=storage_.width||read(snapshot,0x28dc)!=storage_.height)return result;
+  const auto index=*players_[owner].craft_entity_index;
+  if(index>=storage_.banks[storage_.read_bank].size()||
+     storage_.banks[storage_.read_bank][index][15]!=1||
+     (unsigned(work[12])<<8|work[13])!=index)return result;
+  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter);
+  if(result.control.status!=ArenaPlayerControlStatus::Advanced)return result;
+  auto scalar=[&](unsigned o){return std::bit_cast<float>(read(work,o));};
+  for(unsigned i=0;i<4;++i){result.commit.position_480[i]=scalar(0x480+4*i);result.commit.velocity_4a0[i]=scalar(0x4a0+4*i);}
+  result.commit.previous_scalar_38_4e8=scalar(0x4e8);result.commit.statistics_owner_542=owner;
+  result.commit.removal_590=work[0x590];result.commit.removal_handled_593=work[0x593];
+  result.commit.auxiliary_596=work[0x596];result.commit.changed_59a=work[0x59a];
+  ArenaEntitySlot body;std::copy_n(work.begin(),256,body.begin());
+  result.finalization=finalize_player_craft(owner,body,result.commit,frame);
+  if(result.finalization!=ArenaEntityFinalization::Committed){
+    const auto pc=result.finalization==ArenaEntityFinalization::NeedsChangeEffects?0x3940u:
+        result.finalization==ArenaEntityFinalization::NeedsSpatialRecovery?0x6260u:0x6578u;
+    result.control={ArenaPlayerControlStatus::NeedsFinalization,pc};
+  }
+  return result;
+}
 ArenaConstructionContext
 ArenaConstructionSimulation::context_for(ArenaConstructionRequest r) const {
   auto flat = r.grid_z * 24 + r.grid_x;

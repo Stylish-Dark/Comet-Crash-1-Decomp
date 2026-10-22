@@ -64,6 +64,7 @@ add_library(comet_native_recovery STATIC
     src/arena_cannon_runtime.cpp
 
     src/arena_player_craft.cpp
+    src/arena_player_control.cpp
     src/arena_craft_facing.cpp
     src/arena_craft_flight.cpp
     src/native_pilot.cpp
@@ -633,4 +634,15 @@ if(MSVC)
 else()
  target_compile_options(comet_arena_preparation_effects_test PRIVATE -UNDEBUG)
  set_source_files_properties(src/arena_preparation_effects.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_player_control_test tests/arena_player_control.cpp)
+target_link_libraries(comet_arena_player_control_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_player_control_test COMMAND comet_arena_player_control_test)
+if(MSVC)
+ target_compile_options(comet_arena_player_control_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_player_control.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_player_control_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_player_control.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()
