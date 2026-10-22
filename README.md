@@ -2,9 +2,9 @@
 
 ## Current recovery direction — 2026-10-21
 
-The active source-recovery work is on [work/original-player-control-20261022](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-control-20261022/STATE.md), through PR #65. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+The active source-recovery work is on [work/original-player-actions-20261023](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/STATE.md), through PR #66. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
 
-The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-control-20261022/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
+The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
 
 
 Native PC source-recovery project for **Comet Crash** (PS3, NPEB00142 v1.00).
@@ -17,7 +17,7 @@ This repository contains original tooling/code and reverse-engineering metadata 
 
 ## Completion map
 
-[The current execution plan](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-control-20261022/PROJECT_PLAN.md) tracks29 work items,
+[The current execution plan](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/PROJECT_PLAN.md) tracks29 work items,
 what is done/partial/open, dependency order and runnable acceptance gates.
 Next: P1 original controller toward G1 original player loop, then G2 first
 original mission. Planning changes receive no game-completion credit.
