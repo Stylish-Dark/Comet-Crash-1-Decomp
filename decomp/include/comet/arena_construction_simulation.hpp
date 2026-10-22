@@ -14,7 +14,13 @@
 #include "comet/arena_entity_finalization.hpp"
 #include "comet/arena_entity_preparation.hpp"
 #include "comet/arena_preparation_effects.hpp"
+#include "comet/arena_player_control.hpp"
 namespace comet::decomp {
+struct ArenaPlayerCraftControlStep {
+ ArenaPlayerControlResult control;
+ ArenaEntityFinalization finalization=ArenaEntityFinalization::Invalid;
+ ArenaEntityFinalizationContext commit;
+};
 struct ArenaConstructionAccount {
   ArenaRoutePlayer route;
   float resource = 0, resource_max = 0;
@@ -169,6 +175,15 @@ public:
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,
       std::uint32_t original_frame);
+  // Complete source controller output ->6578 ->actual registered banks/cells.
+  // On NeedsFinalization, context retains advanced controller output: resume
+  // with finalize_player_craft and returned commit, never rerun side effects.
+  ArenaPlayerCraftControlStep advance_prepared_player_craft(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaEntityWorkContext&,std::uint32_t original_frame,
+      ArenaPlayerControlScratch* scratch=nullptr,
+      const ArenaPlayerPendingTransport& pending={},
+      const ArenaCounterEmissionSink& emitter={});
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }

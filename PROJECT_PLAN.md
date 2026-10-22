@@ -1,6 +1,6 @@
 # Comet Crash completion plan
 
-Updated 2026-10-22 (Australia/Sydney). Implementation baseline: PR #63,
+Updated 2026-10-22 (Australia/Sydney). Planning baseline: PR #63,
 `43075bcb22b4e4be2323f82f8344dfa160810f2d`. This is the authoritative execution
 map. STATE.md records the latest checkpoint; WORK_QUEUE.md identifies the next
 work item. Historical session entries and preview percentages cannot override it.
@@ -72,12 +72,12 @@ accept G1, claim compiler matching, or grant whole-system parity.
 
 | ID | Status at baseline | Implementation and acceptance criterion | Dependencies / existing evidence |
 | --- | --- | --- | --- |
-| P1 | Partial — next active item | Recover full10290 controller dispatch, original snapshot/control reads and state branches. Account for all reachable branches/callees; unsupported branches remain named blockers. Connect already recovered flight/facing instead of replacing controller decisions with preview flags. | F4/F5; arena_craft_flight/facing; [flight](docs/decomp/native-craft-flight.md), [facing](docs/decomp/native-craft-facing.md). Source wrapper12B88 invokes9A70 ->10290 ->6578. |
+| P1 | Partial — ordinary mode0 connected | Recover full10290 controller dispatch, original snapshot/control reads and state branches. Account for all reachable branches/callees; unsupported branches remain named blockers. Connect already recovered flight/facing instead of replacing controller decisions with preview flags. | F4/F5; arena_craft_flight/facing; [flight](docs/decomp/native-craft-flight.md), [facing](docs/decomp/native-craft-facing.md). Source wrapper12B88 invokes9A70 ->10290 ->6578. [Connected ordinary controller](docs/decomp/original-player-control.md) now executes this path into real banks/scene; alternate/action/death branches remain. |
 | P2 | Open | Recover pickup, carrying, attachment, release and other controller action branches. Requests must change the correct original world/player state, including rejection and interruption. Demonstrate each action in a connected scenario. | P1, P5; trace original branches/callees as part of controller recovery. |
 | P3 | Partial | Complete controller-gated world/peer contacts, facing/banking and attachment response; exercise collisions in the actual player context. Preserve original flag gates. | P1; existing containment, ground-contact and aim helpers.3238 is a flag8000 request path, not a terrain-query substitute. |
 | P4 | Partial | Complete player damage/death/removal/reset lifecycle and its action/carry cleanup. Demonstrate lethal and nonlethal paths; preparation health changes alone do not close this item. | F4, P1/P2/P5; existing accumulator, preparation and finalization code;3940/6260 remain explicit dependencies. |
 | P5 | Partial | Recover request queue initialization, downstream consumption/dispatch, allocation and resulting state commits needed by player actions. Preserve source ordering, reserve/failure and ownership. Publish -> consume -> observable world change must run. | F5 supplies publication only; trace original consumers and bootstrap. |
-| P6 | Partial | Recover snapshot ownership, original simulation scheduling/order and bank commit around the player loop. Bind9A70 ->10290 ->6578 to registered storage; feed renderer from committed body rather than independent NativePilot state. | P1–P5; arena_construction_simulation.hpp currently exposes separate stage/complete/finalize APIs. Native preview scheduling is not acceptance. |
+| P6 | Partial | Recover snapshot ownership, original simulation scheduling/order and bank commit around the player loop. Bind9A70 ->10290 ->6578 to registered storage; feed renderer from committed body rather than independent NativePilot state. | P1–P5; Connected ordinary10290 now joins stage/complete/finalize APIs and renderer-facing scene. Original scheduling/input remain missing; native preview scheduling is not acceptance. |
 | P7 | Partial | Recover complete original command/button lifecycle and controller abstraction. Verify press/hold/release/cancel through actual player actions. | P1/P2/P6; existing snapshot command evidence and native gamepad adapter are foundations. |
 | P8 | Open | Map mouse/keyboard to recovered commands/actions, including picking/position conversion where required. Demonstrate G1 actions with mouse and keyboard; retain controller support. | P7; platform adaptation must preserve original gameplay decisions. |
 
@@ -91,6 +91,8 @@ branches/callees. It is an intermediate source checkpoint, not G1 acceptance.
 Following checkpoints must remove that list's blockers and then execute the full
 player loop. Publishing another standalone numeric helper is insufficient unless
 a concrete failing original path requires it.
+
+Current P1 checkpoint: [ordinary controller and remaining branches](docs/decomp/original-player-control.md). Provisional G1 remaining effort16/32/64 focused hours (low/likely/high), low confidence and uncalibrated; assumptions/breakdown are in that checkpoint. G1 remains unaccepted.
 
 ## G2 work: make one original mission playable
 

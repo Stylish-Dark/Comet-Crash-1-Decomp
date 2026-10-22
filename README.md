@@ -23,6 +23,8 @@ The previous `ps3recomp` work is retained because it provides valuable exact mac
 
 This repository contains original tooling/code and reverse-engineering metadata only. **It does not contain Comet Crash binaries, assets, PKGs, decrypted EBOOTs, or Sony SDK material.** The user's legally obtained NPEB00142 v1.00 data remains private input.
 
+Latest source checkpoint: [connected ordinary original controller](docs/decomp/original-player-control.md), on `work/original-player-control-20261022`. The full original player loop remains incomplete.
+
 ## Current state
 
 - Reference title is pinned: 3,409 original PPU functions, 171 firmware imports across 18 libraries, two embedded SPU images.

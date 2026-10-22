@@ -94,7 +94,7 @@ void NativeConstructionScene::refresh_construction() {
     if (!entity.live_entity_index)
       continue;
     const auto &slot = bank[*entity.live_entity_index];
-    if (slot[15]==3 || slot[15]==5 || (slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
+    if (slot[15]==1 || slot[15]==3 || slot[15]==5 || (slot[15] >= 40 && slot[15] <= 48) || slot[15]==62) {
       auto scalar = [&](unsigned o) {
         std::uint32_t bits=0;
         for (unsigned i=0;i<4;++i) bits=(bits<<8)|slot[o+i];
@@ -231,6 +231,30 @@ ArenaConstructionTick NativeConstructionScene::advance(float t) {
   refresh_construction();
   arena_.players = simulation_.players();
   return tick;
+}
+ArenaCraftRegistration NativeConstructionScene::create_player_craft(std::uint8_t owner,
+    const std::array<float,4>& spawn,const ArenaEntitySlot& reused,const ArenaCraftAuxiliaryStart& auxiliary){
+  const auto result=simulation_.create_player_craft(owner,spawn,reused,auxiliary);
+  if(result==ArenaCraftRegistration::Registered){
+    project_dynamic_entity(*simulation_.craft_registry().indices[owner]);
+    arena_.players=simulation_.players();
+  }
+  return result;
+}
+ArenaPlayerCraftControlStep NativeConstructionScene::advance_prepared_player_craft(std::uint8_t owner,
+    std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaEntityWorkContext& work,
+    std::uint32_t frame,ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
+    const ArenaCounterEmissionSink& emitter){
+  const auto result=simulation_.advance_prepared_player_craft(owner,snapshot,elapsed,work,frame,scratch,pending,emitter);
+  if(result.control.status==ArenaPlayerControlStatus::Advanced)refresh_construction();
+  return result;
+}
+ArenaEntityFinalization NativeConstructionScene::finalize_player_craft(std::uint8_t owner,
+    const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext& context,
+    std::uint32_t frame){
+  const auto result=simulation_.finalize_player_craft(owner,updated,context,frame);
+  if(result==ArenaEntityFinalization::Committed)refresh_construction();
+  return result;
 }
 ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(
     std::uint8_t owner, std::uint8_t kind, ArenaGridPosition cell) {
