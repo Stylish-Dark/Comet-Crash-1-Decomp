@@ -1,5 +1,13 @@
 # Comet Crash 1 PC Port
 
+## Completion map — 2026-10-22
+
+See [PROJECT_PLAN.md](PROJECT_PLAN.md) for what is done, partial and missing,
+implementation order and runnable acceptance criteria. Current code baseline is
+PR #63. A preview runs; the original player loop and first original mission are
+not yet accepted. Next: P1 full controller, connected toward G1, then G2 original
+mission. Earlier preview percentages are historical and withdrawn.
+
 **Project contract, corrected 2026-10-20:** faithfully recover the original
 game and adapt it to PC with mouse-capable controls. Current focus is original
 code recovery, not expansion of replacement preview behavior. Earlier

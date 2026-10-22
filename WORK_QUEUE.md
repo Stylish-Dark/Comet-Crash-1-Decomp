@@ -3,6 +3,19 @@
 Follow AGENTS.md. The deliverable is the original game adapted to PC, including
 mouse controls. All historical subjective percentages below are withdrawn.
 
+## Execute the completion map — 2026-10-22
+
+[PROJECT_PLAN.md](PROJECT_PLAN.md) is authoritative. Next **P1**: recover full10290
+controller branches/callees and original state writes, connecting existing
+flight/facing. Recover its **P2** action/carry, **P3** contacts, **P4** lifecycle
+and **P5** queue consumers as required, then **P6** authoritative update/commit
+and **P7/P8** original commands/mouse input. **G1** requires that connected loop
+running; **G2/M8** requires a named original mission playable to completion.
+Do not substitute another isolated helper for these acceptance criteria.
+At the next source checkpoint, include P1's remaining branch/dependency list and
+a provisional effort forecast based on that inspected source. Keep implementation
+moving; no separate project-wide re-estimating mission is required.
+
 ## Completed connected boundaries
 
 Creation/player registration (PR #59),6578 finalization/delayed removal (PR #60),

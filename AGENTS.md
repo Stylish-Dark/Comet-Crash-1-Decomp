@@ -2,6 +2,16 @@
 
 Confirmed by the project owner on 2026-10-20. This governs all subsequent work.
 
+## Completion map — owner instruction 2026-10-22
+
+PROJECT_PLAN.md is the authoritative step-by-step execution map, based on PR #63.
+Read its gate/status/dependency tables before choosing implementation. Next P1:
+full original player controller, then its connected action/carry/request/update
+path toward G1; G2 is a runnable original mission. Record item IDs, status changes,
+remaining blockers and runnable evidence in each checkpoint. Preview capabilities,
+standalone helpers, planning documents and passing-test counts do not accept a
+playable gate. Do not require another user "continue" for authorized work.
+
 ## Deliverable
 
 Recover Comet Crash NPEB00142 v1.00 into readable C/C++ and adapt that recovered

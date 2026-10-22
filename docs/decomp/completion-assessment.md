@@ -13,6 +13,16 @@ a sum of passing tests, or a statement that 25% of calendar time has elapsed.
 The range expresses uncertainty, not a statistical confidence interval. The
 available evidence does not support a reliable remaining-hours or weeks forecast.
 
+## Operational completion map — 2026-10-22
+
+[PROJECT_PLAN.md](../../PROJECT_PLAN.md) now contains stable work-item IDs,
+current statuses, dependency order, completion criteria and runnable gates.
+G0 preview foundation exists; G1 original player loop and G2 first original
+mission are unaccepted. Use that map to show concrete before/after progress.
+The map itself adds no game completion. Unequal task counts cannot be converted
+into a remaining-time or overall-effort percentage. Calibrate item forecasts
+against actual comparable source/integration work as the plan is executed.
+
 ## Basis
 
 The assessment uses STATE.md, the subsystem recovery documents and the current
