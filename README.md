@@ -2,9 +2,9 @@
 
 ## Current recovery direction — 2026-10-21
 
-The active source-recovery work is on [work/original-request-publication-20261021](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-request-publication-20261021/STATE.md), through PR #63. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+The active source-recovery work is on [work/completion-plan-20261022](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/completion-plan-20261022/STATE.md), through PR #64. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
 
-The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-request-publication-20261021/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
+The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/completion-plan-20261022/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
 
 
 Native PC source-recovery project for **Comet Crash** (PS3, NPEB00142 v1.00).
@@ -14,6 +14,13 @@ The project is now explicitly a **decompilation/native rewrite**, not a static-r
 The previous `ps3recomp` work is retained because it provides valuable exact machine-code lifting, function boundaries, dynamic traces and a behavioural oracle. It is no longer the target architecture.
 
 This repository contains original tooling/code and reverse-engineering metadata only. **It does not contain Comet Crash binaries, assets, PKGs, decrypted EBOOTs, or Sony SDK material.** The user's legally obtained NPEB00142 v1.00 data remains private input.
+
+## Completion map
+
+[The current execution plan](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/completion-plan-20261022/PROJECT_PLAN.md) tracks29 work items,
+what is done/partial/open, dependency order and runnable acceptance gates.
+Next: P1 original controller toward G1 original player loop, then G2 first
+original mission. Planning changes receive no game-completion credit.
 
 ## Current state
 
