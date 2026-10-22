@@ -2,6 +2,8 @@
 #include "comet/arena_entity_core.hpp"
 #include "comet/arena_ground_contact.hpp"
 #include "comet/arena_craft_facing.hpp"
+#include "comet/arena_weapon_aim.hpp"
+#include "arena_spu_math.hpp"
 #include <algorithm>
 #include <bit>
 #include <cfenv>
@@ -50,6 +52,55 @@ ArenaCounterEmissionRequest owner_request(ArenaEmissionDescriptor descriptor,
  put(descriptor,0x50,owner);descriptor[0x54]=0;
  return {descriptor,1,0};
 }
+// 1080C..10910: quaternion rotation of the current forward vector.
+float nm(float a,float b,float c){return check(std::fma(-a,b,c));}
+float dot(const V& a,const V& b){return ma(a[2],b[2],ma(a[1],b[1],mul(a[0],b[0])));}
+float root(float squared){
+ const float estimate=detail::inverse_root_estimate(squared),v=mul(estimate,squared);
+ return ma(nm(estimate,v,std::bit_cast<float>(0x3f800001u)),mul(v,.5f),v);
+}
+float inverse(float squared){
+ const float estimate=detail::inverse_root_estimate(squared);
+ return check(std::fma(nm(estimate,mul(estimate,squared),std::bit_cast<float>(0x3f800001u)),estimate*.5f,estimate));
+}
+V difference(const V& a,const V& b){V v;for(unsigned i=0;i<4;++i)v[i]=sub(a[i],b[i]);return v;}
+V rotate_point(const V& q,const V& point){
+ const float projection=add(ma(point[1],q[1],mul(q[0],point[0])),mul(q[2],point[2]));
+ V intermediate{},result{};
+ for(unsigned i=0;i<4;++i){const auto j=i==3?3:(i+1)%3,k=i==3?3:(i+2)%3;
+  intermediate[i]=nm(q[k],point[j],ma(q[j],point[k],mul(q[3],point[i])));}
+ for(unsigned i=0;i<4;++i){const auto j=i==3?3:(i+1)%3,k=i==3?3:(i+2)%3;
+  result[i]=nm(q[k],intermediate[j],ma(q[j],intermediate[k],ma(q[3],intermediate[i],mul(projection,q[i]))));}
+ return result;
+}
+// 1F560's first return lane: distance from point to the gripper segment.
+// Retain the source estimate/refinement and endpoint test operation order.
+float segment_distance(const V& point,const V& a,const V& b){
+ const auto delta=difference(b,a),from_a=difference(point,a);
+ V direction=delta;const float factor=inverse(dot(delta,delta));
+ for(auto& x:direction)x=mul(x,factor);
+ const float projection=dot(from_a,direction);V nearest;
+ for(unsigned i=0;i<4;++i)nearest[i]=ma(direction[i],projection,a[i]);
+ const auto perpendicular=difference(point,nearest),left=difference(nearest,a),right=difference(b,nearest);
+ const float perpendicular_distance=root(dot(perpendicular,perpendicular));
+ const float l=dot(left,left),r=dot(right,right),epsilon=std::bit_cast<float>(0x38d1b717u);
+ if(epsilon>l||epsilon>r)return perpendicular_distance;
+ V ln=left,rn=right;const float li=inverse(l),ri=inverse(r);
+ for(unsigned i=0;i<4;++i){ln[i]=mul(ln[i],li);rn[i]=mul(rn[i],ri);}
+ if(dot(ln,rn)>std::bit_cast<float>(0x3f7ff972u))return perpendicular_distance;
+ return root(dot(r>l?from_a:difference(point,b),r>l?from_a:difference(point,b)));
+}
+// 12A70/11820: two selectors for left slot, then two for right slot.
+ArenaCounterEmissionRequest release_request(ArenaEmissionDescriptor descriptor,
+ const ArenaEntityWorkContext& context,unsigned slot,bool outward){
+ fp(descriptor,0,-100);fp(descriptor,4,-100);fp(descriptor,8,-100);
+ descriptor[15]=112;descriptor[14]=0;
+ std::copy_n(descriptor.begin(),16,descriptor.begin()+0x20);ph(descriptor,12,0);put(descriptor,0x10,18);
+ fp(descriptor,0x30,outward?-1.f:1.f);put(descriptor,0x3c,0);
+ ph(descriptor,0x40,slot);ph(descriptor,0x42,21);
+ ph(descriptor,0x44,half(context,outward?0xca:0xc8));ph(descriptor,0x46,(context[0x33]>>5)&7);
+ descriptor[0x48]=1;return {descriptor,1,0};
+}
 }
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
@@ -69,16 +120,16 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  if((context[0x33]&0x1c)&&half(context,0x1c)!=65535)return blocked(S::NeedsPeerContact,0x1162c);
  if(snapshot[base+0x29]==2)return blocked(S::NeedsAlternateControl,0x11ca8);
  if(half(context,0xb8)!=65535)return blocked(S::NeedsAttachment,0x10610);
- if(context[0xbf])return blocked(S::NeedsTargetFacing,0x106b0);
  if(word(snapshot,0x28d4))return blocked(S::NeedsBanking,0x10b60);
  auto next=context;Rounding rounding;bool owner_emission=false;
+ std::array<ArenaCounterEmissionRequest,4> action_requests{};unsigned action_count=0;
  ArenaCounterEmissionRequest request;
  try {
   const auto x=check(scalar(snapshot,base+0x10)),z=check(scalar(snapshot,base+0x14));
   if(std::abs(x)>1||std::abs(z)>1)return {};
   // The inherited aim proof excludes aligned/near-aligned Z. Reject that
   // domain here instead of introducing the preview's finite analytic limit.
-  if((x!=0||z!=0)&&std::abs(x)<mul(std::abs(z),.001f))return blocked(S::NeedsNumericRecovery,0x1a118);
+  if(!context[0xbf]&&(x!=0||z!=0)&&std::abs(x)<mul(std::abs(z),.001f))return blocked(S::NeedsNumericRecovery,0x1a118);
   put(next,0x5a0,check(scalar(next,0x74))>0?6:0);
   store(next,0x480,vector(next,0xe0));store(next,0x20,vector(next,0xf0));next[0xbd]=0;
   auto position=vector(next,0x480),velocity=vector(next,0x4a0);
@@ -103,13 +154,49 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   // 11640 sentinel branch: reset action progress and staged collision mask.
   put(next,0x5a0,0);fp(next,0x78,std::bit_cast<float>(0x3c23d70au));next[0x33]&=0xe3;
   ArenaCraftFacingState facing;facing.yaw=check(scalar(next,0xdc));facing.pending_orientation=vector(next,0xf0);
-  auto visible=advance_arena_craft_facing(facing,x,z,elapsed,false,false);
+  const auto visible=facing.pending_orientation;
+  if(next[0xbf]){
+   V direction{check(scalar(next,0x200)),check(scalar(next,0x204)),check(scalar(next,0x208)),0};
+   for(unsigned i=0;i<3;++i)direction[i]=sub(direction[i],position[i]);
+   const auto factor=inverse(dot(direction,direction));
+   for(auto& component:direction)component=mul(component,factor);
+   if(std::abs(direction[0])<mul(std::abs(direction[2]),.001f))return blocked(S::NeedsNumericRecovery,0x1a118);
+   ArenaWeaponAimQuery aim;aim.direction=direction;aim.yaw=facing.yaw;
+   aim.yaw_step=mul(mul(elapsed,std::bit_cast<float>(0x41490fdau)),std::bit_cast<float>(0x3f666666u));
+   const auto result=prepare_arena_weapon_aim(aim);if(!result)throw Numeric{};
+   facing.yaw=result->yaw;facing.pending_orientation=result->source_orientation;
+  }else advance_arena_craft_facing(facing,x,z,elapsed,false,false);
   fp(next,0xdc,facing.yaw);store(next,0x20,visible);store(next,0xf0,facing.pending_orientation);
   const auto action=check(scalar(snapshot,base+0x34));
-  if(action>0&&!next[0xbc])return blocked(S::NeedsCarry,next[0xbb]?0x11808:0x107b0);
-  // 113E0 clears attachment/target-facing state; stack-only rotated points are
-  // dead in this zero-mode branch and have no outgoing observable writes.
-  ph(next,0x1e,65535);next[0xbe]=next[0xbf]=0;next[0xbb]=1;
+  if(action>0&&!next[0xbc]){
+   if(next[0xbb]){
+    if(!scratch||!emitter)return blocked(S::NeedsActionEmission,0x12b5c);
+    auto descriptor=scratch->action_effect;
+    for(bool outward:{false,true})for(unsigned slot=0;slot<2;++slot){
+     auto release=release_request(descriptor,next,slot,outward);
+     descriptor=release.descriptor;action_requests[action_count++]=release;
+    }
+    next[0xbb]=0;
+   }
+   bool eligible=false;
+   if(half(next,0x1e)!=65535){
+    V candidate{check(scalar(next,0x200)),check(scalar(next,0x204)),check(scalar(next,0x208)),0};
+    const auto separation=difference(candidate,position);
+    if(next[0x20f]<=60&&root(dot(separation,separation))<3){
+     // 108F0..10910: segment from half to full current forward vector.
+     // The separately computed old gripper points only feed dead mode0 quaternions.
+     const auto forward=rotate_point(vector(next,0xf0),V{0,0,-1,0});
+     V middle,endpoint;for(unsigned i=0;i<4;++i){middle[i]=ma(forward[i],.5f,position[i]);endpoint[i]=add(position[i],forward[i]);}
+     eligible=true;next[0xbf]=1;
+     if(.5f>segment_distance(candidate,middle,endpoint))next[0xbe]=1;
+    }
+   }
+   if(!eligible){next[0xbe]=next[0xbf]=0;ph(next,0x1e,word(next,0x378));}
+   // 10A28's two quaternion results are stack-only and dead in mode0.
+  }else{
+   // 113E0: button release rearms the edge and clears target state.
+   ph(next,0x1e,65535);next[0xbe]=next[0xbf]=0;next[0xbb]=1;
+  }
   next[0x590]=std::uint8_t((!(check(scalar(next,0x38))>0))&(next[0xbc]^1u));
   if(next[0x590])return blocked(S::NeedsDeath,0x12288);
   const auto target_owner=word(snapshot,0x2790+4*owner);
@@ -138,6 +225,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    pending.publish(staged.pending_entity);
   }
  }
+ for(unsigned i=0;i<action_count;++i){emitter(action_requests[i]);staged.action_effect=action_requests[i].descriptor;}
  if(owner_emission){emitter(request);staged.owner_effect=request.descriptor;}
  if(scratch)*scratch=staged;context=next;return {S::Advanced,0};
 }

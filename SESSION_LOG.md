@@ -1,6 +1,26 @@
 # SESSION LOG
 
-## 2026-10-22 — Connected original ordinary player controller
+## 2026-10-23 — Original action decisions, release requests and target-facing
+
+Active code: `work/original-player-actions-20261023`, stacked above PR #65.
+P2 advances Open -> Partial: original mode0 action edge/hold/rearm, ordered four
+release requests, pickup candidate gates/fallback and target-facing continuation
+now execute in10290 through real craft bank/scene commits. A connected four-step
+scene test publishes actual1E090 records. Carried-object request consumption and
+world effects remain missing; no pickup/carry gameplay acceptance is claimed.
+See [source scope and evidence](docs/decomp/original-player-actions.md).
+Private5,000-case mixed action/facing comparison:4,994 complete accepted outputs
+exact,6 matching contact-effect boundaries. A separate ordinary-facing suite has
+4,993 exact,6 contact boundaries and1 explicit numeric exclusion. Inputs overlap;
+do not sum them as distinct coverage. Focused source review found no material issue.
+Next: original kind18 consumer/dispatch and resulting world state; then remaining
+attachment/lifecycle/banking/scheduling/input. G1/G2 unaccepted. Provisional G1
+allowance16/32/64 focused hours remains low confidence; overall full-game estimate
+about25%, plausible15–35%. Restore/build tool availability consumed some work;
+phase timing was not recorded and is not invented.
+Validation: Release build and72/72 CTests pass; repository safety and diff checks pass.
+
+## Previous checkpoint: 2026-10-22 — Connected original ordinary player controller
 
 Active branch: `work/original-player-control-20261022`, above completion-plan PR #64.
 P1 now executes ordinary mode0 original10290 through registered entity-bank commit

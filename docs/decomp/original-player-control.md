@@ -62,7 +62,9 @@ This is serial behavior parity for the stated domain, not original compiler byte
 matching, hardware concurrency parity, complete controller recovery or whole-game
 exactness. Private binaries/assets/disassembly/oracle code are excluded from git.
 
-## Remaining controller and G1 dependencies
+## Remaining controller and G1 dependencies at PR #65
+
+Updated action/target-facing entries are in [the next checkpoint](original-player-actions.md).
 
 | Work | Original source / concrete missing behavior |
 | --- | --- |

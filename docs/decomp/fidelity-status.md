@@ -53,3 +53,9 @@ native-cannon-combat.md in this directory for evidence and specific exclusions.
 Request publication is recovered through1E090/2AD8 with serial native FIFO/pool
 ownership; see [scope and evidence](original-request-publication.md). It leaves
 queue bootstrap, original downstream consumption and scheduling open.
+
+2026-10-23: [ordinary action decisions and target-facing](original-player-actions.md)
+now connect into registered craft commits and1E090 request publication. Kind18
+consumption, carried-object world changes and complete player-loop acceptance
+remain missing. See the current completion map; do not treat old branch lists as
+evidence that the new action decisions are still unimplemented.
