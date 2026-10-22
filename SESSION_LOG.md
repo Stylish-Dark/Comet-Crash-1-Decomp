@@ -1,5 +1,19 @@
 # SESSION LOG
 
+## 2026-10-22 — Owner-directed completion map
+
+Replaced the generic phase plan with PROJECT_PLAN.md's stable work IDs, scoped
+foundation evidence, done/partial/open statuses, dependencies and explicit
+completion criteria. G0 preview foundation exists; G1 player loop and G2 first
+original mission are not accepted. Full-content, presentation/audio/save/modes
+and release gates remain explicit. Next P1 original10290 controller, with actual
+branch/dependency accounting and provisional effort forecast during source work.
+AGENTS/STATE/WORK_QUEUE/README/assessment now point to that map. No game code
+changed, no game build/test rerun required, no completion-percentage credit.
+Estimate stays about25% (plausible15–35%). Checkpoint report must identify task
+movement and runnable evidence, not just repeat a rounded number/test total.
+
+
 ## 2026-10-21 — Original request publication and FIFO allocation
 
 Continued above PR #62. Recovered1E090..1E47C plus2AD8 allocation: ordered FIFO

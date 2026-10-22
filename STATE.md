@@ -16,9 +16,19 @@ full-deliverable planning baseline is **about 25%, plausible range 15–35%**.
 See [the assessment and its limits](docs/decomp/completion-assessment.md).
 This is not measured decompilation coverage or an elapsed/remaining-time ratio.
 
+## Completion map — 2026-10-22
+
+[PROJECT_PLAN.md](PROJECT_PLAN.md) now governs execution with stable work IDs,
+explicit dependencies and runnable acceptance gates. Baseline implementation is
+PR #63 at43075bcb. Active continuation: `work/completion-plan-20261022`.
+G0 preview foundation exists; G1 original player loop and G2 first original
+mission remain unaccepted. Next P1 full10290 controller with P2–P8 integration.
+Planning updates add no game-code completion credit. Overall estimate stays
+about25%, plausible15–35%; task completion is not an elapsed-time percentage.
+
 ## Current boundary and next work
 
-Active branch: `work/original-request-publication-20261021`, stacked above PR #62
+Implementation baseline branch: `work/original-request-publication-20261021`, stacked above PR #62
 atd9c130409. Original9A70 preparation is recovered through counted requests;
 now1E090 publication and2AD8 FIFO allocation are recovered too. Preparation can
 publish into the caller-owned native record pool with original batch32/reserve128,
