@@ -1,4 +1,4 @@
-# Original player action selection and release requests
+# Original player action selection and visual requests
 
 Checkpoint 2026-10-23 (Australia/Sydney), stacked above PR #65 on
 `work/original-player-actions-20261023`. Completion-map P2 changes Open -> Partial;
@@ -29,7 +29,7 @@ allocation callbacks still precede these emissions; owner emissions follow them.
 Missing required callbacks or unsupported arithmetic reject without changing
 controller/scratch or emitting any request.
 
-107B0..10AE8 now preserves source pickup selection: a non-sentinel1E candidate
+107B0..10AE8 now preserves source candidate selection: a non-sentinel1E candidate
 of kind<=60 within strict distance3 sets BF1. Original1F560's first return lane
 measures candidate distance to the current rotated-forward segment between
 half and full forward displacement. Strict distance<.5 sets BE1; an eligible
@@ -51,7 +51,7 @@ The same simulation and scene APIs now execute these branches into registered
 craft banks and renderer-facing state, using the original1E090 publication pool
 for emitted requests. A four-update press/hold/release/repress test verifies actual
 published records, preserved latch state and both committed banks. Focused tests
-also cover pickup selection -> target-facing continuation -> button-release reset,
+also cover candidate selection -> target-facing continuation -> button-release reset,
 ineligible target fallback, missing-emitter transactional rejection, request
 sequence/metadata, and preserved reused bytes. BC0 and candidate/context images
 are explicit test inputs; they are not asserted to be original mission bootstrap
@@ -82,12 +82,18 @@ this document alone.
 
 ## What remains and next work
 
-Publishing a kind18 request is not the carried object's state change. Recover its
-original consumer/dispatch and ownership next, alongside the pending2058/2198
-transport where that path requires it. Actual pickup, attached follow-through,
-carry/release world effects and interrupted/death cleanup are not yet accepted.
-Original attached/automatic-control branches, banking, real-peer/energetic contact
-effects, death/change effects, snapshot/job ordering and input adaptation remain.
+Correction from the next source checkpoint: FDFE0 initialization maps kind18 to
+2BE0/5558. That consumer reads player/target bodies and updates its own visual
+record; it does not detach or mutate the target body. The earlier “release
+requests” label and proposed carry-consumer dependency were incorrect. The
+controller/request comparison evidence above remains valid for the emitted bytes.
+See [reference fetch and attached position](original-player-references.md).
+
+Actual pickup/link creation, drop/unlink, interrupted/death cleanup and ground
+entity carrying updates remain missing. The ordinary attached-position branch is
+now recovered in the next checkpoint, but its test explicitly installs the link;
+it does not demonstrate pickup. Automatic control/banking, energetic contacts,
+death/change effects, snapshot/job ordering and input adaptation remain open.
 P1 is still Partial; P2 now has recovered controller decisions/publication but
 still lacks its connected world-change acceptance criterion. G1/G2 remain open.
 

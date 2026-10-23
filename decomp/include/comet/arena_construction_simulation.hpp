@@ -15,6 +15,7 @@
 #include "comet/arena_entity_preparation.hpp"
 #include "comet/arena_preparation_effects.hpp"
 #include "comet/arena_player_control.hpp"
+#include "comet/arena_player_references.hpp"
 namespace comet::decomp {
 struct ArenaPlayerCraftControlStep {
  ArenaPlayerControlResult control;
@@ -160,10 +161,17 @@ public:
       const std::array<float,4>& spawn, const ArenaEntitySlot& reused_slot,
       const ArenaCraftAuxiliaryStart&);
   // Stage the actual registered body through original9A70..9EC0. Caller owns
-  // the original job snapshot and reused work context; no accumulator consumed.
+  // the original job snapshot, reused work and reference caches; no accumulator
+  // consumed. This overload does not perform B500 reference fetching.
   bool stage_player_craft_preparation(std::uint8_t owner,
       std::span<const std::uint8_t,0x2900> snapshot,
       ArenaEntityWorkContext&) const;
+  // Connected B500 reference fetch +9A70 staging. Original records/tag are
+  // required caller inputs; this does not invent a snapshot or frame serial.
+  bool stage_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,ArenaEntityWorkContext&,
+      ArenaPlayerReferenceCache&,std::span<const ArenaAccumulatorRecord>,
+      std::uint32_t original_job_tag) const;
   // Complete staged/consumed preparation for the linked original craft.
   // Missing emission leaves inputs intact; retain consumption for resumption.
   ArenaPreparationCompletion complete_player_craft_preparation(std::uint8_t owner,

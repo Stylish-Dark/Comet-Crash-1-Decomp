@@ -54,7 +54,7 @@ int main(){
  auto emit=[&](const ArenaCounterEmissionRequest& request){assert(request.descriptor[15]==109&&word(request.descriptor,0x10)==16);assert(publish_arena_request(queue,request).status==ArenaRequestPublicationStatus::Published);};
  assert(advance_arena_player_control(work,s,.016f,&scratch,{},emit).status==ArenaPlayerControlStatus::Advanced);
  assert(queue.available==159&&scalar(work,0xb4)>.5f&&queue.records[0][0x2c]==0x6b&&queue.records[0][0x2d]==0x6b);
- // Held action now executes original release requests and no-target fallback.
+ // Held action now executes original kind18 visual requests and no-target fallback.
  s=snapshot();fp(s,0x2584,1);work=initial;work[0xbc]=0;work[0xbb]=1;
  put(work,0x378,0xffffffff);work[0x1e]=work[0x1f]=0xff;
  reject(work,s,ArenaPlayerControlStatus::NeedsActionEmission);
@@ -72,7 +72,7 @@ int main(){
  assert(advance_arena_player_control(work,s,.016f,&scratch,pending,action_emit).status==ArenaPlayerControlStatus::Advanced);
  assert(action_emits==4&&work[0xbb]==0&&work[0xbe]==0&&work[0xbf]==0);
  assert(work[0x1e]==0xff&&work[0x1f]==0xff);
- // Keeping the command held does not emit release requests again.
+ // Keeping the command held does not emit visual requests again.
  assert(advance_arena_player_control(work,s,.016f,&scratch,pending,action_emit).status==ArenaPlayerControlStatus::Advanced);
  assert(action_emits==4);
  // Release resets the edge latch, so a fresh press emits four again.

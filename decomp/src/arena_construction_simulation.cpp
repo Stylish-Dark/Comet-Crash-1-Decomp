@@ -177,6 +177,17 @@ bool ArenaConstructionSimulation::stage_player_craft_preparation(
   if(!stage_arena_entity_preparation(next,snapshot))return false;
   context=next;return true;
 }
+bool ArenaConstructionSimulation::stage_player_craft_preparation(std::uint8_t owner,
+    std::span<const std::uint8_t,0x2900> snapshot,ArenaEntityWorkContext& context,
+    ArenaPlayerReferenceCache& cache,std::span<const ArenaAccumulatorRecord> accumulators,
+    std::uint32_t tag) const {
+  auto next=context;auto next_cache=cache;
+  // These pure staging writes are disjoint from B500's fetch destinations.
+  // Keep all writes transactional if either source boundary is unavailable.
+  if(!stage_player_craft_preparation(owner,snapshot,next)||
+     !fetch_arena_player_references(next,next_cache,storage_.banks[storage_.read_bank],accumulators,tag))return false;
+  context=next;cache=next_cache;return true;
+}
 ArenaPreparationCompletion ArenaConstructionSimulation::complete_player_craft_preparation(
     std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,
     const ArenaAccumulatorConsumption& consumed,ArenaEntityWorkContext& context,
