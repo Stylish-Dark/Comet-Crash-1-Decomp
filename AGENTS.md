@@ -4,13 +4,18 @@ Confirmed by the project owner on 2026-10-20. This governs all subsequent work.
 
 ## Current recovery direction — 2026-10-21
 
-The active source-recovery work is on [work/original-player-actions-20261023](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/STATE.md), through PR #66. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
+The active source-recovery work is on [work/original-player-reference-fetch-20261023](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-reference-fetch-20261023/STATE.md), through PR #67. Read its current STATE.md and WORK_QUEUE.md; older default-branch state is historical. Do not restart from the older main implementation or merge the PR stack automatically.
 
-The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
+Latest checkpoint recovers original reference fetching and attached positioning.
+Actual pickup/drop transitions remain missing. Kind18 requests update visual
+records; the earlier release-world-effect interpretation is corrected. Continue
+from the active branch's queue, following the actual gameplay state changes.
+
+The owner requires the original Comet Crash adapted to PC with mouse controls. Earlier subjective completion percentages, including92%, remain withdrawn. The new full-port planning estimate is about25% (plausible15–35%); see [the assessment and its limits](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-reference-fetch-20261023/docs/decomp/completion-assessment.md). Focus now on faithful decompilation of missing original behavior. See [the governing contract](AGENTS.md) and [known fidelity gaps](docs/decomp/fidelity-status.md).
 
 ## Completion map — owner instruction 2026-10-22
 
-Read [the authoritative completion map](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-actions-20261023/PROJECT_PLAN.md).
+Read [the authoritative completion map](https://github.com/Stylish-Dark/Comet-Crash-1-Decomp/blob/work/original-player-reference-fetch-20261023/PROJECT_PLAN.md).
 PROJECT_PLAN.md is the authoritative step-by-step execution map, based on PR #63.
 Read its gate/status/dependency tables before choosing implementation. Next P1:
 full original player controller, then its connected action/carry/request/update
