@@ -24,6 +24,12 @@ public:
       const std::array<float,4>& spawn,const ArenaEntitySlot& reused,
       const ArenaCraftAuxiliaryStart&);
   bool stage_player_craft_preparation(std::uint8_t owner,
+      std::span<const std::uint8_t,0x2900> snapshot,ArenaEntityWorkContext& work,
+      ArenaPlayerReferenceCache& cache,std::span<const ArenaAccumulatorRecord> accumulators,
+      std::uint32_t original_job_tag) const {
+    return simulation_.stage_player_craft_preparation(owner,snapshot,work,cache,accumulators,original_job_tag);
+  }
+  bool stage_player_craft_preparation(std::uint8_t owner,
       std::span<const std::uint8_t,0x2900> snapshot,ArenaEntityWorkContext& work) const {
     return simulation_.stage_player_craft_preparation(owner,snapshot,work);
   }

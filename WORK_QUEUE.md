@@ -1,5 +1,29 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-23 — Original reference fetch and attached positioning
+
+Active code: `work/original-player-reference-fetch-20261023`, stacked above PR #66.
+P1/P6 advance within Partial: B500/3108/21F8 reads actual bank/accumulator records
+and original job tag; mode0 attachment10648 now runs into real6578 bank/scene
+commits, including delayed visible position and raw metadata lane. Public tests
+explicitly install the attachment link; actual pickup/drop remains missing.
+See [source scope and comparison evidence](docs/decomp/original-player-references.md).
+
+Correction: prior kind18 “release requests” interpretation was wrong. FDFE0's
+2BE0/5558 consumer updates its own visual record, not the target body. Earlier
+request-byte evidence stands; this supersedes the historical consumer priority
+below. Next: actual pickup/link and drop/unlink state transitions and ground
+carrying updates, then banking/contacts/lifecycle/scheduling/input dependencies.
+
+10,000 full reference-fetch outputs match all700 bytes. Attachment/controller
+comparison:4,992/5,000 exact accepted cases,7 matching contact boundaries and1
+numeric exclusion; action/target-facing variant4,991/5,000 exact,3 boundaries and6
+numeric exclusions. Suites overlap. Independent source review found no material
+code issue. Release build and73/73 CTests, repository safety and diff checks pass.
+G1/G2 remain unaccepted; overall full-game estimate about25%, plausible15–35%.
+Existing G1 forecast16/32/64 focused hours remains uncalibrated/low confidence;
+no justified reduction or reliable full-game deadline. No phase timing invented.
+
 ## 2026-10-23 — Original action decisions, release requests and target-facing
 
 Active code: `work/original-player-actions-20261023`, stacked above PR #65.

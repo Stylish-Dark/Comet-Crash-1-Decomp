@@ -1,5 +1,12 @@
 # Original-game recovery status — 2026-10-21
 
+Latest player checkpoint: [reference fetch and mode0 attached positioning](original-player-references.md)
+connects original B500 bank/accumulator reads and10648 position selection through
+real scene commits. Attachment links are explicit test fixtures; original pickup,
+drop, banking, lifecycle and scheduling are still incomplete. Kind18 is a visual
+consumer, correcting the earlier release-world-effect interpretation. G1/G2 are
+unaccepted.
+
 This is a scoped inventory, not a complete function audit or measured coverage.
 Prior subjective percentages, including92%, remain withdrawn. The new overall
 planning estimate is about 25% (plausible 15–35%); see completion-assessment.md for

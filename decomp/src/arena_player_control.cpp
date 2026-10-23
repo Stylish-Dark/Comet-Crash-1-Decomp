@@ -63,7 +63,7 @@ float inverse(float squared){
  const float estimate=detail::inverse_root_estimate(squared);
  return check(std::fma(nm(estimate,mul(estimate,squared),std::bit_cast<float>(0x3f800001u)),estimate*.5f,estimate));
 }
-V difference(const V& a,const V& b){V v;for(unsigned i=0;i<4;++i)v[i]=sub(a[i],b[i]);return v;}
+V difference(const V& a,const V& b){V v{};for(unsigned i=0;i<3;++i)v[i]=sub(a[i],b[i]);return v;}
 V rotate_point(const V& q,const V& point){
  const float projection=add(ma(point[1],q[1],mul(q[0],point[0])),mul(q[2],point[2]));
  V intermediate{},result{};
@@ -91,14 +91,14 @@ float segment_distance(const V& point,const V& a,const V& b){
  return root(dot(r>l?from_a:difference(point,b),r>l?from_a:difference(point,b)));
 }
 // 12A70/11820: two selectors for left slot, then two for right slot.
-ArenaCounterEmissionRequest release_request(ArenaEmissionDescriptor descriptor,
- const ArenaEntityWorkContext& context,unsigned slot,bool outward){
+ArenaCounterEmissionRequest action_visual_request(ArenaEmissionDescriptor descriptor,
+ const ArenaEntityWorkContext& context,unsigned slot,bool second_target){
  fp(descriptor,0,-100);fp(descriptor,4,-100);fp(descriptor,8,-100);
  descriptor[15]=112;descriptor[14]=0;
  std::copy_n(descriptor.begin(),16,descriptor.begin()+0x20);ph(descriptor,12,0);put(descriptor,0x10,18);
- fp(descriptor,0x30,outward?-1.f:1.f);put(descriptor,0x3c,0);
+ fp(descriptor,0x30,second_target?-1.f:1.f);put(descriptor,0x3c,0);
  ph(descriptor,0x40,slot);ph(descriptor,0x42,21);
- ph(descriptor,0x44,half(context,outward?0xca:0xc8));ph(descriptor,0x46,(context[0x33]>>5)&7);
+ ph(descriptor,0x44,half(context,second_target?0xca:0xc8));ph(descriptor,0x46,(context[0x33]>>5)&7);
  descriptor[0x48]=1;return {descriptor,1,0};
 }
 }
@@ -119,7 +119,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  // when the supplied target already isFFFF.
  if((context[0x33]&0x1c)&&half(context,0x1c)!=65535)return blocked(S::NeedsPeerContact,0x1162c);
  if(snapshot[base+0x29]==2)return blocked(S::NeedsAlternateControl,0x11ca8);
- if(half(context,0xb8)!=65535)return blocked(S::NeedsAttachment,0x10610);
+ const bool attached=half(context,0xb8)!=65535;
+ if(attached&&(half(context,0x60c)!=half(context,0xb8)||context[0x60f]==0||context[0x60f]>63))
+  return blocked(S::NeedsAttachment,0xb570);
  if(word(snapshot,0x28d4))return blocked(S::NeedsBanking,0x10b60);
  auto next=context;Rounding rounding;bool owner_emission=false;
  std::array<ArenaCounterEmissionRequest,4> action_requests{};unsigned action_count=0;
@@ -131,8 +133,10 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   // domain here instead of introducing the preview's finite analytic limit.
   if(!context[0xbf]&&(x!=0||z!=0)&&std::abs(x)<mul(std::abs(z),.001f))return blocked(S::NeedsNumericRecovery,0x1a118);
   put(next,0x5a0,check(scalar(next,0x74))>0?6:0);
-  store(next,0x480,vector(next,0xe0));store(next,0x20,vector(next,0xf0));next[0xbd]=0;
-  auto position=vector(next,0x480),velocity=vector(next,0x4a0);
+  std::copy_n(next.begin()+0xe0,16,next.begin()+0x480);
+  store(next,0x20,vector(next,0xf0));next[0xbd]=0;
+  V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?0.f:check(scalar(next,0x480+4*i));
+  auto velocity=vector(next,0x4a0);
   for(unsigned i=0;i<4;++i)position[i]=ma(velocity[i],elapsed,position[i]);
   put(next,0x5a0,0); // 10538
   ArenaGroundBoundsQuery bounds;bounds.position=position;bounds.velocity=velocity;
@@ -150,9 +154,16 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   next[0xc7]=ma(impulse[2],impulse[2],ma(impulse[1],impulse[1],mul(impulse[0],impulse[0])))>3?1:0;
   const V target{mul(x,40),0,mul(z,40),0};
   for(unsigned i=0;i<4;++i)velocity[i]=ma(sub(target[i],velocity[i]),1,velocity[i]);
-  velocity[1]=0;position[1]=1;store(next,0x480,position);store(next,0x4a0,velocity);
+  velocity[1]=0;position[1]=1;
+  if(attached){
+   // Mode0 takes10648 directly: reset74 and load the source cached body quadword.
+   // Its fourth lane is packed identity/type metadata, not a floating coordinate.
+   fp(next,0x74,0);for(unsigned i=0;i<3;++i)position[i]=check(scalar(next,0x600+4*i));
+   position[3]=scalar(next,0x60c);
+  }
+  store(next,0x480,position);store(next,0x4a0,velocity);
   // 11640 sentinel branch: reset action progress and staged collision mask.
-  put(next,0x5a0,0);fp(next,0x78,std::bit_cast<float>(0x3c23d70au));next[0x33]&=0xe3;
+  if(!attached){put(next,0x5a0,0);fp(next,0x78,std::bit_cast<float>(0x3c23d70au));next[0x33]&=0xe3;}
   ArenaCraftFacingState facing;facing.yaw=check(scalar(next,0xdc));facing.pending_orientation=vector(next,0xf0);
   const auto visible=facing.pending_orientation;
   if(next[0xbf]){
@@ -172,9 +183,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    if(next[0xbb]){
     if(!scratch||!emitter)return blocked(S::NeedsActionEmission,0x12b5c);
     auto descriptor=scratch->action_effect;
-    for(bool outward:{false,true})for(unsigned slot=0;slot<2;++slot){
-     auto release=release_request(descriptor,next,slot,outward);
-     descriptor=release.descriptor;action_requests[action_count++]=release;
+    for(bool second_target:{false,true})for(unsigned slot=0;slot<2;++slot){
+     auto visual=action_visual_request(descriptor,next,slot,second_target);
+     descriptor=visual.descriptor;action_requests[action_count++]=visual;
     }
     next[0xbb]=0;
    }
@@ -186,7 +197,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
      // 108F0..10910: segment from half to full current forward vector.
      // The separately computed old gripper points only feed dead mode0 quaternions.
      const auto forward=rotate_point(vector(next,0xf0),V{0,0,-1,0});
-     V middle,endpoint;for(unsigned i=0;i<4;++i){middle[i]=ma(forward[i],.5f,position[i]);endpoint[i]=add(position[i],forward[i]);}
+     V middle{},endpoint{};for(unsigned i=0;i<3;++i){middle[i]=ma(forward[i],.5f,position[i]);endpoint[i]=add(position[i],forward[i]);}
      eligible=true;next[0xbf]=1;
      if(.5f>segment_distance(candidate,middle,endpoint))next[0xbe]=1;
     }
@@ -210,7 +221,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   ph(next,0xc4,target_owner);
   // 112E4/113A0 exchange old visible position and next controller position,
   // just as11300/1139C exchange the delayed quaternion.
-  store(next,0x480,vector(context,0xe0));store(next,0xe0,position);
+  std::copy_n(context.begin()+0xe0,16,next.begin()+0x480);store(next,0xe0,position);
  }catch(const Numeric&){return blocked(S::NeedsNumericRecovery,0x10290);}
  catch(const std::invalid_argument&){return blocked(S::NeedsNumericRecovery,0x1a118);}
  // All rejecting computation precedes external mutations. Queue callbacks may

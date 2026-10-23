@@ -26,7 +26,7 @@ struct ArenaPlayerControlResult {
 };
 // Original10290 entry through ordinary-mode0 return113A4, including3238 request
 // construction,7DD0 bounds, no-target7E40, movement/target-facing, ordinary
-// action edge/release requests/pickup selection, owner timer/request
+// action edge/visual requests/candidate selection, owner timer/request
 // and body/controller commits. Other source branches return a named boundary.
 // Uses the completed9A70 context, relative extension reference80 and original
 // snapshot. Supports finite normal/zero values in the documented math domain.
