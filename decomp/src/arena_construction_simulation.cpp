@@ -226,7 +226,7 @@ ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
 ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player_craft(
     std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
     ArenaEntityWorkContext& work,std::uint32_t frame,ArenaPlayerControlScratch* scratch,
-    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter){
+    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles){
   ArenaPlayerCraftControlStep result;
   auto read=[&](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
       std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
@@ -239,7 +239,7 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
   if(index>=storage_.banks[storage_.read_bank].size()||
      storage_.banks[storage_.read_bank][index][15]!=1||
      (unsigned(work[12])<<8|work[13])!=index)return result;
-  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter);
+  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles);
   if(result.control.status!=ArenaPlayerControlStatus::Advanced)return result;
   auto scalar=[&](unsigned o){return std::bit_cast<float>(read(work,o));};
   for(unsigned i=0;i<4;++i){result.commit.position_480[i]=scalar(0x480+4*i);result.commit.velocity_4a0[i]=scalar(0x4a0+4*i);}

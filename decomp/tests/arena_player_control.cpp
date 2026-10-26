@@ -216,4 +216,42 @@ int main(){
   for(unsigned o:{0xc8u,0xccu,0xcau,0xceu})assert(body[o]==255&&body[o+1]==255);
  }
  assert(full_reserves==before_reserves+15); // retained8000 request + four proxies/frame
+ // Full expansion now publishes original11A80 particles and commits the craft.
+ // Attachment identity is an explicit original-state fixture, not invented pickup.
+ assert(scene.stage_player_craft_preparation(0,s,context));auto full_consumed=consume_arena_prepared_accumulator(context,{});
+ assert(scene.complete_player_craft_preparation(0,s,full_consumed,context)==ArenaPreparationCompletion::Prepared);
+ context[0xb8]=0;context[0xb9]=3;context[0x60c]=0;context[0x60d]=3;context[0x60f]=29;
+ put(context,0x660,8);fp(context,0x78,1);fp(context,0x600,3.25f);fp(context,0x604,1);fp(context,0x608,3.5f);
+ const auto full_before=context;const auto banks_before=scene.simulation().storage().banks;const auto reserve_before=full_reserves;
+ auto missing_particles=scene.advance_prepared_player_craft(0,s,.016f,context,13,&scratch,full);
+ assert(missing_particles.control.status==ArenaPlayerControlStatus::NeedsContactEffects);
+ assert(context==full_before&&scene.simulation().storage().banks==banks_before&&full_reserves==reserve_before);
+ ArenaRequestPublicationQueue particle_pool;particle_pool.records.resize(160);particle_pool.free_ring.resize(160);
+ for(unsigned i=0;i<160;++i)particle_pool.free_ring[i]=i;
+ particle_pool.available=131;ArenaRandom particle_random(701);ArenaParticleEmissionScratch particle_scratch;
+ unsigned particle_calls=0,particle_published=0;
+ ArenaPlayerParticleTransport particles{&particle_random,[&](const ArenaParticleEmission& q,ArenaRandom& rng){
+  ++particle_calls;assert(q.count==1&&q.configuration[8]>=85&&q.configuration[8]<=88);
+  const auto result=publish_arena_particles(particle_pool,q,rng,particle_scratch);
+  assert(result.status!=ArenaRequestPublicationStatus::Invalid);particle_published+=result.published;
+ }};
+ const auto expanded=scene.advance_prepared_player_craft(0,s,.016f,context,13,&scratch,full,{},particles);
+ assert(expanded.control.status==ArenaPlayerControlStatus::Advanced&&expanded.finalization==ArenaEntityFinalization::Committed);
+ assert(particle_calls==4&&particle_published==3&&particle_pool.available==128);
+ assert(scene.simulation().storage().banks[0]==scene.simulation().storage().banks[1]);
+ const auto& full_body=scene.simulation().storage().banks[0][0];
+ assert(scene.arena().entities[0].position.x==scalar(full_body,0));
+ for(unsigned i=0;i<3;++i)assert(word(particle_pool.records[i],0x10)==4&&particle_pool.records[i][0x7f]==1);
+ // Original1053C zeros5A0 before7DD0, so hard craft-boundary hits call
+ //1E880 with count0. They must advance without a particle transport or RNG.
+ assert(scene.stage_player_craft_preparation(0,s,context));auto collision_consumed=consume_arena_prepared_accumulator(context,{});
+ assert(scene.complete_player_craft_preparation(0,s,collision_consumed,context)==ArenaPreparationCompletion::Prepared);
+ context[0xb8]=context[0xb9]=255;fp(context,0xe0,.01f);fp(context,0xe4,1);fp(context,0xe8,.01f);put(context,0xec,0);
+ fp(context,0x4a0,-30);fp(context,0x4a8,-20);fp(context,0x74,.5f);
+ const auto collided=scene.advance_prepared_player_craft(0,s,.016f,context,14,&scratch,full);
+ assert(collided.control.status==ArenaPlayerControlStatus::Advanced&&collided.finalization==ArenaEntityFinalization::Committed);
+ assert(context[0xc7]==1&&word(context,0x5a0)==0&&scalar(context,0xe0)>.01f&&scalar(context,0xe8)>.01f);
+ assert(particle_calls==4&&particle_pool.available==128);
+ assert(scene.simulation().storage().banks[0]==scene.simulation().storage().banks[1]);
+
 }

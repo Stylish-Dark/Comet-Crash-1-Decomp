@@ -1,5 +1,27 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-26 — Full-action particles and hard craft containment
+
+Active code: `work/original-player-action-effects-20261026`, above PR #68.
+P1/P3/P5/P6 advance within Partial: original1E880/1E480 particle construction and
+FIFO publication, both random shapes and scratch/RNG semantics, now serve10290's
+four full-expansion11A80 effects. Full attachment reaches6578 and both banks with
+real particle-pool exhaustion. Hard7DD0 craft impacts now advance:1053C zeros5A0,
+so their1E880 count is0 and no pool/RNG work is needed.
+See [source scope and evidence](docs/decomp/original-player-action-effects.md).
+
+Original-instruction checks:24 emitter cases exact;15/16 full-action cases exact
+with1 inherited numeric exclusion;16 hard-wall/corner cases exact. Independent
+source review confirmed order/exhaustion and zero-count containment. A workspace
+reset interrupted publication; changes were restored from this session. Private
+oracle inputs/tools require restoration before new source comparisons.
+Fresh restored Release build and all74 CTests pass; two zero-byte executables
+were relinked and only their failed launches rerun. Safety/whitespace checks pass.
+Pickup/drop remains an explicit state-fixture boundary; G1/G2 remain unaccepted.
+Overall full faithful PC-port estimate stays about25%, plausible15–35%.
+Next: pickup/drop mutations and carried-ground updates, expired attachment/death,
+peer contacts, pending transport/scheduling and original command/mouse input.
+
 ## 2026-10-26 — Original banking, proxy lifecycle and automatic control
 
 Active code: `work/original-player-banking-20261026`, stacked above PR #67.

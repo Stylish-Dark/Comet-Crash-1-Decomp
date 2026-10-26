@@ -16,6 +16,7 @@ add_library(comet_native_recovery STATIC
     src/arena_structure_entity.cpp
     src/arena_entity_storage.cpp
     src/arena_counter_emission.cpp
+    src/arena_particle_emission.cpp
     src/arena_request_publication.cpp
     src/arena_preparation_effects.cpp
     src/arena_entity_accumulator.cpp
@@ -655,4 +656,15 @@ if(MSVC)
  target_compile_options(comet_arena_player_references_test PRIVATE /UNDEBUG)
 else()
  target_compile_options(comet_arena_player_references_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_particle_emission_test tests/arena_particle_emission.cpp)
+target_link_libraries(comet_arena_particle_emission_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_particle_emission_test COMMAND comet_arena_particle_emission_test)
+if(MSVC)
+ target_compile_options(comet_arena_particle_emission_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_particle_emission.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_particle_emission_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_particle_emission.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
 endif()

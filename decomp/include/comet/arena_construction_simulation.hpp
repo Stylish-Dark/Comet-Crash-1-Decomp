@@ -191,7 +191,8 @@ public:
       ArenaEntityWorkContext&,std::uint32_t original_frame,
       ArenaPlayerControlScratch* scratch=nullptr,
       const ArenaPlayerPendingTransport& pending={},
-      const ArenaCounterEmissionSink& emitter={});
+      const ArenaCounterEmissionSink& emitter={},
+      const ArenaPlayerParticleTransport& particles={});
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }
