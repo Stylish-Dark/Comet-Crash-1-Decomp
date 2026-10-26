@@ -254,4 +254,85 @@ int main(){
  assert(particle_calls==4&&particle_pool.available==128);
  assert(scene.simulation().storage().banks[0]==scene.simulation().storage().banks[1]);
 
+ // Expired construction countdown: exact-zero74 queues sound8, then grows.
+ auto growth=prepared(bank_snapshot);put(growth,0x60,word(growth,0x60)&~0x8000u);
+ growth[0xb8]=0;growth[0xb9]=3;growth[0x60c]=0;growth[0x60d]=3;growth[0x60f]=29;
+ fp(growth,0x600,3.25f);fp(growth,0x604,.5f);fp(growth,0x608,3.5f);
+ const auto growth_before=growth;const auto calls_before_growth=full_reserves;
+ auto no_audio=advance_arena_player_control(growth,bank_snapshot,.016f,&scratch,full);
+ assert(no_audio.status==ArenaPlayerControlStatus::NeedsAudio&&growth==growth_before&&full_reserves==calls_before_growth);
+ ArenaAudioBatch audio_batch{};
+ auto sound=[&](const ArenaAudioEvent& event){assert(event.sound==8&&event.parameter_6==0&&event.parameter_7==0);
+  assert(append_arena_audio_event(audio_batch,event)==ArenaAudioAppend::Appended);};
+ assert(advance_arena_player_control(growth,bank_snapshot,.016f,&scratch,full,{}, {},sound).status==ArenaPlayerControlStatus::Advanced);
+ assert(word(audio_batch,0)==1&&audio_batch[4]==0&&audio_batch[5]==8);
+ assert(scalar(growth,0x74)>0&&scalar(growth,0x74)<.01f&&scalar(growth,0x38)>0&&scalar(growth,0x38)<10);
+ assert(growth[0x6f]==0&&(growth[0x33]&28)==24&&scalar(growth,0x4a0)==0&&scalar(growth,0x4a8)==0);
+ // Real-bank completion: strict >1 clearsBC and sends original kind16/model108.
+ assert(scene.stage_player_craft_preparation(0,s,context));auto completing_effects=consume_arena_prepared_accumulator(context,{});
+ assert(scene.complete_player_craft_preparation(0,s,completing_effects,context)==ArenaPreparationCompletion::Prepared);
+ context[0xb8]=0;context[0xb9]=3;context[0x60c]=0;context[0x60d]=3;context[0x60f]=29;put(context,0x660,0);
+ fp(context,0x600,3.25f);fp(context,0x604,.5f);fp(context,0x608,3.5f);fp(context,0xc0,0);context[0xbc]=1;
+ fp(context,0x74,1);fp(context,0xd4,3);scratch.attachment_effect.fill(0x75);
+ unsigned completions=0;
+ auto complete_request=[&](const ArenaCounterEmissionRequest& request){
+  ++completions;assert(request.count==1&&request.mode==0&&word(request.descriptor,0x10)==16&&request.descriptor[15]==108);
+  assert(scalar(request.descriptor,0x38)==3&&scalar(request.descriptor,0x3c)==2&&request.descriptor[0x2c]==0x75);
+  assert(publish_arena_request(action_queue,request).status==ArenaRequestPublicationStatus::Published);
+ };
+ const auto completed=scene.advance_prepared_player_craft(0,s,.016f,context,15,&scratch,full,complete_request,particles);
+ assert(completed.control.status==ArenaPlayerControlStatus::Advanced&&completed.finalization==ArenaEntityFinalization::Committed);
+ assert(completions==1&&context[0xbc]==0&&scalar(context,0x74)==1&&scalar(context,0x38)==scalar(context,0x64));
+ assert(scene.simulation().storage().banks[0]==scene.simulation().storage().banks[1]);
+ assert(scene.simulation().storage().banks[0][0][0x6f]==0);
+ // Repair eligibility uses original same-group, signed16 neighboring cells.
+ auto repair_snapshot=bank_snapshot;put(repair_snapshot,0x2820,1);put(repair_snapshot,0x2660,2);put(repair_snapshot,0x2670,3);
+ auto repair=prepared(repair_snapshot);put(repair,0x60,word(repair,0x60)&~0x8000u);repair[0xbc]=0;
+ repair[0xb8]=0;repair[0xb9]=3;repair[0x60c]=0;repair[0x60d]=3;repair[0x60f]=29;fp(repair,0xc0,0);fp(repair,0x38,500);fp(repair,0x78,.3f);
+ ArenaRequestPublicationQueue repair_pool;repair_pool.records.resize(160);repair_pool.free_ring.resize(160);repair_pool.available=160;
+ for(unsigned n=0;n<160;++n)repair_pool.free_ring[n]=n;
+ ArenaRandom repair_random(7);ArenaParticleEmissionScratch repair_scratch;unsigned repair_calls=0;
+ ArenaPlayerParticleTransport repairing{&repair_random,[&](const ArenaParticleEmission& request,ArenaRandom& rng){
+  ++repair_calls;assert(request.count==1&&request.configuration[8]==37&&request.speed==-5);
+  assert(publish_arena_particles(repair_pool,request,rng,repair_scratch).status==ArenaRequestPublicationStatus::Published);
+ }};
+ assert(advance_arena_player_control(repair,repair_snapshot,.016f,&scratch,full,{},repairing).status==ArenaPlayerControlStatus::Advanced);
+ assert(repair_calls==1&&repair_pool.available==159&&scalar(repair,0x38)>500&&scalar(repair,0x38)<502);
+ // Full3940 health-change finalization stays explicit; do not claim it ran.
+ put(repair_snapshot,0x2660,7);put(repair_snapshot,0x2670,7);const auto health_before=scalar(repair,0x38);
+ assert(advance_arena_player_control(repair,repair_snapshot,.016f,&scratch,full).status==ArenaPlayerControlStatus::Advanced);
+ assert(scalar(repair,0x38)==health_before&&repair_calls==1);
+
+ // Nine connected source construction updates: audio onset, progress/health,
+ // full expansion, completion latch/request and authoritative delayed positions.
+ // Supplied state includes a valid cached attachment and an existing health
+ // display (7F1); first-display creation remains a separate recovery boundary.
+ NativeConstructionScene sequence(arena,config);ArenaEntitySlot sequence_reused{};
+ assert(sequence.create_player_craft(0,{2.5f,0,3.5f,0},sequence_reused,[](const ArenaCraftAuxiliaryRequest&){return -1;})==ArenaCraftRegistration::Registered);
+ auto sequence_snapshot=snapshot();put(sequence_snapshot,0x28d4,1);fp(sequence_snapshot,0x27b0,.25f);
+ ArenaEntityWorkContext sequence_work{};ArenaPlayerControlScratch sequence_scratch;ArenaAudioBatch sequence_audio{};
+ ArenaRequestPublicationQueue sequence_queue;sequence_queue.records.resize(160);sequence_queue.free_ring.resize(160);sequence_queue.available=160;
+ for(unsigned n=0;n<160;++n)sequence_queue.free_ring[n]=n;
+ ArenaRandom sequence_random(23);ArenaParticleEmissionScratch sequence_particles;unsigned sequence_completions=0,sequence_particle_calls=0;
+ ArenaPlayerPendingTransport sequence_full{[&](const ArenaEntitySlot&){assert(sequence.simulation().storage().free_indices.empty());return -1;},[](const ArenaEntitySlot&){assert(false);}};
+ ArenaPlayerParticleTransport sequence_particle_transport{&sequence_random,[&](const ArenaParticleEmission& request,ArenaRandom& rng){
+  ++sequence_particle_calls;assert(publish_arena_particles(sequence_queue,request,rng,sequence_particles).status==ArenaRequestPublicationStatus::Published);
+ }};
+ auto sequence_emit=[&](const ArenaCounterEmissionRequest& request){++sequence_completions;assert(request.descriptor[15]==108);assert(publish_arena_request(sequence_queue,request).status==ArenaRequestPublicationStatus::Published);};
+ auto sequence_sound=[&](const ArenaAudioEvent& event){assert(append_arena_audio_event(sequence_audio,event)==ArenaAudioAppend::Appended);};
+ for(unsigned frame=1;frame<=9;++frame){
+  assert(sequence.stage_player_craft_preparation(0,sequence_snapshot,sequence_work));auto consumed=consume_arena_prepared_accumulator(sequence_work,{});
+  assert(sequence.complete_player_craft_preparation(0,sequence_snapshot,consumed,sequence_work)==ArenaPreparationCompletion::Prepared);
+  sequence_work[0xb8]=0;sequence_work[0xb9]=3;sequence_work[0x60c]=0;sequence_work[0x60d]=3;sequence_work[0x60f]=29;
+  put(sequence_work,0x660,0);fp(sequence_work,0x600,3.25f);fp(sequence_work,0x604,.5f);fp(sequence_work,0x608,3.5f);
+  if(frame==1){sequence_work[0x7f]=1;fp(sequence_work,0xd4,3);}
+  const auto step=sequence.advance_prepared_player_craft(0,sequence_snapshot,.25f,sequence_work,frame,&sequence_scratch,sequence_full,sequence_emit,sequence_particle_transport,sequence_sound);
+  assert(step.control.status==ArenaPlayerControlStatus::Advanced&&step.finalization==ArenaEntityFinalization::Committed);
+  const auto& banks=sequence.simulation().storage().banks;assert(banks[0]==banks[1]);
+  assert(scalar(banks[0][0],0x38)==float(std::min(frame,8u)*125));
+  assert(banks[0][0][0xbc]==(frame<9?1:0));
+  assert(sequence.arena().entities[0].position.y==scalar(banks[0][0],4));
+ }
+ assert(word(sequence_audio,0)==1&&sequence_completions==1&&sequence_particle_calls==8&&sequence_queue.available==151);
+
 }

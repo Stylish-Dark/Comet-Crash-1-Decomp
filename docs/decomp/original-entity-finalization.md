@@ -1,5 +1,7 @@
 # Shared entity finalization and delayed removal
 
+Latest continuation: [attachment states](original-attachment-states.md) recovers3940's immediate return for nonzero body7F. First-display allocation remains open.
+
 ## Source and connected boundary
 
 Reference: private NPEB00142 v1.00 EBOOT.ELF SHA256

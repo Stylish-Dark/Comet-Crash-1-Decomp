@@ -182,7 +182,7 @@ ArenaCounterEmissionRequest action_visual_request(ArenaEmissionDescriptor descri
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
- const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles){
+ const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio){
  using S=ArenaPlayerControlStatus;
  if(context[15]!=1||word(context,0x500)!=1||word(context,0x5d0)!=0x80||context[0xc6]>=4||
     half(context,0x542)!=context[0xc6]||!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||
@@ -201,9 +201,11 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   return blocked(S::NeedsAttachment,0xb570);
  const bool banking=word(snapshot,0x28d4)!=0;
  if(banking&&(!scratch||!pending.reserve||!pending.publish))return blocked(S::NeedsPendingQueue,0x1105c);
- if(banking&&attached&&!(word(context,0x660)&8u)&&!(scalar(context,0xc0)>0))
-  return blocked(S::NeedsAttachment,0x11de8);
- auto next=context;Rounding rounding;bool owner_emission=false,full_action=false;
+ // Only expired BC0 retains the integrated W lane; other attachment paths
+ // replace that quadword before it becomes observable.
+ const bool retain_attachment_w=banking&&attached&&!(word(context,0x660)&8u)&&!(scalar(context,0xc0)>0)&&!context[0xbc];
+ auto next=context;Rounding rounding;bool owner_emission=false,full_action=false,attachment_audio=false,attachment_emission=false,repair_particle=false;
+ ArenaCounterEmissionRequest attachment_request;ArenaParticleEmission repair_request;
  std::array<ArenaParticleEmission,4> action_particles{};
  std::array<ArenaCounterEmissionRequest,4> action_requests{};unsigned action_count=0;
  ArenaCounterEmissionRequest request;
@@ -218,9 +220,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   put(next,0x5a0,check(scalar(next,0x74))>0?6:0);
   std::copy_n(next.begin()+0xe0,16,next.begin()+0x480);
   store(next,0x20,vector(next,0xf0));next[0xbd]=0;
-  V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?0.f:check(scalar(next,0x480+4*i));
+  V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?(retain_attachment_w?scalar(next,0x480+4*i):0.f):check(scalar(next,0x480+4*i));
   auto velocity=vector(next,0x4a0);
-  for(unsigned i=0;i<4;++i)position[i]=ma(velocity[i],elapsed,position[i]);
+  for(unsigned i=0;i<4;++i)position[i]=retain_attachment_w&&i==3?std::fma(velocity[i],elapsed,position[i]):ma(velocity[i],elapsed,position[i]);
   put(next,0x5a0,0); // 1053C
   ArenaGroundBoundsQuery bounds;bounds.position=position;bounds.velocity=velocity;
   bounds.accumulated_impulse=vector(next,0x4d0);
@@ -260,16 +262,59 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    // Mode0 takes10648 directly: reset74 and load the source cached body quadword.
    // Its fourth lane is packed identity/type metadata, not a floating coordinate.
    if(banking&&!(word(next,0x660)&8u)){
-    // 119BC..11A6C: attachment countdown moves from the stored grid center
-    // toward the fetched entity. Y and health are restored to one.
-    const float timer=sub(check(scalar(next,0xc0)),elapsed);fp(next,0xc0,timer);
-    const float blend=mul(sub(2,timer),.5f);
-    const V center{add(float(half(next,0xd0)),.5f),0,add(float(half(next,0xd2)),.5f),0};
-    for(unsigned i=0;i<3;++i)position[i]=ma(sub(check(scalar(next,0x600+4*i)),center[i]),blend,center[i]);
-    position[1]=1;
-    // The source interpolates the packed fourth lane as raw float bits too.
-    // It never enters a spatial dot product; preserve it without numeric filtering.
-    position[3]=std::fma(scalar(next,0x60c),blend,0.f);fp(next,0x38,1);
+    if(check(scalar(next,0xc0))>0){
+     // 119BC..11A6C: positive countdown from the saved cell toward the body.
+     const float timer=sub(check(scalar(next,0xc0)),elapsed);fp(next,0xc0,timer);
+     const float blend=mul(sub(2,timer),.5f);
+     const V center{add(float(half(next,0xd0)),.5f),0,add(float(half(next,0xd2)),.5f),0};
+     for(unsigned i=0;i<3;++i)position[i]=ma(sub(check(scalar(next,0x600+4*i)),center[i]),blend,center[i]);
+     position[1]=1;position[3]=std::fma(scalar(next,0x60c),blend,0.f);fp(next,0x38,1);
+    }else if(next[0xbc]){
+     // 11E08..11F6C: construction progress, health and Y interpolation.
+     const float old=check(scalar(next,0x74));
+     if(old==0){if(!audio)return blocked(S::NeedsAudio,0x11e38);attachment_audio=true;}
+     float progress=ma(elapsed,.5f,old);fp(next,0x74,progress);
+     next[0x33]=std::uint8_t((next[0x33]&~28u)|24u);next[0x6f]=0;
+     if(progress>1){
+      next[0xbc]=0;progress=1;fp(next,0x74,progress);
+      if(check(scalar(next,0xd4))!=2){
+       if(!scratch||!emitter)return blocked(S::NeedsActionEmission,0x1275c);
+       auto descriptor=staged.attachment_effect;
+       fp(descriptor,0,0);fp(descriptor,4,-5);fp(descriptor,8,0);descriptor[14]=0;descriptor[15]=108;
+       std::copy_n(descriptor.begin(),16,descriptor.begin()+0x20);ph(descriptor,12,0);put(descriptor,0x10,16);
+       ph(descriptor,0x30,half(next,12));descriptor[0x32]=descriptor[0x33]=1;put(descriptor,0x34,0);
+       put(descriptor,0x38,word(next,0xd4));fp(descriptor,0x3c,2);put(descriptor,0x40,0);
+       put(descriptor,0x44,0x3e20d97b);put(descriptor,0x50,owner);descriptor[0x54]=0;
+       attachment_request={descriptor,1,0};attachment_emission=true;
+      }
+     }
+     fp(next,0x78,progress);fp(next,0x38,mul(progress,check(scalar(next,0x64))));velocity={};
+     for(unsigned i=0;i<4;++i){
+      const float fetched=i==3?scalar(next,0x60c):check(scalar(next,0x600+4*i));
+      const float goal=i==1?1.f:fetched;
+      position[i]=i==3?std::fma(goal-fetched,progress,fetched):ma(sub(goal,fetched),progress,fetched);
+     }
+     if(!std::isfinite(position[3]))throw Numeric{};
+    }else{
+     // 11F70..12194: health regeneration near a same-group player cell.
+     const float health=check(scalar(next,0x38)),maximum=check(scalar(next,0x64));
+     if(maximum>health){
+      const unsigned players=word(snapshot,0x2820);if(players>4)return {};
+      bool eligible=false;
+      for(unsigned p=0;p<players;++p){
+       const auto dx=std::bit_cast<std::int16_t>(std::uint16_t(half(next,0x552)-std::uint16_t(word(snapshot,0x2660+4*p))));
+       const auto dz=std::bit_cast<std::int16_t>(std::uint16_t(half(next,0x562)-std::uint16_t(word(snapshot,0x2670+4*p))));
+       eligible|=half(snapshot,0x2720+2*p)==half(snapshot,0x2720+2*owner)&&dx>=-1&&dx<=1&&dz>=-1&&dz<=1;
+      }
+      if(eligible){
+       if(!particles.random||!particles.publish)return blocked(S::NeedsContactEffects,0x12188);
+       const float updated=ma(maximum,mul(elapsed,bits(0x3dcccccc)),health);fp(next,0x38,maximum>updated?updated:maximum);
+       repair_particle=true;repair_request.position=position;repair_request.radius_min=repair_request.radius_max=1;
+       repair_request.speed=-5;repair_request.lifetime_min=repair_request.lifetime_max=bits(0x3e5d2f18);repair_request.count=1;
+       fp(repair_request.configuration,0,bits(0x3dcccccc));repair_request.configuration[8]=37;repair_request.configuration[9]=1;
+      }
+     }
+    }
    }else{
     fp(next,0x74,0);for(unsigned i=0;i<3;++i)position[i]=check(scalar(next,0x600+4*i));
     position[3]=scalar(next,0x60c);
@@ -432,6 +477,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    pending.publish(staged.pending_entity);
   }
  }
+ if(attachment_audio)audio(ArenaAudioEvent{8,0,0});
+ if(attachment_emission){emitter(attachment_request);staged.attachment_effect=attachment_request.descriptor;}
+ if(repair_particle)particles.publish(repair_request,*particles.random);
  for(unsigned i=0;i<action_count;++i){emitter(action_requests[i]);staged.action_effect=action_requests[i].descriptor;}
  if(banking)for(unsigned i=0;i<4;++i)publish_proxy(next,proxy_links[i],staged.interaction_proxies[i],pending,word(snapshot,0x27c0));
  if(full_action)for(auto& q:action_particles){

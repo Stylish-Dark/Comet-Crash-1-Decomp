@@ -43,7 +43,8 @@ public:
       std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaEntityWorkContext&,
       std::uint32_t original_frame,ArenaPlayerControlScratch* scratch=nullptr,
       const ArenaPlayerPendingTransport& pending={},const ArenaCounterEmissionSink& emitter={},
-      const ArenaPlayerParticleTransport& particles={});
+      const ArenaPlayerParticleTransport& particles={},
+      const ArenaAudioEventSink& audio={});
   // Resume retained controller output without replaying request callbacks.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,

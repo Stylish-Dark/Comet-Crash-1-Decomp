@@ -71,6 +71,9 @@ int main(){
  auto effect=source;fp(effect,0x38,999);const auto saved=effect;
  assert(finalize_arena_entity_record(effect,statistics,c,0)==ArenaEntityFinalization::NeedsChangeEffects);
  assert(effect==saved && statistics==before_stats);
+ auto existing=source;fp(existing,0x38,999);existing[0x7f]=1;
+ assert(finalize_arena_entity_record(existing,statistics,c,0)==ArenaEntityFinalization::Committed);
+ assert(word(existing,0x38)==std::bit_cast<unsigned>(999.f)&&existing[0x7f]==1);
  c.previous_scalar_38_4e8=999;c.skip_spatial_6260=false;
  assert(finalize_arena_entity_record(effect,statistics,c,0)==ArenaEntityFinalization::NeedsSpatialRecovery);
  assert(effect==saved);

@@ -192,7 +192,8 @@ public:
       ArenaPlayerControlScratch* scratch=nullptr,
       const ArenaPlayerPendingTransport& pending={},
       const ArenaCounterEmissionSink& emitter={},
-      const ArenaPlayerParticleTransport& particles={});
+      const ArenaPlayerParticleTransport& particles={},
+      const ArenaAudioEventSink& audio={});
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }
