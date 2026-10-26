@@ -182,7 +182,7 @@ ArenaCounterEmissionRequest action_visual_request(ArenaEmissionDescriptor descri
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
- const ArenaCounterEmissionSink& emitter){
+ const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles){
  using S=ArenaPlayerControlStatus;
  if(context[15]!=1||word(context,0x500)!=1||word(context,0x5d0)!=0x80||context[0xc6]>=4||
     half(context,0x542)!=context[0xc6]||!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||
@@ -202,8 +202,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  const bool banking=word(snapshot,0x28d4)!=0;
  if(banking&&(!scratch||!pending.reserve||!pending.publish))return blocked(S::NeedsPendingQueue,0x1105c);
  if(banking&&attached&&!(word(context,0x660)&8u)&&!(scalar(context,0xc0)>0))
-  return blocked(S::NeedsAttachment,context[0xbc]?0x11f70u:0x11de8u);
- auto next=context;Rounding rounding;bool owner_emission=false;
+  return blocked(S::NeedsAttachment,0x11de8);
+ auto next=context;Rounding rounding;bool owner_emission=false,full_action=false;
+ std::array<ArenaParticleEmission,4> action_particles{};
  std::array<ArenaCounterEmissionRequest,4> action_requests{};unsigned action_count=0;
  ArenaCounterEmissionRequest request;
  auto staged=scratch?*scratch:ArenaPlayerControlScratch{};
@@ -220,7 +221,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?0.f:check(scalar(next,0x480+4*i));
   auto velocity=vector(next,0x4a0);
   for(unsigned i=0;i<4;++i)position[i]=ma(velocity[i],elapsed,position[i]);
-  put(next,0x5a0,0); // 10538
+  put(next,0x5a0,0); // 1053C
   ArenaGroundBoundsQuery bounds;bounds.position=position;bounds.velocity=velocity;
   bounds.accumulated_impulse=vector(next,0x4d0);
   bounds.max_x=float(word(snapshot,0x28d8));bounds.max_z=float(word(snapshot,0x28dc));bounds.max_y=2;
@@ -228,7 +229,9 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   bounds.restitution_percent=next[0x7d];bounds.movable=(word(next,0x60)&0x4000)!=0;
   bounds.floor_uses_lateral_radius=(word(next,0x60)&0x02000000u)!=0;
   auto contained=contain_arena_ground_unit(bounds);if(!contained)throw Numeric{};
-  if(contained->energetic_impact)return blocked(S::NeedsContactEffects,0x1e880);
+  // 1053C clears5A0 before7DD0.7510 can call1E880 on a hard hit,
+  // but7638..76F0 then supplies count0: no allocation, record or RNG draw.
+  // Synchronous native storage also needs no corresponding DMA-tag wait.
   position=contained->position;velocity=contained->velocity;
   auto impulse=contained->accumulated_impulse;auto consumed=vector(next,0x340);
   for(unsigned i=0;i<4;++i)impulse[i]=add(impulse[i],consumed[i]);
@@ -356,9 +359,10 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
            right_root{bits(0x3ed2fec3),bits(0xbd2a64c1),bits(0x3e5a5118),0};
    const auto left_rotated_root=rotate_point(q,left_root),right_rotated_root=rotate_point(q,right_root);
    V left_base{},right_base{};
-   for(unsigned i=0;i<3;++i){
-    left_base[i]=ma(left_rotated_root[i],check(scalar(next,0x78)),position[i]);
-    right_base[i]=ma(right_rotated_root[i],check(scalar(next,0x78)),position[i]);
+   for(unsigned i=0;i<4;++i){
+    // W can contain packed fetched-body bits; retain it without filtering.
+    left_base[i]=std::fma(left_rotated_root[i],check(scalar(next,0x78)),position[i]);
+    right_base[i]=std::fma(right_rotated_root[i],check(scalar(next,0x78)),position[i]);
    }
    const float factor=divide(bits(0x3c888888),check(scalar(snapshot,0x27b0)));
    V acceleration{};for(unsigned i=0;i<4;++i)acceleration[i]=mul(sub(velocity[i],previous_horizontal[i]),factor);
@@ -385,9 +389,23 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    proxy_descriptor(staged.interaction_proxies[1],next,left_base,left_bank,1,half(next,0xcc),scalar(next,0x78));
    proxy_descriptor(staged.interaction_proxies[2],next,right_point,right_orientation,40,half(next,0xca),scalar(next,0x78));
    proxy_descriptor(staged.interaction_proxies[3],next,right_base,right_bank,1,half(next,0xce),scalar(next,0x78));
-   // 11214's fully expanded action state also emits four randomized effects.
-   // Do not publish proxies until that unrecovered continuation is available.
-   if(scalar(next,0x78)==1)return blocked(S::NeedsContactEffects,0x11a80);
+   // 11214 ->11A80..11CA4: four ordered arm-exhaust particle calls.
+   if(scalar(next,0x78)==1){
+    if(!particles.random||!particles.publish)return blocked(S::NeedsContactEffects,0x11a80);
+    full_action=true;
+    for(unsigned n=0;n<4;++n){
+     auto& q=action_particles[n];const auto arm=vector(next,n%2?0xa0:0x90);const auto& base=n%2?right_base:left_base;
+     for(unsigned i=0;i<4;++i){
+      q.position[i]=i==3?std::fma(-arm[i],bits(0x3dcccccc),base[i]):nm(arm[i],bits(0x3dcccccc),base[i]);
+      if(!std::isfinite(q.position[i]))throw Numeric{};
+      q.velocity[i]=mul(arm[i],-4);
+     }
+     q.radius_min=0;q.radius_max=bits(0x3dcccccc);q.count=1;q.speed=bits(0x3cf5c28f);
+     q.lifetime_min=bits(0x3e4ccccc);q.lifetime_max=bits(0x3e999999);
+     fp(q.configuration,0,bits(0x3d0b4395));fp(q.configuration,4,-2);
+     q.configuration[9]=1;q.configuration[10]=0;q.configuration[11]=1;q.configuration[12]=0;
+    }
+   }
   }
   const auto target_owner=word(snapshot,0x2790+4*owner);
   const auto previous=std::bit_cast<std::int16_t>(std::uint16_t(half(next,0xc4)));
@@ -416,6 +434,10 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  }
  for(unsigned i=0;i<action_count;++i){emitter(action_requests[i]);staged.action_effect=action_requests[i].descriptor;}
  if(banking)for(unsigned i=0;i<4;++i)publish_proxy(next,proxy_links[i],staged.interaction_proxies[i],pending,word(snapshot,0x27c0));
+ if(full_action)for(auto& q:action_particles){
+  q.configuration[8]=std::uint8_t(85+(particles.random->next()&3u));
+  particles.publish(q,*particles.random);
+ }
  if(owner_emission){emitter(request);staged.owner_effect=request.descriptor;}
  if(scratch)*scratch=staged;
  context=next;return {S::Advanced,0};

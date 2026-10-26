@@ -1,5 +1,6 @@
 #pragma once
 #include "comet/arena_counter_emission.hpp"
+#include "comet/arena_particle_emission.hpp"
 #include <functional>
 namespace comet::decomp {
 struct ArenaPlayerControlScratch {
@@ -17,6 +18,13 @@ struct ArenaPlayerPendingTransport {
  std::function<std::int32_t(const ArenaEntitySlot&)> reserve;
  std::function<void(const ArenaEntitySlot&)> publish;
 };
+// Original particle-pool ownership remains explicit. Publisher executes1E880
+// with the supplied RNG, including no draws on a failed pool batch. Same
+// no-throw/no-reentry/input-observation contract as the pending callbacks.
+struct ArenaPlayerParticleTransport {
+ ArenaRandom* random=nullptr;
+ std::function<void(const ArenaParticleEmission&,ArenaRandom&)> publish;
+};
 enum class ArenaPlayerControlStatus {
  Advanced, Invalid, NeedsPendingQueue, NeedsPeerContact, NeedsAlternateControl,
  NeedsAttachment, NeedsTargetFacing, NeedsCarry, NeedsDeath, NeedsBanking,
@@ -31,7 +39,10 @@ struct ArenaPlayerControlResult {
 // action edge/visual requests/candidate selection, owner timer/request
 // and body/controller commits. Also recovers11CA8 grid approach,119BC positive
 // attachment countdown and10B60 arm banking/four180A0 proxy lifecycles. Missing
-// death/attachment/effect continuations return a named boundary. Proxy storage
+// death/attachment/peer-contact continuations return a named boundary.11A80
+// full expansion emits four original particle calls through the supplied pool/RNG
+// transport. Hard7DD0 craft impacts have source particle count0 and can advance
+// without a particle transport. Proxy storage
 // order is far-left, near-left, far-right, near-right; linksC8/CC/CA/CE.
 // Uses the completed9A70 context, relative extension reference80 and original
 // snapshot. Supports finite normal/zero values in the documented math domain.
@@ -41,5 +52,6 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext&,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch=nullptr,
  const ArenaPlayerPendingTransport& pending={},
- const ArenaCounterEmissionSink& emitter={});
+ const ArenaCounterEmissionSink& emitter={},
+ const ArenaPlayerParticleTransport& particles={});
 }
