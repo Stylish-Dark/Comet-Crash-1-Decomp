@@ -68,8 +68,10 @@ ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot& slot,
   Rounding rounding;volatile float difference=c.previous_scalar_38_4e8-health;
   if(!normal(difference))return ArenaEntityFinalization::Invalid;
   // 6634..663C masks the low bit of changed_59A, not any nonzero byte.
-  if(std::abs(float(difference))>std::bit_cast<float>(0x38d1b717u) || (c.changed_59a&1u))
-   return ArenaEntityFinalization::NeedsChangeEffects; // original3940 unresolved
+  if((std::abs(float(difference))>std::bit_cast<float>(0x38d1b717u) || (c.changed_59a&1u))&&next[0x7f]==0)
+   return ArenaEntityFinalization::NeedsChangeEffects; // 3940 first-display allocation unresolved
+  // 3940/3994..39EC returns immediately when body7F is already nonzero.
+  // Existing health-display ownership therefore permits later health commits.
  }
  if(!c.skip_spatial_6260)return ArenaEntityFinalization::NeedsSpatialRecovery;
  // 6674/6678 replace XYZ only. The fourth lanes hold identity/type metadata

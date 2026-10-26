@@ -1,5 +1,26 @@
 # STATE
 
+## 2026-10-27 — Expired attachment growth/repair and audio queue
+
+Active code: `work/original-attachment-states-20261027`, above PR #69.
+P1/P2/P5/P6 advance within Partial:11DE8 attachment expiry now executes BC1 growth,
+audio onset, strict completion/request108 and BC0 nearby-team repair/request37.
+B588 audio packet append/full/fresh-reservation retry is recovered.3940's existing-
+display7F!=0 early return permits later health commits; first display stays blocked.
+Nine connected scene updates now commit progress/health through completion with
+original audio/request/particle order. Attachment/cache/display state is supplied,
+not claimed recovered pickup/drop/bootstrap.
+See [source scope and evidence](docs/decomp/original-attachment-states.md).
+
+24 original controller contexts/callback sets and subsequent existing-display
+6578 bodies match;16 original audio packets/retry write sequences match. Independent
+source review confirmed gates/order and3940 no-op. Release build and75 CTests pass;
+five build-artifact launch problems were relinked and only failed launches rerun.
+Safety/whitespace checks pass. G1/G2 remain unaccepted; overall complete faithful
+PC-port estimate stays about25%, plausible15–35%.
+Next: first3940 health-display allocation, actual held-unit/pickup/drop behavior,
+peer contacts/death, pending transport/scheduling and original command/mouse input.
+
 ## 2026-10-26 — Full-action particles and hard craft containment
 
 Active code: `work/original-player-action-effects-20261026`, above PR #68.

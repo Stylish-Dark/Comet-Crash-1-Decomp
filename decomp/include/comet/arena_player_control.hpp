@@ -1,5 +1,6 @@
 #pragma once
 #include "comet/arena_counter_emission.hpp"
+#include "comet/arena_audio_event.hpp"
 #include "comet/arena_particle_emission.hpp"
 #include <functional>
 namespace comet::decomp {
@@ -7,6 +8,7 @@ struct ArenaPlayerControlScratch {
  ArenaEntitySlot pending_entity{};
  ArenaEmissionDescriptor owner_effect{};
  ArenaEmissionDescriptor action_effect{};
+ ArenaEmissionDescriptor attachment_effect{};
  // Four reused original interaction proxy records (far/near, left/right).
  std::array<ArenaEntitySlot,4> interaction_proxies{};
 };
@@ -28,7 +30,7 @@ struct ArenaPlayerParticleTransport {
 enum class ArenaPlayerControlStatus {
  Advanced, Invalid, NeedsPendingQueue, NeedsPeerContact, NeedsAlternateControl,
  NeedsAttachment, NeedsTargetFacing, NeedsCarry, NeedsDeath, NeedsBanking,
- NeedsOwnerEmission, NeedsActionEmission, NeedsContactEffects, NeedsNumericRecovery, NeedsFinalization
+ NeedsOwnerEmission, NeedsActionEmission, NeedsContactEffects, NeedsNumericRecovery, NeedsFinalization, NeedsAudio
 };
 struct ArenaPlayerControlResult {
  ArenaPlayerControlStatus status=ArenaPlayerControlStatus::Invalid;
@@ -38,7 +40,8 @@ struct ArenaPlayerControlResult {
 // construction,7DD0 bounds, no-target7E40, movement/target-facing, ordinary
 // action edge/visual requests/candidate selection, owner timer/request
 // and body/controller commits. Also recovers11CA8 grid approach,119BC positive
-// attachment countdown and10B60 arm banking/four180A0 proxy lifecycles. Missing
+// attachment countdown,11DE8 expired attachment growth/repair, and10B60 arm
+// banking/four180A0 proxy lifecycles. Missing
 // death/attachment/peer-contact continuations return a named boundary.11A80
 // full expansion emits four original particle calls through the supplied pool/RNG
 // transport. Hard7DD0 craft impacts have source particle count0 and can advance
@@ -47,11 +50,13 @@ struct ArenaPlayerControlResult {
 // Uses the completed9A70 context, relative extension reference80 and original
 // snapshot. Supports finite normal/zero values in the documented math domain.
 // Rejection preserves context/scratch and issues no external callbacks. Callback
-// contracts apply equally to emitter. Finalization and scheduling are separate.
+// contracts apply equally to emitter, audio and particle sinks. Finalization
+// and scheduling are separate.
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext&,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch=nullptr,
  const ArenaPlayerPendingTransport& pending={},
  const ArenaCounterEmissionSink& emitter={},
- const ArenaPlayerParticleTransport& particles={});
+ const ArenaPlayerParticleTransport& particles={},
+ const ArenaAudioEventSink& audio={});
 }

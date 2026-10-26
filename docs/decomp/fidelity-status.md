@@ -1,11 +1,11 @@
 # Original-game recovery status — 2026-10-21
 
-Latest player checkpoint: [full-action particles and hard craft containment](original-player-action-effects.md)
-connects original11A80 arm effects and1E880 publication through full-attachment
-scene commits. Hard craft-boundary impacts advance with their actual zero-count
-particle behavior. Pickup/drop link mutation, expired attachment, peer contacts,
-death, pending transport/scheduling and original input remain incomplete. Particle
-rendering/consumer integration is unfinished. G1/G2 remain unaccepted.
+Latest player checkpoint: [expired attachment growth/repair and audio batches](original-attachment-states.md)
+connects11DE8 growth/completion and nearby-team repair, sound events and existing-
+display health commits. Supplied-state scene sequences reach both authoritative
+banks. Actual pickup/drop, first health-display creation, peer contacts/death,
+pending transport/scheduling and original input remain incomplete. Audio/particle
+playback and downstream consumption remain unfinished. G1/G2 remain unaccepted.
 
 This is a scoped inventory, not a complete function audit or measured coverage.
 Prior subjective percentages, including92%, remain withdrawn. The new overall

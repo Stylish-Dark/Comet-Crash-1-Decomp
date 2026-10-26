@@ -22,7 +22,8 @@ void initialize_arena_entity_tombstone(ArenaEntitySlot&,std::uint32_t frame);
 // Original E00..E84 admission: kind63 AND deadline == frame (not >=).
 bool arena_entity_tombstone_due(const ArenaEntitySlot&,std::uint32_t frame);
 // 6578 live/removal finalization. Returns a recovery boundary without writes
-// if unrecovered3940/6260 is required. It does not pretend those effects ran.
+// if first-display3940 allocation or6260 is required.3940 already-display
+// returns (body7F nonzero) are recovered; no missing effects are fabricated.
 ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot&,
  std::span<std::uint8_t,128> statistics,const ArenaEntityFinalizationContext&,
  std::uint32_t frame);
