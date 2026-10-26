@@ -1,11 +1,11 @@
 # Original-game recovery status — 2026-10-21
 
-Latest player checkpoint: [reference fetch and mode0 attached positioning](original-player-references.md)
-connects original B500 bank/accumulator reads and10648 position selection through
-real scene commits. Attachment links are explicit test fixtures; original pickup,
-drop, banking, lifecycle and scheduling are still incomplete. Kind18 is a visual
-consumer, correcting the earlier release-world-effect interpretation. G1/G2 are
-unaccepted.
+Latest player checkpoint: [banking, interaction proxies and grid approach](original-player-banking.md)
+connects nonzero10290 control and automatic grid approach through real scene
+commits. Original proxy allocation/reuse/retirement and positive attachment
+countdown are recovered. Pickup/drop link mutation, fully expanded effects,
+remaining attachment/death/contact branches and actual pending transport/
+scheduling/input are incomplete. G1/G2 remain unaccepted.
 
 This is a scoped inventory, not a complete function audit or measured coverage.
 Prior subjective percentages, including92%, remain withdrawn. The new overall
