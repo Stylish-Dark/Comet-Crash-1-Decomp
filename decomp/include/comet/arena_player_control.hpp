@@ -6,6 +6,8 @@ struct ArenaPlayerControlScratch {
  ArenaEntitySlot pending_entity{};
  ArenaEmissionDescriptor owner_effect{};
  ArenaEmissionDescriptor action_effect{};
+ // Four reused original interaction proxy records (far/near, left/right).
+ std::array<ArenaEntitySlot,4> interaction_proxies{};
 };
 // Source2058 allocation/spatial submission, then2198 body publication. A failed
 // allocation returns-1:3238 retains flag8000 and the controller still proceeds.
@@ -24,10 +26,13 @@ struct ArenaPlayerControlResult {
  ArenaPlayerControlStatus status=ArenaPlayerControlStatus::Invalid;
  std::uint32_t blocked_address=0;
 };
-// Original10290 entry through ordinary-mode0 return113A4, including3238 request
+// Original10290 entry through supported ordinary/banking returns, including3238 request
 // construction,7DD0 bounds, no-target7E40, movement/target-facing, ordinary
 // action edge/visual requests/candidate selection, owner timer/request
-// and body/controller commits. Other source branches return a named boundary.
+// and body/controller commits. Also recovers11CA8 grid approach,119BC positive
+// attachment countdown and10B60 arm banking/four180A0 proxy lifecycles. Missing
+// death/attachment/effect continuations return a named boundary. Proxy storage
+// order is far-left, near-left, far-right, near-right; linksC8/CC/CA/CE.
 // Uses the completed9A70 context, relative extension reference80 and original
 // snapshot. Supports finite normal/zero values in the documented math domain.
 // Rejection preserves context/scratch and issues no external callbacks. Callback

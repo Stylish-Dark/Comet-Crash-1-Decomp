@@ -40,7 +40,7 @@ int main(){
   const auto result=advance_arena_player_control(work,image,.016f,&sc,pending);
   assert(result.status==expected&&work==before&&sc.pending_entity==original_scratch.pending_entity&&sc.owner_effect==original_scratch.owner_effect&&sc.action_effect==original_scratch.action_effect&&reserves==calls);
  };
- auto work=initial;put(s,0x28d4,1);reject(work,s,ArenaPlayerControlStatus::NeedsBanking);s=snapshot();
+ auto work=initial;put(s,0x28d4,1);reject(work,s,ArenaPlayerControlStatus::NeedsNumericRecovery);s=snapshot();
  work[0xb8]=work[0xb9]=0;reject(work,s,ArenaPlayerControlStatus::NeedsAttachment);work=initial;
  work[0xbf]=1;fp(work,0x200,4);fp(work,0x204,1);fp(work,0x208,1);
  assert(advance_arena_player_control(work,s,.016f,&scratch,pending).status==ArenaPlayerControlStatus::Advanced);work=initial;
@@ -158,4 +158,62 @@ int main(){
   assert(action_queue.available==(step==3?152u:156u));
  }
  for(unsigned i=0;i<8;++i)assert(word(action_queue.records[i],0x10)==18&&action_queue.records[i][15]==112);
+ // Nonzero-mode10290 must reach real banking/proxy publication, not reject it.
+ auto bank_snapshot=snapshot();put(bank_snapshot,0x28d4,1);put(bank_snapshot,0x27b0,0x3c888888);
+ auto bank_work=prepared(bank_snapshot);put(bank_work,0x60,word(bank_work,0x60)&~0x8000u);
+ put(bank_work,0x378,0xffffffff);
+ fp(bank_work,0x90,0);fp(bank_work,0x94,1);fp(bank_work,0x98,0);fp(bank_work,0x9c,0);
+ fp(bank_work,0xa0,0);fp(bank_work,0xa4,1);fp(bank_work,0xa8,0);fp(bank_work,0xac,0);
+ ArenaPlayerControlScratch bank_scratch{};std::vector<ArenaEntitySlot> proxies;unsigned allocations=0;
+ ArenaPlayerPendingTransport proxy_transport;
+ proxy_transport.reserve=[&](const ArenaEntitySlot& e){assert(e[15]==13);++allocations;return int(20+allocations);};
+ proxy_transport.publish=[&](const ArenaEntitySlot& e){proxies.push_back(e);};
+ auto bank_result=advance_arena_player_control(bank_work,bank_snapshot,.016f,&bank_scratch,proxy_transport);
+ assert(bank_result.status==ArenaPlayerControlStatus::Advanced);
+ assert(allocations==4&&proxies.size()==4);
+ for(unsigned i=0;i<4;++i){assert(proxies[i][15]==13);assert(proxies[i][0x6f]==(i%2?1:40));
+  assert(word(proxies[i],0x10)==32);assert(proxies[i][13]==21+i);}
+ assert(bank_work[0xc9]==21&&bank_work[0xcd]==22&&bank_work[0xcb]==23&&bank_work[0xcf]==24);
+ // Original-instruction fixture pins the newly recovered banking arithmetic.
+ const std::array<unsigned,8> arm_bits{0x3cc90285,0x3f7b1d53,0xbe45815b,0xbc2741f2,
+  0x3c88010c,0x3f7ab52f,0x3e4e705a,0xbc158d81};
+ for(unsigned i=0;i<8;++i)assert(word(bank_work,0x90+4*i)==arm_bits[i]);
+ assert(word(proxies[1],0)==0x401fb6dd&&word(proxies[1],4)==0x3f7fe4bc);
+ assert(word(proxies[1],0x20)==0x3f2293b9&&word(proxies[1],0x2c)==0x3f45b511);
+ // Reuse the four original identities; no extra pool allocation on the next update.
+ proxies.clear();bank_result=advance_arena_player_control(bank_work,bank_snapshot,.016f,&bank_scratch,proxy_transport);
+ assert(bank_result.status==ArenaPlayerControlStatus::Advanced&&allocations==4&&proxies.size()==4);
+ // Dead craft with BC1 bypasses12288 but retires proxies via182C0/3400.
+ // No missing identity can allocate, and existing identities publish tombstones.
+ fp(bank_work,0x38,0);bank_work[0xbc]=1;put(bank_snapshot,0x27c0,0xfffffffe);
+ proxies.clear();bank_result=advance_arena_player_control(bank_work,bank_snapshot,.016f,&bank_scratch,proxy_transport);
+ assert(bank_result.status==ArenaPlayerControlStatus::Advanced&&allocations==4&&proxies.size()==4);
+ for(unsigned i=0;i<4;++i){assert(proxies[i][15]==63&&word(proxies[i],0x80)==1);
+  assert(proxies[i][0x6f]==(i%2?1:40));}
+ for(unsigned o:{0xc8u,0xccu,0xcau,0xceu})assert(bank_work[o]==255&&bank_work[o+1]==255);
+ proxies.clear();bank_result=advance_arena_player_control(bank_work,bank_snapshot,.016f,&bank_scratch,proxy_transport);
+ assert(bank_result.status==ArenaPlayerControlStatus::Advanced&&allocations==4&&proxies.empty());
+ // The attachment countdown retains its timer and interpolated packed lane.
+ auto attached_work=prepared(bank_snapshot);put(attached_work,0x60,word(attached_work,0x60)&~0x8000u);
+ attached_work[0xb8]=0;attached_work[0xb9]=3;attached_work[0x60c]=0;attached_work[0x60d]=3;attached_work[0x60f]=29;
+ fp(attached_work,0x78,.3f);fp(attached_work,0xc0,1.2f);fp(attached_work,0x600,3.25f);
+ fp(attached_work,0x604,.5f);fp(attached_work,0x608,3.5f);attached_work[0xd1]=2;attached_work[0xd3]=3;
+ assert(advance_arena_player_control(attached_work,bank_snapshot,.016f,&bank_scratch,full).status==ArenaPlayerControlStatus::Advanced);
+ assert(scalar(attached_work,0xc0)<1.2f&&scalar(attached_work,0xe4)==1&&word(attached_work,0xec)==0x13963);
+ // Real registered scene: nonzero controller + automatic target ->6578 commits.
+ // Full pool exercises all four proxy failures without fabricated identities.
+ s=snapshot();put(s,0x28d4,1);fp(s,0x27b0,1.f/60.f);s[0x2579]=2;s[0x257a]=4;s[0x257b]=5;
+ const auto before_reserves=full_reserves;
+ for(unsigned frame=10;frame<13;++frame){
+  assert(scene.stage_player_craft_preparation(0,s,context));auto consumed=consume_arena_prepared_accumulator(context,{});
+  assert(scene.complete_player_craft_preparation(0,s,consumed,context)==ArenaPreparationCompletion::Prepared);
+  auto result=scene.advance_prepared_player_craft(0,s,.016f,context,frame,&scratch,full);
+  assert(result.control.status==ArenaPlayerControlStatus::Advanced&&result.finalization==ArenaEntityFinalization::Committed);
+  const auto& storage=scene.simulation().storage();assert(storage.banks[0]==storage.banks[1]);
+  assert(scalar(context,0x4a0)>0&&scalar(context,0x4a8)>0);
+  const auto& body=storage.banks[0][0];const auto& visible_entity=scene.arena().entities[0];
+  assert(visible_entity.position.x==scalar(body,0)&&visible_entity.position.z==scalar(body,8));
+  for(unsigned o:{0xc8u,0xccu,0xcau,0xceu})assert(body[o]==255&&body[o+1]==255);
+ }
+ assert(full_reserves==before_reserves+15); // retained8000 request + four proxies/frame
 }

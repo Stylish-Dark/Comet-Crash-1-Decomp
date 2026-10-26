@@ -1,5 +1,27 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-26 — Original banking, proxy lifecycle and automatic control
+
+Active code: `work/original-player-banking-20261026`, stacked above PR #67.
+P1/P2/P3/P5/P6 advance within Partial: nonzero10290 banking now builds four
+original interaction-arm proxies, allocates/reuses/publishes identities and
+retires them through3400 on the deadBC1 branch.11CA8 automatic grid approach
+and119BC positive attachment countdown are recovered. Actual registered scene
+updates commit the banking/automatic path through6578 into both banks/render state.
+See [source scope and evidence](docs/decomp/original-player-banking.md).
+
+128 targeted original-instruction comparisons:117 accepted complete contexts/
+proxy publications match;11 explicit numeric exclusions have no parity claim.
+Public fixtures cover original output words, reuse/exhaustion, retirement and
+connected scene commits. Source review found and resolved the dead-proxy path. Release build and all73
+CTest cases pass (one pre-existing zero-byte executable was relinked; only its
+failed launch was rerun). Repository safety and whitespace checks pass.
+No complete player loop or original mission is accepted. Full-game estimate stays
+about25%, plausible15–35%; no justified change to the low-confidence G1 allowance.
+Next: actual pickup/drop link mutation and carried-ground updates, fully expanded
+11A80/1E880 effects, remaining attachment/death/contact branches and real pending
+transport/scheduling/input. Mouse adaptation still depends on original commands.
+
 ## 2026-10-23 — Original reference fetch and attached positioning
 
 Active code: `work/original-player-reference-fetch-20261023`, stacked above PR #66.

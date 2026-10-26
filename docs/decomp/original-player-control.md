@@ -1,5 +1,9 @@
 # Original player controller: connected ordinary path
 
+Latest continuation: [banking, interaction-proxy lifecycle, automatic grid approach
+and positive attachment countdown](original-player-banking.md). The historical
+branch table below records the PR #65 boundary, not the current recovery ledger.
+
 Checkpoint 2026-10-22. Completion-map items P1/P3/P6 advanced; G1 remains unaccepted.
 
 ## What now executes
