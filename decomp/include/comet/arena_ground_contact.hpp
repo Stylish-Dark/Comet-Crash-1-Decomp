@@ -14,6 +14,8 @@ struct ArenaGroundContactQuery {
 };
 struct ArenaGroundContactResult {
   std::array<float,4> position{},velocity{},accumulated_impulse{};
+  bool velocity_response = false; // original7510 reaches77A0
+  float impact_strength = 0; // source clamp((impulse length-2)*.5,0,1)
   bool energetic_impact = false; // original return value, not a damage event
 };
 std::optional<ArenaGroundContactResult>

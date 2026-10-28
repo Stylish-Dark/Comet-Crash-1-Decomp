@@ -22,6 +22,7 @@ add_library(comet_native_recovery STATIC
     src/arena_preparation_effects.cpp
     src/arena_entity_accumulator.cpp
     src/arena_entity_preparation.cpp
+    src/arena_health_display.cpp
     src/arena_entity_finalization.cpp
     src/arena_construction_runtime.cpp
     src/arena_factory_production.cpp
@@ -67,6 +68,7 @@ add_library(comet_native_recovery STATIC
 
     src/arena_player_craft.cpp
     src/arena_player_references.cpp
+    src/arena_player_peer.cpp
     src/arena_player_control.cpp
     src/arena_craft_facing.cpp
     src/arena_craft_flight.cpp
@@ -677,4 +679,30 @@ if(MSVC)
  target_compile_options(comet_arena_audio_event_test PRIVATE /UNDEBUG)
 else()
  target_compile_options(comet_arena_audio_event_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_arena_health_display_test tests/arena_health_display.cpp)
+target_link_libraries(comet_arena_health_display_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_health_display_test COMMAND comet_arena_health_display_test)
+if(MSVC)
+ target_compile_options(comet_arena_health_display_test PRIVATE /UNDEBUG)
+ set_source_files_properties(src/arena_health_display.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ target_compile_options(comet_arena_health_display_test PRIVATE -UNDEBUG)
+ set_source_files_properties(src/arena_health_display.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+if(MSVC)
+ set_source_files_properties(src/arena_player_peer.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+else()
+ set_source_files_properties(src/arena_player_peer.cpp PROPERTIES COMPILE_OPTIONS "-frounding-math;-ffp-contract=off")
+endif()
+
+add_executable(comet_arena_player_peer_test tests/arena_player_peer.cpp)
+target_link_libraries(comet_arena_player_peer_test PRIVATE comet_native_recovery)
+add_test(NAME comet_arena_player_peer_test COMMAND comet_arena_player_peer_test)
+if(MSVC)
+ target_compile_options(comet_arena_player_peer_test PRIVATE /UNDEBUG)
+else()
+ target_compile_options(comet_arena_player_peer_test PRIVATE -UNDEBUG)
 endif()

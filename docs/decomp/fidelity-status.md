@@ -1,11 +1,11 @@
 # Original-game recovery status — 2026-10-21
 
-Latest player checkpoint: [expired attachment growth/repair and audio batches](original-attachment-states.md)
-connects11DE8 growth/completion and nearby-team repair, sound events and existing-
-display health commits. Supplied-state scene sequences reach both authoritative
-banks. Actual pickup/drop, first health-display creation, peer contacts/death,
-pending transport/scheduling and original input remain incomplete. Audio/particle
-playback and downstream consumption remain unfinished. G1/G2 remain unaccepted.
+Latest player checkpoint: [health displays and real peer contact](original-player-health-contact.md)
+connects3940 first-display publication and11618 ->7E40/7510 contacts, peer impulse
+publication/consumption, bank commits and renderer-facing craft state. Display
+pool exhaustion still permits health commits. Actual pickup/drop, full death,
+display consumer, queue/bootstrap/scheduling and original command/mouse input
+remain incomplete. G1/G2 remain unaccepted.
 
 This is a scoped inventory, not a complete function audit or measured coverage.
 Prior subjective percentages, including92%, remain withdrawn. The new overall
@@ -35,7 +35,7 @@ and counted requests at the explicit1E090 publication boundary. Reservation/retr
 behavior is separately covered in PR #61. Full10290 controller/actions/carry,
 original request consumption, queue bootstrap, snapshot/job ownership and
 scheduling remain next. Recovered1E090/2AD8 now supplies request publication.
-Numeric exclusions,3940/6260, audio/bootstrap and full death lifecycle remain open.
+Numeric exclusions,6260, display/audio consumers, bootstrap and full death lifecycle remain open.
 F3 remains separate.3510 constructs counted requests; it is not a complete death
 handler. Output comparisons do not establish matching compilation/hardware parity.
 

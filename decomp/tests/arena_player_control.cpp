@@ -127,7 +127,7 @@ int main(){
  assert(scene.stage_player_craft_preparation(0,s,context));
  auto effects=consume_arena_prepared_accumulator(context,{});
  assert(scene.complete_player_craft_preparation(0,s,effects,context)==ArenaPreparationCompletion::Prepared);
- fp(context,0x38,99); // actual health change requires still-unrecovered3940
+ fp(context,0x38,99); // actual health change requires an explicit3940 display transport
  auto blocked=scene.advance_prepared_player_craft(0,s,.016f,context,5,&scratch,full);
  assert(blocked.control.status==ArenaPlayerControlStatus::NeedsFinalization);
  assert(blocked.finalization==ArenaEntityFinalization::NeedsChangeEffects);
@@ -305,14 +305,13 @@ int main(){
 
  // Nine connected source construction updates: audio onset, progress/health,
  // full expansion, completion latch/request and authoritative delayed positions.
- // Supplied state includes a valid cached attachment and an existing health
- // display (7F1); first-display creation remains a separate recovery boundary.
+ // Supplied attachment/cache state, with first health display now created by3940.
  NativeConstructionScene sequence(arena,config);ArenaEntitySlot sequence_reused{};
  assert(sequence.create_player_craft(0,{2.5f,0,3.5f,0},sequence_reused,[](const ArenaCraftAuxiliaryRequest&){return -1;})==ArenaCraftRegistration::Registered);
  auto sequence_snapshot=snapshot();put(sequence_snapshot,0x28d4,1);fp(sequence_snapshot,0x27b0,.25f);
  ArenaEntityWorkContext sequence_work{};ArenaPlayerControlScratch sequence_scratch;ArenaAudioBatch sequence_audio{};
- ArenaRequestPublicationQueue sequence_queue;sequence_queue.records.resize(160);sequence_queue.free_ring.resize(160);sequence_queue.available=160;
- for(unsigned n=0;n<160;++n)sequence_queue.free_ring[n]=n;
+ ArenaRequestPublicationQueue sequence_queue;sequence_queue.records.resize(1040);sequence_queue.free_ring.resize(1040);sequence_queue.available=1040;
+ for(unsigned n=0;n<1040;++n)sequence_queue.free_ring[n]=n;
  ArenaRandom sequence_random(23);ArenaParticleEmissionScratch sequence_particles;unsigned sequence_completions=0,sequence_particle_calls=0;
  ArenaPlayerPendingTransport sequence_full{[&](const ArenaEntitySlot&){assert(sequence.simulation().storage().free_indices.empty());return -1;},[](const ArenaEntitySlot&){assert(false);}};
  ArenaPlayerParticleTransport sequence_particle_transport{&sequence_random,[&](const ArenaParticleEmission& request,ArenaRandom& rng){
@@ -325,14 +324,17 @@ int main(){
   assert(sequence.complete_player_craft_preparation(0,sequence_snapshot,consumed,sequence_work)==ArenaPreparationCompletion::Prepared);
   sequence_work[0xb8]=0;sequence_work[0xb9]=3;sequence_work[0x60c]=0;sequence_work[0x60d]=3;sequence_work[0x60f]=29;
   put(sequence_work,0x660,0);fp(sequence_work,0x600,3.25f);fp(sequence_work,0x604,.5f);fp(sequence_work,0x608,3.5f);
-  if(frame==1){sequence_work[0x7f]=1;fp(sequence_work,0xd4,3);}
-  const auto step=sequence.advance_prepared_player_craft(0,sequence_snapshot,.25f,sequence_work,frame,&sequence_scratch,sequence_full,sequence_emit,sequence_particle_transport,sequence_sound);
+  if(frame==1){assert(sequence_work[0x7f]==0);fp(sequence_work,0xd4,3);}
+  const auto step=sequence.advance_prepared_player_craft(0,sequence_snapshot,.25f,sequence_work,frame,&sequence_scratch,sequence_full,sequence_emit,sequence_particle_transport,sequence_sound,&sequence_queue);
   assert(step.control.status==ArenaPlayerControlStatus::Advanced&&step.finalization==ArenaEntityFinalization::Committed);
   const auto& banks=sequence.simulation().storage().banks;assert(banks[0]==banks[1]);
   assert(scalar(banks[0][0],0x38)==float(std::min(frame,8u)*125));
-  assert(banks[0][0][0xbc]==(frame<9?1:0));
+  assert(banks[0][0][0xbc]==(frame<9?1:0)&&banks[0][0][0x7f]==1&&sequence_work[0x7f]==1);
+  assert(sequence_queue.records[0][15]==105&&sequence_queue.records[1][15]==106);
+  assert(word(sequence_queue.records[0],0x64)==std::bit_cast<unsigned>(125.f));
+  assert(word(sequence_queue.records[0],0x7c)>>16==0);
   assert(sequence.arena().entities[0].position.y==scalar(banks[0][0],4));
  }
- assert(word(sequence_audio,0)==1&&sequence_completions==1&&sequence_particle_calls==8&&sequence_queue.available==151);
+ assert(word(sequence_audio,0)==1&&sequence_completions==1&&sequence_particle_calls==8&&sequence_queue.available==1029);
 
 }

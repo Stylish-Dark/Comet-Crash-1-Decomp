@@ -1,6 +1,7 @@
 #pragma once
 #include "comet/arena_entity_storage.hpp"
 #include "comet/arena_player_statistics.hpp"
+#include "comet/arena_health_display.hpp"
 namespace comet::decomp {
 // Named source context lanes consumed by FE5D8 6578. W lanes are not copied
 // into packed body metadata. The original frame serial is supplied, not derived
@@ -10,6 +11,7 @@ struct ArenaEntityFinalizationContext {
  float previous_scalar_38_4e8=0;
  std::uint16_t statistics_owner_542=0;
  std::uint8_t removal_590=0, removal_handled_593=0, auxiliary_596=0, changed_59a=0;
+ ArenaHealthDisplayParameters health_display; // original500/520/4E4 cache
  bool skip_spatial_6260=true; // nonzero r4; original type1 wrapper passes1
 };
 enum class ArenaEntityFinalization {
@@ -22,17 +24,17 @@ void initialize_arena_entity_tombstone(ArenaEntitySlot&,std::uint32_t frame);
 // Original E00..E84 admission: kind63 AND deadline == frame (not >=).
 bool arena_entity_tombstone_due(const ArenaEntitySlot&,std::uint32_t frame);
 // 6578 live/removal finalization. Returns a recovery boundary without writes
-// if first-display3940 allocation or6260 is required.3940 already-display
-// returns (body7F nonzero) are recovered; no missing effects are fabricated.
+// if3940 requires an absent display transport or6260 is required. Full
+// display pools still commit health; no missing effects are fabricated.
 ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot&,
  std::span<std::uint8_t,128> statistics,const ArenaEntityFinalizationContext&,
- std::uint32_t frame);
+ std::uint32_t frame,const ArenaHealthDisplayTransport& display={});
 // Synchronous owned-bank publication; original DMA scheduling remains outside.
 // Tombstones retain their original cell membership until job completion.
 ArenaEntityFinalization finalize_arena_entity_update(ArenaEntityStorage&,
  std::uint16_t index,const ArenaEntitySlot& updated,
  std::span<std::uint8_t,128> statistics,const ArenaEntityFinalizationContext&,
- std::uint32_t frame);
+ std::uint32_t frame,const ArenaHealthDisplayTransport& display={});
 // Collect in cell/entry order. Does not release pool identities. Caller must
 // complete the original job phase before applying this result.
 std::vector<std::uint16_t> collect_arena_entity_tombstones(

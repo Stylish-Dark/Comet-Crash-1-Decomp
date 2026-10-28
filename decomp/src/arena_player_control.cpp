@@ -1,4 +1,5 @@
 #include "comet/arena_player_control.hpp"
+#include "comet/arena_player_peer.hpp"
 #include "comet/arena_entity_core.hpp"
 #include "comet/arena_entity_finalization.hpp"
 #include "comet/arena_ground_contact.hpp"
@@ -25,7 +26,12 @@ float mul(float a,float b){volatile float r=a*b;return check(r);}
 float add(float a,float b){volatile float r=a+b;return check(r);}
 float sub(float a,float b){volatile float r=a-b;return check(r);}
 float ma(float a,float b,float c){return check(std::fma(a,b,c));}
-V vector(const auto& b,unsigned o){V v;for(unsigned i=0;i<4;++i)v[i]=check(scalar(b,o+4*i));return v;}
+float lane_check(float v,unsigned i){if(i!=3)return check(v);if(!std::isfinite(v)||std::abs(v)>1e6f)throw Numeric{};return v;}
+float lane_mul(float a,float b,unsigned i){volatile float v=a*b;return lane_check(v,i);}
+float lane_add(float a,float b,unsigned i){volatile float v=a+b;return lane_check(v,i);}
+float lane_sub(float a,float b,unsigned i){volatile float v=a-b;return lane_check(v,i);}
+float lane_ma(float a,float b,float c,unsigned i){return lane_check(std::fma(a,b,c),i);}
+V vector(const auto& b,unsigned o){V v;for(unsigned i=0;i<4;++i)v[i]=lane_check(scalar(b,o+4*i),i);return v;}
 void store(auto& b,unsigned o,const V& v){for(unsigned i=0;i<4;++i)fp(b,o+4*i,v[i]);}
 struct Rounding {
  int old=std::fegetround();
@@ -123,7 +129,7 @@ V direction_orientation(const V& direction){
  cross=normalized;
  return cross;
 }
-V normalize(const V& v){V r=v;const float factor=inverse(dot(v,v));for(auto& q:r)q=mul(q,factor);return r;}
+V normalize(const V& v){V r=v;const float factor=inverse(dot(v,v));for(unsigned i=0;i<4;++i)r[i]=lane_mul(r[i],factor,i);return r;}
 float divide(float a,float b){
  if(b==0)throw Numeric{};
  const float estimate=check(detail::reciprocal_estimate(b)),initial=mul(a,estimate);
@@ -132,7 +138,7 @@ float divide(float a,float b){
 V point(const V& p,const V& q,const V& offset,float scale){
  V local{};for(unsigned i=0;i<4;++i)local[i]=mul(offset[i],scale);
  const auto rotated=rotate_point(q,local);V result{};
- for(unsigned i=0;i<4;++i)result[i]=add(p[i],rotated[i]);
+ for(unsigned i=0;i<4;++i)result[i]=lane_add(p[i],rotated[i],i);
  return result;
 }
 float bits(unsigned value){return std::bit_cast<float>(value);}
@@ -182,7 +188,7 @@ ArenaCounterEmissionRequest action_visual_request(ArenaEmissionDescriptor descri
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
- const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio){
+ const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,const ArenaAccumulatorTransport& peer_accumulator){
  using S=ArenaPlayerControlStatus;
  if(context[15]!=1||word(context,0x500)!=1||word(context,0x5d0)!=0x80||context[0xc6]>=4||
     half(context,0x542)!=context[0xc6]||!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||
@@ -191,10 +197,10 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  const unsigned owner=context[0xc6],base=0x2550u+64u*owner;
  const bool pending_needed=(word(context,0x60)&0x8000)!=0;
  if(pending_needed&&(!scratch||!pending.reserve||!pending.publish))return blocked(S::NeedsPendingQueue,0x103cc);
- // 7E40's single-target sentinel path is recovered here; real peers remain
- // explicit. Kind>=62 also clears the target halfword, but is not required
- // when the supplied target already isFFFF.
- if((context[0x33]&0x1c)&&half(context,0x1c)!=65535)return blocked(S::NeedsPeerContact,0x1162c);
+ // Original11618 single-target peer call. The active geometry path requires
+ // source RNG ownership; sentinel, stale-kind and ignored links do not draw.
+ const bool peer_needed=(context[0x33]&0x1c)&&half(context,0x1c)!=65535;
+ if(peer_needed&&context[0x10f]<62&&half(context,0x1c)!=half(context,0x6c)&&!particles.random)return blocked(S::NeedsPeerContact,0x1162c);
  const bool automatic=snapshot[base+0x29]==2;
  const bool attached=half(context,0xb8)!=65535;
  if(attached&&(half(context,0x60c)!=half(context,0xb8)||context[0x60f]==0||context[0x60f]>63))
@@ -205,6 +211,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  // replace that quadword before it becomes observable.
  const bool retain_attachment_w=banking&&attached&&!(word(context,0x660)&8u)&&!(scalar(context,0xc0)>0)&&!context[0xbc];
  auto next=context;Rounding rounding;bool owner_emission=false,full_action=false,attachment_audio=false,attachment_emission=false,repair_particle=false;
+ ArenaPlayerPeerResult peer_result;std::optional<ArenaRandom> peer_random;
  ArenaCounterEmissionRequest attachment_request;ArenaParticleEmission repair_request;
  std::array<ArenaParticleEmission,4> action_particles{};
  std::array<ArenaCounterEmissionRequest,4> action_requests{};unsigned action_count=0;
@@ -220,9 +227,16 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   put(next,0x5a0,check(scalar(next,0x74))>0?6:0);
   std::copy_n(next.begin()+0xe0,16,next.begin()+0x480);
   store(next,0x20,vector(next,0xf0));next[0xbd]=0;
-  V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?(retain_attachment_w?scalar(next,0x480+4*i):0.f):check(scalar(next,0x480+4*i));
+  if(peer_needed){
+   peer_random=particles.random?*particles.random:ArenaRandom{};peer_result=prepare_arena_player_peer_contact(next,snapshot,*peer_random);
+   if(!peer_result.advanced)return blocked(S::NeedsPeerContact,0x7e40);
+   next[0xbd]=peer_result.overlapping;
+   if(peer_result.outgoing_impulse&&(!scratch||!peer_accumulator.read_reserved||!peer_accumulator.write_conditional))return blocked(S::NeedsPeerContact,0x16f8);
+   if(peer_result.particles&&!particles.publish)return blocked(S::NeedsContactEffects,0x7704);
+  }
+  V position;for(unsigned i=0;i<4;++i)position[i]=attached&&i==3?(retain_attachment_w?scalar(next,0x480+4*i):0.f):lane_check(scalar(next,0x480+4*i),i);
   auto velocity=vector(next,0x4a0);
-  for(unsigned i=0;i<4;++i)position[i]=retain_attachment_w&&i==3?std::fma(velocity[i],elapsed,position[i]):ma(velocity[i],elapsed,position[i]);
+  for(unsigned i=0;i<4;++i)position[i]=retain_attachment_w&&i==3?std::fma(velocity[i],elapsed,position[i]):lane_ma(velocity[i],elapsed,position[i],i);
   put(next,0x5a0,0); // 1053C
   ArenaGroundBoundsQuery bounds;bounds.position=position;bounds.velocity=velocity;
   bounds.accumulated_impulse=vector(next,0x4d0);
@@ -236,7 +250,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
   // Synchronous native storage also needs no corresponding DMA-tag wait.
   position=contained->position;velocity=contained->velocity;
   auto impulse=contained->accumulated_impulse;auto consumed=vector(next,0x340);
-  for(unsigned i=0;i<4;++i)impulse[i]=add(impulse[i],consumed[i]);
+  for(unsigned i=0;i<4;++i)impulse[i]=lane_add(impulse[i],consumed[i],i);
   store(next,0x4d0,impulse);
   next[0xc7]=ma(impulse[2],impulse[2],ma(impulse[1],impulse[1],mul(impulse[0],impulse[0])))>3?1:0;
   V target{mul(x,banking?10.f:40.f),0,mul(z,banking?10.f:40.f),0};
@@ -253,10 +267,10 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
     if(length>10){const float scale=divide(10,length);for(auto& component:target)component=mul(component,scale);}
     next[0xbd]=0;
     if(next[0xbe])for(auto& component:target)component=mul(component,bits(0x3f333333));
-   }else for(unsigned i=0;i<4;++i)target[i]=mul(velocity[i],bits(0x3e4ccccc));
+   }else for(unsigned i=0;i<4;++i)target[i]=lane_mul(velocity[i],bits(0x3e4ccccc),i);
    response=1;
   }
-  for(unsigned i=0;i<4;++i)velocity[i]=ma(sub(target[i],velocity[i]),response,velocity[i]);
+  for(unsigned i=0;i<4;++i)velocity[i]=lane_ma(lane_sub(target[i],velocity[i],i),response,velocity[i],i);
   velocity[1]=0;position[1]=1;
   if(attached){
    // Mode0 takes10648 directly: reset74 and load the source cached body quadword.
@@ -410,7 +424,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
     right_base[i]=std::fma(right_rotated_root[i],check(scalar(next,0x78)),position[i]);
    }
    const float factor=divide(bits(0x3c888888),check(scalar(snapshot,0x27b0)));
-   V acceleration{};for(unsigned i=0;i<4;++i)acceleration[i]=mul(sub(velocity[i],previous_horizontal[i]),factor);
+   V acceleration{};for(unsigned i=0;i<4;++i)acceleration[i]=lane_mul(lane_sub(velocity[i],previous_horizontal[i],i),factor,i);
    float angle=sub(facing.yaw,check(scalar(context,0xdc)));
    if(angle>bits(0x40490fda))angle=sub(angle,bits(0x40c90fda));
    else if(bits(0xc0490fda)>angle)angle=add(angle,bits(0x40c90fda));
@@ -419,12 +433,12 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    arm_left[2]=add(arm_left[2],turn);arm_right[2]=sub(arm_right[2],turn);
    const auto left_rotated=rotate_point(q,arm_left),right_rotated=rotate_point(q,arm_right);
    V left_goal{},right_goal{};
-   for(unsigned i=0;i<4;++i){left_goal[i]=add(mul(acceleration[i],3),left_rotated[i]);
-    right_goal[i]=add(mul(acceleration[i],3),right_rotated[i]);}
+   for(unsigned i=0;i<4;++i){left_goal[i]=lane_add(lane_mul(acceleration[i],3,i),left_rotated[i],i);
+    right_goal[i]=lane_add(lane_mul(acceleration[i],3,i),right_rotated[i],i);}
    const float left_inverse=inverse(dot(left_goal,left_goal)),right_inverse=inverse(dot(right_goal,right_goal));
    auto left_arm=vector(next,0x90),right_arm=vector(next,0xa0);
-   for(unsigned i=0;i<4;++i){left_arm[i]=ma(ma(left_goal[i],left_inverse,-left_arm[i]),bits(0x3e4ccccc),left_arm[i]);
-    right_arm[i]=ma(ma(right_goal[i],right_inverse,-right_arm[i]),bits(0x3e4ccccc),right_arm[i]);}
+   for(unsigned i=0;i<4;++i){left_arm[i]=lane_ma(lane_ma(left_goal[i],left_inverse,-left_arm[i],i),bits(0x3e4ccccc),left_arm[i],i);
+    right_arm[i]=lane_ma(lane_ma(right_goal[i],right_inverse,-right_arm[i],i),bits(0x3e4ccccc),right_arm[i],i);}
    left_arm=normalize(left_arm);right_arm=normalize(right_arm);
    store(next,0x90,left_arm);store(next,0xa0,right_arm);
    for(auto& component:left_arm)component=-component;
@@ -443,7 +457,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
      for(unsigned i=0;i<4;++i){
       q.position[i]=i==3?std::fma(-arm[i],bits(0x3dcccccc),base[i]):nm(arm[i],bits(0x3dcccccc),base[i]);
       if(!std::isfinite(q.position[i]))throw Numeric{};
-      q.velocity[i]=mul(arm[i],-4);
+      q.velocity[i]=lane_mul(arm[i],-4,i);
      }
      q.radius_min=0;q.radius_max=bits(0x3dcccccc);q.count=1;q.speed=bits(0x3cf5c28f);
      q.lifetime_min=bits(0x3e4ccccc);q.lifetime_max=bits(0x3e999999);
@@ -477,6 +491,13 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    pending.publish(staged.pending_entity);
   }
  }
+ if(peer_random&&particles.random)*particles.random=*peer_random;
+ if(peer_result.outgoing_impulse){
+  const auto ea=word(snapshot,0x27f8)+std::uint32_t(std::int32_t(std::bit_cast<std::int16_t>(peer_result.peer_index)))*128u;
+  if(submit_arena_peer_impulse(staged.peer_accumulator,ea,peer_result.impulse,peer_accumulator)!=ArenaAccumulatorStatus::Cached)
+   throw std::runtime_error("original peer accumulator transport failed");
+ }
+ if(peer_result.particles)particles.publish(*peer_result.particles,*particles.random);
  if(attachment_audio)audio(ArenaAudioEvent{8,0,0});
  if(attachment_emission){emitter(attachment_request);staged.attachment_effect=attachment_request.descriptor;}
  if(repair_particle)particles.publish(repair_request,*particles.random);

@@ -48,8 +48,8 @@ bool arena_entity_tombstone_due(const ArenaEntitySlot& slot,std::uint32_t frame)
 }
 ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot& slot,
  std::span<std::uint8_t,128> statistics,const ArenaEntityFinalizationContext& c,
- std::uint32_t frame){
- auto next=slot;std::array<std::uint8_t,128> stats;
+ std::uint32_t frame,const ArenaHealthDisplayTransport& display){
+ auto next=slot;bool change_effects=false;std::array<std::uint8_t,128> stats;
  std::copy(statistics.begin(),statistics.end(),stats.begin());
  put(next,0x60,word(next,0x60)&~2u); // 65C4/65EC, before either source branch
  if(c.removal_590){
@@ -69,7 +69,8 @@ ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot& slot,
   if(!normal(difference))return ArenaEntityFinalization::Invalid;
   // 6634..663C masks the low bit of changed_59A, not any nonzero byte.
   if((std::abs(float(difference))>std::bit_cast<float>(0x38d1b717u) || (c.changed_59a&1u))&&next[0x7f]==0)
-   return ArenaEntityFinalization::NeedsChangeEffects; // 3940 first-display allocation unresolved
+   change_effects=true;
+  if(change_effects&&(!display.queue||!display.scratch))return ArenaEntityFinalization::NeedsChangeEffects;
   // 3940/3994..39EC returns immediately when body7F is already nonzero.
   // Existing health-display ownership therefore permits later health commits.
  }
@@ -81,16 +82,28 @@ ArenaEntityFinalization finalize_arena_entity_record(ArenaEntitySlot& slot,
   put(next,4*i,std::bit_cast<std::uint32_t>(c.position_480[i]));
   put(next,0x40+4*i,std::bit_cast<std::uint32_t>(c.velocity_4a0[i]));
  }
+ if(change_effects){
+  const auto effect=publish_arena_health_display(*display.queue,next,c.health_display,c.position_480,*display.scratch);
+  if(effect.status==ArenaRequestPublicationStatus::Invalid)return ArenaEntityFinalization::Invalid;
+  //3940 allocation failure returns normally;6578 commits the health anyway.
+ }
  slot=next;return ArenaEntityFinalization::Committed;
 }
 ArenaEntityFinalization finalize_arena_entity_update(ArenaEntityStorage& storage,
  std::uint16_t index,const ArenaEntitySlot& updated,std::span<std::uint8_t,128> statistics,
- const ArenaEntityFinalizationContext& c,std::uint32_t frame){
+ const ArenaEntityFinalizationContext& c,std::uint32_t frame,const ArenaHealthDisplayTransport& display){
  const auto member=membership(storage,index);
  if(!member || (word(updated,12)>>16)!=index)return ArenaEntityFinalization::Invalid;
  auto next=updated;std::array<std::uint8_t,128> stats;
  std::copy(statistics.begin(),statistics.end(),stats.begin());
- const auto result=finalize_arena_entity_record(next,stats,c,frame);
+ // Stage external display publication until bank/cell admission succeeds.
+ std::optional<ArenaRequestPublicationQueue> queue;
+ std::optional<ArenaHealthDisplayScratch> scratch;
+ ArenaHealthDisplayTransport staged;
+ if(display.queue&&display.scratch&&!updated[0x7f]&&(word(updated,0x60)&4u)&&!c.removal_590){
+  queue=*display.queue;scratch=*display.scratch;staged={&*queue,&*scratch};
+ }
+ const auto result=finalize_arena_entity_record(next,stats,c,frame,staged);
  if(result!=ArenaEntityFinalization::Tombstone && result!=ArenaEntityFinalization::Committed &&
     result!=ArenaEntityFinalization::AlreadyHandled)return result;
  if(next[15]==63){
@@ -105,6 +118,7 @@ ArenaEntityFinalization finalize_arena_entity_update(ArenaEntityStorage& storage
   if(published==ArenaEntityUpdate::CellFull)return ArenaEntityFinalization::CellFull;
   if(published!=ArenaEntityUpdate::Updated)return ArenaEntityFinalization::Invalid;
  }
+ if(queue){*display.queue=std::move(*queue);*display.scratch=*scratch;}
  std::copy(stats.begin(),stats.end(),statistics.begin());return result;
 }
 std::vector<std::uint16_t> collect_arena_entity_tombstones(const ArenaEntityStorage& storage,std::uint32_t frame){

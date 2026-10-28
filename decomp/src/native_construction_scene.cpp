@@ -244,15 +244,15 @@ ArenaCraftRegistration NativeConstructionScene::create_player_craft(std::uint8_t
 ArenaPlayerCraftControlStep NativeConstructionScene::advance_prepared_player_craft(std::uint8_t owner,
     std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaEntityWorkContext& work,
     std::uint32_t frame,ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
-    const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio){
-  const auto result=simulation_.advance_prepared_player_craft(owner,snapshot,elapsed,work,frame,scratch,pending,emitter,particles,audio);
+    const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator){
+  const auto result=simulation_.advance_prepared_player_craft(owner,snapshot,elapsed,work,frame,scratch,pending,emitter,particles,audio,display_queue,peer_accumulator);
   if(result.control.status==ArenaPlayerControlStatus::Advanced)refresh_construction();
   return result;
 }
 ArenaEntityFinalization NativeConstructionScene::finalize_player_craft(std::uint8_t owner,
     const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext& context,
-    std::uint32_t frame){
-  const auto result=simulation_.finalize_player_craft(owner,updated,context,frame);
+    std::uint32_t frame,const ArenaHealthDisplayTransport& display){
+  const auto result=simulation_.finalize_player_craft(owner,updated,context,frame,display);
   if(result==ArenaEntityFinalization::Committed)refresh_construction();
   return result;
 }
