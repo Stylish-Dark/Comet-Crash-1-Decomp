@@ -104,7 +104,7 @@ int main(){
  for(auto& cell:arena.cells)cell.visibility_recovered=true;
  ArenaConstructionSimulationConfig config;config.capacity=1;config.native_extent=8;config.players={{{{0,0},0,false},100,100}};
  NativeConstructionScene scene(arena,config);ArenaEntitySlot reused{};
- assert(scene.create_player_craft(0,{2.5f,0,3.5f,0},reused,[](const ArenaCraftAuxiliaryRequest&){return -1;})==ArenaCraftRegistration::Registered);
+ assert(scene.create_player_craft(0,{2.25f,0,3.25f,0},reused,[](const ArenaCraftAuxiliaryRequest&){return -1;})==ArenaCraftRegistration::Registered);
  assert(scene.arena().entities.size()==1&&scene.arena().entities[0].live_entity_index==0);
  ArenaPlayerPendingTransport full;
  unsigned full_reserves=0;
@@ -113,12 +113,13 @@ int main(){
  for(unsigned frame=1;frame<=4;++frame){
   assert(scene.stage_player_craft_preparation(0,s,context));auto effects=consume_arena_prepared_accumulator(context,{});
   assert(scene.complete_player_craft_preparation(0,s,effects,context)==ArenaPreparationCompletion::Prepared);
-  auto result=scene.advance_prepared_player_craft(0,s,.016f,context,frame,&scratch,full);
+  const ArenaGridPosition job_cell{2,3};
+  auto result=scene.advance_prepared_player_craft(0,s,.016f,context,frame,&scratch,full,{}, {}, {},nullptr,{},&job_cell);
   assert(result.control.status==ArenaPlayerControlStatus::Advanced&&result.finalization==ArenaEntityFinalization::Committed);
   const auto& storage=scene.simulation().storage();assert(storage.banks[0]==storage.banks[1]);
   const auto& entity=scene.arena().entities[0];const auto& body=storage.banks[0][0];
   assert(entity.position.x==scalar(body,0)&&entity.position.y==scalar(body,4)&&entity.position.z==scalar(body,8));
-  assert(word(body,0x60)&0x8000);if(frame<=2)assert(entity.position.x==2.5f);else assert(entity.position.x>2.5f);
+  assert(word(body,0x60)&0x8000);if(frame<=2)assert(entity.position.x==2.25f);else assert(entity.position.x>2.25f);
  }
  const auto banks=scene.simulation().storage().banks;
  assert(scene.advance_prepared_player_craft(1,s,.016f,context,5,&scratch,full).control.status==ArenaPlayerControlStatus::Invalid);
@@ -207,7 +208,8 @@ int main(){
  for(unsigned frame=10;frame<13;++frame){
   assert(scene.stage_player_craft_preparation(0,s,context));auto consumed=consume_arena_prepared_accumulator(context,{});
   assert(scene.complete_player_craft_preparation(0,s,consumed,context)==ArenaPreparationCompletion::Prepared);
-  auto result=scene.advance_prepared_player_craft(0,s,.016f,context,frame,&scratch,full);
+  const ArenaGridPosition job_cell{2,3};
+  auto result=scene.advance_prepared_player_craft(0,s,.016f,context,frame,&scratch,full,{}, {}, {},nullptr,{},&job_cell);
   assert(result.control.status==ArenaPlayerControlStatus::Advanced&&result.finalization==ArenaEntityFinalization::Committed);
   const auto& storage=scene.simulation().storage();assert(storage.banks[0]==storage.banks[1]);
   assert(scalar(context,0x4a0)>0&&scalar(context,0x4a8)>0);

@@ -26,3 +26,17 @@ ArenaAccumulatorConsumption consume_arena_entity_accumulator(
 ArenaAccumulatorConsumption consume_arena_prepared_accumulator(
  ArenaEntityWorkContext&,const ArenaAccumulatorTransport&);
 }
+
+namespace comet::decomp {
+enum class ArenaCommandClaimStatus { Claimed, Occupied, MissingTransport, Invalid };
+struct ArenaCommandClaimResult {
+ ArenaCommandClaimStatus status=ArenaCommandClaimStatus::Invalid;
+ std::uint32_t attempts=0;
+};
+// Original14F8: reserve the target's128-byte accumulator, claim empty word60,
+// preserve all other bytes, and retry fresh after failed PUTLLC. Occupied slots
+// still require a successful conditional write before returning Occupied.
+ArenaCommandClaimResult claim_arena_entity_command(ArenaAccumulatorRecord& scratch,
+ std::uint32_t accumulator_base,std::int16_t target,
+ const std::array<std::uint8_t,16>& payload,const ArenaAccumulatorTransport&);
+}

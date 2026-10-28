@@ -244,10 +244,30 @@ ArenaCraftRegistration NativeConstructionScene::create_player_craft(std::uint8_t
 ArenaPlayerCraftControlStep NativeConstructionScene::advance_prepared_player_craft(std::uint8_t owner,
     std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaEntityWorkContext& work,
     std::uint32_t frame,ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
-    const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator){
-  const auto result=simulation_.advance_prepared_player_craft(owner,snapshot,elapsed,work,frame,scratch,pending,emitter,particles,audio,display_queue,peer_accumulator);
+    const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator,const ArenaGridPosition* original_job_cell){
+  const auto result=simulation_.advance_prepared_player_craft(owner,snapshot,elapsed,work,frame,scratch,pending,emitter,particles,audio,display_queue,peer_accumulator,original_job_cell);
   if(result.control.status==ArenaPlayerControlStatus::Advanced)refresh_construction();
   return result;
+}
+ArenaGroundCarryStatus NativeConstructionScene::advance_prepared_ground_carry(std::uint16_t index,
+    std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaGroundCarryContext& work,
+    std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue){
+  const auto result=simulation_.advance_prepared_ground_carry(index,snapshot,elapsed,work,frame,original_job_cell,queue);
+  if(result==ArenaGroundCarryStatus::Advanced)refresh_construction();
+  return result;
+}
+ArenaGroundCarryStatus NativeConstructionScene::complete_prepared_ground_carry_command(std::uint16_t index,
+    std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaGroundCarryContext& work,
+    std::uint32_t frame,ArenaGridPosition job_cell,ArenaAccumulatorRecord& scratch,
+    const ArenaAccumulatorTransport& transport,ArenaCommandClaimResult* claim,ArenaRequestPublicationQueue* queue,const ArenaAudioEventSink& audio){
+  const auto result=simulation_.complete_prepared_ground_carry_command(index,snapshot,elapsed,work,frame,job_cell,scratch,transport,claim,queue,audio);
+  if(result==ArenaGroundCarryStatus::Advanced)refresh_construction();return result;
+}
+ArenaGroundCarryStatus NativeConstructionScene::finalize_prepared_ground_carry(std::uint16_t index,
+    std::span<const std::uint8_t,0x2900> snapshot,ArenaGroundCarryContext& work,
+    std::uint32_t frame,ArenaGridPosition job_cell,ArenaRequestPublicationQueue* queue){
+  const auto result=simulation_.finalize_prepared_ground_carry(index,snapshot,work,frame,job_cell,queue);
+  if(result==ArenaGroundCarryStatus::Advanced)refresh_construction();return result;
 }
 ArenaEntityFinalization NativeConstructionScene::finalize_player_craft(std::uint8_t owner,
     const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext& context,

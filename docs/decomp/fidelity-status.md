@@ -1,5 +1,7 @@
 # Original-game recovery status — 2026-10-21
 
+Latest: [carried ground units and shared6260 nearest-peer selection](original-ground-carry.md) connect supplied source states to authoritative banks/scene. Ground carrier47 pickup/link/acknowledgement now connects via original accumulators. Player-craft pickup/drop, full14060 and original scheduling/mouse integration remain missing. Earlier finalizer r4 polarity notes are corrected there.
+
 Latest player checkpoint: [health displays and real peer contact](original-player-health-contact.md)
 connects3940 first-display publication and11618 ->7E40/7510 contacts, peer impulse
 publication/consumption, bank commits and renderer-facing craft state. Display

@@ -226,7 +226,7 @@ ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
 ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player_craft(
     std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
     ArenaEntityWorkContext& work,std::uint32_t frame,ArenaPlayerControlScratch* scratch,
-    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator){
+    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator,const ArenaGridPosition* original_job_cell){
   ArenaPlayerCraftControlStep result;
   auto read=[&](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
       std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
@@ -239,6 +239,7 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
   if(index>=storage_.banks[storage_.read_bank].size()||
      storage_.banks[storage_.read_bank][index][15]!=1||
      (unsigned(work[12])<<8|work[13])!=index)return result;
+  if(original_job_cell&&(original_job_cell->x>=storage_.width||original_job_cell->z>=storage_.height))return result;
   result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles,audio,peer_accumulator);
   if(result.control.status!=ArenaPlayerControlStatus::Advanced)return result;
   auto scalar=[&](unsigned o){return std::bit_cast<float>(read(work,o));};
@@ -247,6 +248,10 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
   result.commit.removal_590=work[0x590];result.commit.removal_handled_593=work[0x593];
   result.commit.auxiliary_596=work[0x596];result.commit.changed_59a=work[0x59a];
   result.commit.health_display={read(work,0x500),read(work,0x520),scalar(0x4e4)};
+  if(original_job_cell&&!work[0x590]&&!select_arena_entity_peer(work,arena_spatial_neighborhood(storage_,*original_job_cell))){
+    result.commit.skip_spatial_6260=false;
+    result.control={ArenaPlayerControlStatus::NeedsFinalization,0x6260};return result;
+  }
   ArenaEntitySlot body;std::copy_n(work.begin(),256,body.begin());
   ArenaHealthDisplayScratch display_scratch;
   for(unsigned n=0;n<2;++n)std::copy_n(work.begin()+0x380+128*n,128,display_scratch[n].begin());
@@ -262,6 +267,78 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
     result.control={ArenaPlayerControlStatus::NeedsFinalization,pc};
   }
   return result;
+}
+bool ArenaConstructionSimulation::stage_ground_carry_references(std::uint16_t index,
+    ArenaGroundCarryContext& work,std::span<const ArenaAccumulatorRecord> accumulators,
+    std::uint32_t tag) const {
+  if(storage_.read_bank>1||index>=storage_.banks[storage_.read_bank].size())return false;
+  auto next=work;std::copy_n(storage_.banks[storage_.read_bank][index].begin(),256,next.begin());
+  if(!fetch_arena_ground_carry_references(next,storage_.banks[storage_.read_bank],accumulators,tag))return false;
+  work=next;return true;
+}
+ArenaGroundCarryStatus ArenaConstructionSimulation::advance_prepared_ground_carry(
+    std::uint16_t index,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+    ArenaGroundCarryContext& work,std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue){
+  auto read=[](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
+      std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
+  const auto owner=unsigned(work[0x542])<<8|work[0x543];
+  if(owner>=players_.size()||owner!=(work[0x33]>>5)||storage_.read_bank>1||
+     index>=storage_.banks[storage_.read_bank].size()||
+     storage_.banks[storage_.read_bank][index][15]!=work[15]||
+     (storage_.banks[storage_.read_bank][index][0x33]>>5)!=owner||
+     read(snapshot,0x28d8)!=storage_.width||read(snapshot,0x28dc)!=storage_.height)
+    return ArenaGroundCarryStatus::Invalid;
+  ArenaHealthDisplayScratch scratch;
+  for(unsigned n=0;n<2;++n)std::copy_n(work.begin()+0x380+128*n,128,scratch[n].begin());
+  const auto result=commit_prepared_arena_ground_carry(storage_,index,work,statistics_[owner],snapshot,elapsed,frame,original_job_cell,{queue,&scratch});
+  if(result==ArenaGroundCarryStatus::Advanced)
+    for(unsigned n=0;n<2;++n)std::copy(scratch[n].begin(),scratch[n].end(),work.begin()+0x380+128*n);
+  return result;
+}
+ArenaGroundCarryStatus ArenaConstructionSimulation::finalize_prepared_ground_carry(
+    std::uint16_t index,std::span<const std::uint8_t,0x2900> snapshot,
+    ArenaGroundCarryContext& work,std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue){
+  auto read=[](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
+      std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
+  const auto owner=unsigned(work[0x542])<<8|work[0x543];
+  if(owner>=players_.size()||owner!=(work[0x33]>>5)||storage_.read_bank>1||
+     index>=storage_.banks[storage_.read_bank].size()||
+     storage_.banks[storage_.read_bank][index][15]!=work[15]||
+     (storage_.banks[storage_.read_bank][index][0x33]>>5)!=owner||
+     read(snapshot,0x28d8)!=storage_.width||read(snapshot,0x28dc)!=storage_.height)
+    return ArenaGroundCarryStatus::Invalid;
+  ArenaHealthDisplayScratch scratch;
+  for(unsigned n=0;n<2;++n)std::copy_n(work.begin()+0x380+128*n,128,scratch[n].begin());
+  const auto result=finalize_prepared_arena_ground_carry(storage_,index,work,statistics_[owner],snapshot,frame,original_job_cell,{queue,&scratch});
+  if(result==ArenaGroundCarryStatus::Advanced)
+    for(unsigned n=0;n<2;++n)std::copy(scratch[n].begin(),scratch[n].end(),work.begin()+0x380+128*n);
+  return result;
+}
+ArenaGroundCarryStatus ArenaConstructionSimulation::complete_prepared_ground_carry_command(
+    std::uint16_t index,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+    ArenaGroundCarryContext& work,std::uint32_t frame,ArenaGridPosition original_job_cell,
+    ArenaAccumulatorRecord& scratch,const ArenaAccumulatorTransport& transport,
+    ArenaCommandClaimResult* claim,ArenaRequestPublicationQueue* queue,const ArenaAudioEventSink& audio){
+  const unsigned owner=unsigned(work[0x542])<<8|work[0x543];
+  auto read=[](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
+      std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
+  if(owner>=players_.size()||owner!=(work[0x33]>>5)||storage_.read_bank>1||
+     index>=storage_.banks[storage_.read_bank].size()||
+     (unsigned(work[12])<<8|work[13])!=index||
+     storage_.banks[storage_.read_bank][index][15]!=work[15]||
+     (storage_.banks[storage_.read_bank][index][0x33]>>5)!=owner||
+     read(snapshot,0x28d8)!=storage_.width||read(snapshot,0x28dc)!=storage_.height||
+     original_job_cell.x>=storage_.width||original_job_cell.z>=storage_.height)return ArenaGroundCarryStatus::Invalid;
+  const float timer=std::bit_cast<float>(read(work,0xc4));
+  if(!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||std::fpclassify(elapsed)==FP_SUBNORMAL||
+     !std::isfinite(timer)||std::fpclassify(timer)==FP_SUBNORMAL||std::abs(timer)>1e6f)return ArenaGroundCarryStatus::Invalid;
+  if(read(work,0x360)==2&&(read(work,0x60)&0x2000u)&&(unsigned(work[0x364])<<8|work[0x365])>=32768)return ArenaGroundCarryStatus::Invalid;
+  if(read(work,0x360)==3&&!audio)return ArenaGroundCarryStatus::NeedsAudio;
+  const auto request=request_arena_ground_carry_pickup(work,snapshot,scratch,transport,claim);
+  if(request!=ArenaGroundCarryStatus::Advanced)return request;
+  const auto result=complete_arena_ground_carry_command(work,snapshot,elapsed,scratch,transport,claim,original_job_cell,audio);
+  if(result!=ArenaGroundCarryStatus::Advanced)return result;
+  return finalize_prepared_ground_carry(index,snapshot,work,frame,original_job_cell,queue);
 }
 ArenaConstructionContext
 ArenaConstructionSimulation::context_for(ArenaConstructionRequest r) const {

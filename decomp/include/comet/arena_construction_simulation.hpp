@@ -16,6 +16,7 @@
 #include "comet/arena_preparation_effects.hpp"
 #include "comet/arena_player_control.hpp"
 #include "comet/arena_player_references.hpp"
+#include "comet/arena_ground_carry.hpp"
 namespace comet::decomp {
 struct ArenaPlayerCraftControlStep {
  ArenaPlayerControlResult control;
@@ -183,9 +184,13 @@ public:
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,
       std::uint32_t original_frame,const ArenaHealthDisplayTransport& display={});
-  // Complete source controller output ->6578 ->actual registered banks/cells.
+  // Source controller output ->6578 ->actual registered banks/cells.
+  // Supply original_job_cell to include original6568/6260 peer selection;
+  // null retains the explicit direct-finalizer boundary of older callers.
   // On NeedsFinalization, context retains advanced controller output: resume
   // with finalize_player_craft and returned commit, never rerun side effects.
+  // A6260 boundary retains skip_spatial_6260=false: complete peer selection
+  // first, then explicitly mark the returned commit spatially complete.
   ArenaPlayerCraftControlStep advance_prepared_player_craft(std::uint8_t owner,
       std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
       ArenaEntityWorkContext&,std::uint32_t original_frame,
@@ -195,7 +200,33 @@ public:
       const ArenaPlayerParticleTransport& particles={},
       const ArenaAudioEventSink& audio={},
       ArenaRequestPublicationQueue* display_queue=nullptr,
-      const ArenaAccumulatorTransport& peer_accumulator={});
+      const ArenaAccumulatorTransport& peer_accumulator={},
+      const ArenaGridPosition* original_job_cell=nullptr);
+  // Original12CD0 read-bank fetch. Does not create a pickup/link or run14060.
+  bool stage_ground_carry_references(std::uint16_t index,ArenaGroundCarryContext&,
+      std::span<const ArenaAccumulatorRecord>,std::uint32_t original_job_tag) const;
+  // Caller supplies completed14060 output. Executes supported158B8 and6F40
+  // alive/no-base continuation, committing authoritative banks and cell lists.
+  ArenaGroundCarryStatus advance_prepared_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaGroundCarryContext&,std::uint32_t original_frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr);
+  // Starts at15FA0 after the caller's ordinary158B8 motion. Carrier47 requests
+  // pickup from real cached contact state; command2 can
+  // create the original parent link; no synthetic pickup choice is supplied.
+  // Post-claim boundaries retain work/scratch. Complete missing command/effect
+  // continuations first; a bank/finalization rejection alone resumes through
+  // finalize_prepared_ground_carry. Never replay a published request or audio.
+  ArenaGroundCarryStatus complete_prepared_ground_carry_command(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaGroundCarryContext&,std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaAccumulatorRecord& scratch,const ArenaAccumulatorTransport&,
+      ArenaCommandClaimResult* claim=nullptr,ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAudioEventSink& audio={});
+  ArenaGroundCarryStatus finalize_prepared_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,ArenaGroundCarryContext&,
+      std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr);
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }

@@ -38,12 +38,12 @@ float atan2_original(float numerator,float denominator,bool negative){
  float q=ma(s,c(0xbe117fc7),c(0x3e4cbbe5));q=ma(q,s,c(0xbeaaaa6c));q=ma(q,mul(s,x),add(x,offset));
  float a=ma(p,mul(s4,x),q);if(denominator<0)a=add(numerator<0?-c(0x40490fda):c(0x40490fda),a);return negative?-std::fabs(a):std::fabs(a);
 }
-float bank_angle(const V&q){
+float bank_angle(const V&q,bool* degenerate=nullptr){
  V conjugate{-q[0],-q[1],-q[2],q[3]};V forward=product(product(q,{0,0,1,0}),conjugate),up=product(product(q,{0,1,0,0}),conjugate);forward[3]=up[3]=0;
  V side=cross(forward,{0,1,0,0});
- if(dot3(side,side)==0)return 0;
+ if(dot3(side,side)==0){if(degenerate)*degenerate=true;return 0;}
  side=norm3(side);V reference=cross(side,forward),swing=cross(up,reference);
- if(dot3(swing,swing)==0)return 0;
+ if(dot3(swing,swing)==0){if(degenerate)*degenerate=true;return 0;}
  float denominator=dot3(up,reference),numerator=root(dot3(swing,swing));bool negative=dot3(swing,forward)<=0;return atan2_original(numerator,denominator,negative);
 }
 float acos_original(float d){
@@ -77,5 +77,46 @@ std::optional<V> prepare_arena_ground_orientation(const ArenaGroundOrientationQu
  float old=sub(1,t),newweight=t,oldweight=old;
  if(dot<c(0x3f7fbe76)){float theta=acos_original(dot),denom=sine(theta),e=detail::reciprocal_estimate(denom),error=nm(denom,e,c(0x3f800001));float n=mul(sine(mul(t,theta)),e),o=mul(sine(mul(old,theta)),e);newweight=ma(error,n,n);oldweight=ma(error,o,o);}
  V result{};for(int i=0;i<4;i++)result[i]=ma(prior[i],oldweight,mul(target[i],newweight));result=norm4(result);for(float x:result)if(!std::isfinite(x))return std::nullopt;return result;
+}
+}
+
+namespace comet::decomp {
+std::optional<std::array<float,4>> prepare_arena_ground_carried_orientation(
+ const std::array<float,4>& quaternion,const std::array<float,4>& parent,
+ float elapsed,float turn_rate,float bank_scale){
+ for(const auto& v:{quaternion,parent}){
+  float sum=0;for(float x:v){if(!std::isfinite(x))return {};sum+=x*x;}
+  if(std::fabs(sum-1.f)>1e-3f)return {};
+ }
+ if(!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||!std::isfinite(turn_rate)||turn_rate<0||!std::isfinite(bank_scale))return {};
+ Rounding rounding;
+ bool degenerate=false;const float bank=bank_angle(parent,&degenerate);
+ if(degenerate)return {}; //2590 extended-exponent boundary remains unrecovered
+ const float angle=mul(bank,bank_scale);
+ if(!std::isfinite(angle)||std::abs(angle)>1e6f)return {};
+ const float half=mul(angle,.5f);
+ const V adjustment{0,0,sine(half),sine(half,true)},target=product(parent,adjustment);
+ float a=ma(quaternion[1],target[1],mul(quaternion[0],target[0]));
+ float b=ma(quaternion[3],target[3],mul(quaternion[2],target[2]));
+ float d=add(a,b);V prior=quaternion;
+ if(d<0){d=-d;for(float& x:prior)x=-x;}
+ const float t=mul(mul(elapsed,c(0x412fedde)),turn_rate),old=sub(1,t);
+ float nw=t,ow=old;
+ if(d<c(0x3f7fbe76)){
+  const float theta=acos_original(d),denom=sine(theta),e=detail::reciprocal_estimate(denom),error=nm(denom,e,c(0x3f800001));
+  const float n=mul(sine(mul(t,theta)),e),o=mul(sine(mul(old,theta)),e);
+  nw=ma(error,n,n);ow=ma(error,o,o);
+ }
+ V result;for(unsigned i=0;i<4;++i)result[i]=ma(prior[i],ow,mul(target[i],nw));
+ //16DB0..16DDC refines each lane's cyclic sum independently; Y/W
+ // can differ by an ulp from X/Z. Broadcasting one norm changes the source.
+ V normalized{};
+ for(unsigned i=0;i<4;++i){
+  const auto j=(i+1)%4,k=(i+2)%4,l=(i+3)%4;
+  const float sum=add(ma(result[j],result[j],mul(result[i],result[i])),
+                      ma(result[l],result[l],mul(result[k],result[k])));
+  normalized[i]=mul(result[i],inv(sum));
+ }
+ for(float x:normalized)if(!std::isfinite(x))return {};return normalized;
 }
 }

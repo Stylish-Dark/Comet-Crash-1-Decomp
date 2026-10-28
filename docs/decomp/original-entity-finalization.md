@@ -41,7 +41,12 @@ native storage without partially applying statistics.
 - Without an explicit display transport,3940 remains a visible boundary. Health difference greater than source
   bits38D1B717 or changed59A lowbit, when flags bit2 is set, returns
   NeedsChangeEffects without writes. This does not silently omit effects.
-- r4=0 requires6568/6260 spatial work; return NeedsSpatialRecovery without writes.
+- Source r4!=0 requires6568/6260 spatial work; r4=0 skips it. The earlier
+  polarity claim was reversed. `skip_spatial_6260` is an explicit native caller
+  boundary, not a claim that originalr4=1 skips spatial work. The new ground
+  carry adapter runs recovered6260 using the original job cell before publication;
+  the craft adapter includes it when supplied `original_job_cell`. Omitting that
+  argument retains the older explicit native direct-finalizer boundary.
   Type1 wrapper passes1. These conditions are not whole-game error handling.
 - The subtraction uses round-toward-zero on finite normal inputs/zero. Nonfinite
   and subnormal values are outside this native supported domain. No original
