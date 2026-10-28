@@ -46,7 +46,26 @@ public:
       const ArenaPlayerParticleTransport& particles={},
       const ArenaAudioEventSink& audio={},
       ArenaRequestPublicationQueue* display_queue=nullptr,
-      const ArenaAccumulatorTransport& peer_accumulator={});
+      const ArenaAccumulatorTransport& peer_accumulator={},
+      const ArenaGridPosition* original_job_cell=nullptr);
+  bool stage_ground_carry_references(std::uint16_t index,ArenaGroundCarryContext& work,
+      std::span<const ArenaAccumulatorRecord> accumulators,std::uint32_t tag) const {
+    return simulation_.stage_ground_carry_references(index,work,accumulators,tag);
+  }
+  ArenaGroundCarryStatus advance_prepared_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaGroundCarryContext&,std::uint32_t original_frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr);
+  ArenaGroundCarryStatus complete_prepared_ground_carry_command(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaGroundCarryContext&,
+      std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaAccumulatorRecord& scratch,const ArenaAccumulatorTransport&,
+      ArenaCommandClaimResult* claim=nullptr,ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAudioEventSink& audio={});
+  ArenaGroundCarryStatus finalize_prepared_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,ArenaGroundCarryContext&,
+      std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr);
   // Resume retained controller output without replaying request callbacks.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,

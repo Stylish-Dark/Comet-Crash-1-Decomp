@@ -15,3 +15,13 @@ struct ArenaGroundOrientationQuery {
 // Kind 46 has a separate, unsupported policy.
 std::optional<std::array<float,4>> prepare_arena_ground_orientation(const ArenaGroundOrientationQuery &query);
 }
+
+namespace comet::decomp {
+//16B68..16DE4: parent2590 bank ->2250 roll, original shortest-arc blend.
+// Shares the existing original trig/estimate arithmetic and its documented
+// degenerate-bank/hardware exclusions. Inputs are source body20, parentA20,
+// elapsed, bodyE8 (turn rate) and body90 (bank scale).
+std::optional<std::array<float,4>> prepare_arena_ground_carried_orientation(
+ const std::array<float,4>& prior,const std::array<float,4>& parent,
+ float elapsed,float turn_rate,float bank_scale);
+}

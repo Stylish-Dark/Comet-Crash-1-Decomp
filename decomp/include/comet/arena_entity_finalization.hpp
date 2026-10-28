@@ -12,7 +12,7 @@ struct ArenaEntityFinalizationContext {
  std::uint16_t statistics_owner_542=0;
  std::uint8_t removal_590=0, removal_handled_593=0, auxiliary_596=0, changed_59a=0;
  ArenaHealthDisplayParameters health_display; // original500/520/4E4 cache
- bool skip_spatial_6260=true; // nonzero r4; original type1 wrapper passes1
+ bool skip_spatial_6260=true; // explicit native boundary; source r4=0 skips, nonzero runs6260
 };
 enum class ArenaEntityFinalization {
  Committed, Tombstone, AlreadyHandled, NeedsChangeEffects, NeedsSpatialRecovery,

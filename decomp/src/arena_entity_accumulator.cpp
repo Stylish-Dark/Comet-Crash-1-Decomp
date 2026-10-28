@@ -76,3 +76,24 @@ ArenaAccumulatorConsumption consume_arena_prepared_accumulator(ArenaEntityWorkCo
  return result;
 }
 }
+
+namespace comet::decomp {
+ArenaCommandClaimResult claim_arena_entity_command(ArenaAccumulatorRecord& scratch,
+ std::uint32_t base,std::int16_t target,const std::array<std::uint8_t,16>& payload,
+ const ArenaAccumulatorTransport& transport){
+ if(target<0||!base||(base&127u)||std::uint64_t(base)+std::uint32_t(target)*128u>0xffffffffu)return {};
+ if(!transport.read_reserved||!transport.write_conditional)return {ArenaCommandClaimStatus::MissingTransport,0};
+ const auto address=base+std::uint32_t(target)*128u;std::uint32_t attempts=0;
+ for(;;){
+  auto record=transport.read_reserved(address);++attempts;
+  if(!record)return {ArenaCommandClaimStatus::MissingTransport,attempts};
+  const bool empty=word(*record,0x60)==0;
+  if(empty)std::copy(payload.begin(),payload.end(),record->begin()+0x60);
+  const auto result=transport.write_conditional(address,*record);
+  if(result==ArenaAccumulatorWrite::Retry)continue;
+  if(result==ArenaAccumulatorWrite::Unavailable)return {ArenaCommandClaimStatus::MissingTransport,attempts};
+  scratch=*record;
+  return {empty?ArenaCommandClaimStatus::Claimed:ArenaCommandClaimStatus::Occupied,attempts};
+ }
+}
+}

@@ -1,5 +1,30 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-29 — Original carried units and shared nearest-peer selection
+
+Active code: `work/original-carry-state-20261029`, above PR #71.
+P1/P2/P3/P6 advance within Partial: actual12CD0 parent/reference fetching,
+14538 formation correction,158B8 linked motion/orientation and17EE8 parent-loss
+unlink now exist. Supplied completed14060 output continues through6F40's
+alive/no-base gate,6578 and recovered6568/6260 into both banks/cell lists and scene.
+Shared6260 preserves original job-cell scan order, packed categories and SIMD
+scratch lanes. The registered craft adapter also runs it when supplied its
+original job cell. Corrected the old r4 polarity claim: nonzero requires6260.
+See [source, connected scope and remaining boundaries](docs/decomp/original-ground-carry.md).
+
+Private source comparisons:1,350 formation/dynamics contexts,64 spatial contexts
+and24 complete late-update/finalization contexts match within documented numeric
+and scratch domains. Public fixtures cover source bits, bank migration, rendered
+state, actual parent tombstone fetch/unlink and unsupported-base atomic refusal.
+Ground carrier47 now requests pickup via16878/14F8; passenger command2 creates
+B4/B2 and acknowledgement3 clears carrier200000/emits audio60. Real accumulator
+consumption connects the handshake into banks/scene.45 request cases,45 link-claim
+cases and9 acknowledgement cases match source. Player-craft pickup/release and
+carrier unloading remain unrecovered; preceding motion/contact inputs are explicit. Full14060, effects/base/death, scheduler/bootstrap and mouse
+command integration remain next. G1/G2 remain unaccepted. Whole faithful PC-port
+estimate stays about25%, plausible15–35%; no test-count percentage is implied.
+
+
 ## 2026-10-28 — Original health-display creation and real peer contact
 
 Active code: `work/original-health-display-20261028`, above PR #70.
