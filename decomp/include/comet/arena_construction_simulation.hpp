@@ -182,7 +182,7 @@ public:
   // render-frame counter is generated here. Effects boundaries remain visible.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,
-      std::uint32_t original_frame);
+      std::uint32_t original_frame,const ArenaHealthDisplayTransport& display={});
   // Complete source controller output ->6578 ->actual registered banks/cells.
   // On NeedsFinalization, context retains advanced controller output: resume
   // with finalize_player_craft and returned commit, never rerun side effects.
@@ -193,7 +193,9 @@ public:
       const ArenaPlayerPendingTransport& pending={},
       const ArenaCounterEmissionSink& emitter={},
       const ArenaPlayerParticleTransport& particles={},
-      const ArenaAudioEventSink& audio={});
+      const ArenaAudioEventSink& audio={},
+      ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAccumulatorTransport& peer_accumulator={});
   const auto &grid() const { return grid_; }
   const auto &storage() const { return storage_; }
   std::size_t pending() const { return queue_.size(); }

@@ -1,6 +1,7 @@
 #include "comet/arena_ground_contact.hpp"
 #include "arena_spu_math.hpp"
 #include <bit>
+#include <algorithm>
 #include <cfenv>
 #include <cmath>
 #include <stdexcept>
@@ -31,7 +32,7 @@ Vector normalized(const Vector&v,float squared){
  return result;
 }
 ArenaGroundContactResult contact(const ArenaGroundContactQuery&q){
- ArenaGroundContactResult result{q.position,q.velocity,q.accumulated_impulse,false};
+ ArenaGroundContactResult result;result.position=q.position;result.velocity=q.velocity;result.accumulated_impulse=q.accumulated_impulse;
  const float own_squared=dot(q.velocity,q.velocity),peer_squared=dot(q.peer_velocity,q.peer_velocity);
  const auto peer_direction=normalized(q.peer_velocity,peer_squared);
  const auto own_direction=normalized(q.velocity,own_squared);
@@ -40,6 +41,7 @@ ArenaGroundContactResult contact(const ArenaGroundContactQuery&q){
  const bool separating=(peer_squared>add(own_squared,epsilon)&&dot(peer_direction,q.normal)>threshold)||
      (own_squared>add(peer_squared,epsilon)&&dot(own_direction,q.normal)<-threshold);
  if(!separating){
+   result.velocity_response=true;
    Vector relative;for(unsigned i=0;i<4;++i)relative[i]=subtract(q.peer_velocity[i],q.velocity[i]);
    const float projection=dot(relative,q.normal);
    const float restitution=multiply(float(q.restitution_percent),std::bit_cast<float>(0x3c23d70au));
@@ -57,6 +59,7 @@ ArenaGroundContactResult contact(const ArenaGroundContactQuery&q){
      const float residual=std::fma(-estimate,root,std::bit_cast<float>(0x3f800001u));
      const float length=std::fma(residual,multiply(root,.5f),root);
      result.energetic_impact=length>2.f;
+     result.impact_strength=std::clamp(multiply(subtract(length,2.f),.5f),0.f,1.f);
    }
  }
  // 7938: original movable-bit positional correction precedes effect handling.

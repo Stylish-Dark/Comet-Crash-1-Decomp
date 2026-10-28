@@ -5,7 +5,7 @@
 #include <bit>
 #include <limits>
 using namespace comet::decomp;
-static unsigned word(const ArenaEntitySlot& s,unsigned o){return unsigned(s[o])<<24|unsigned(s[o+1])<<16|unsigned(s[o+2])<<8|s[o+3];}
+static unsigned word(const auto& s,unsigned o){return unsigned(s[o])<<24|unsigned(s[o+1])<<16|unsigned(s[o+2])<<8|s[o+3];}
 static void put(ArenaEntitySlot& s,unsigned o,unsigned v){for(unsigned i=0;i<4;++i)s[o+i]=v>>(24-8*i);}
 static void fp(ArenaEntitySlot& s,unsigned o,float f){put(s,o,std::bit_cast<unsigned>(f));}
 int main(){
@@ -80,6 +80,30 @@ int main(){
  c.skip_spatial_6260=true;c.position_480[0]=std::numeric_limits<float>::infinity();
  assert(finalize_arena_entity_record(effect,statistics,c,0)==ArenaEntityFinalization::Invalid);
  assert(effect==saved);
+ // Display publication and health commit are one owned transaction. A full
+ // source pool completes3940 without a flag; later changed health can retry.
+ ArenaRequestPublicationQueue display_pool;display_pool.records.resize(1040);display_pool.free_ring.resize(1040);
+ for(unsigned n=0;n<1040;++n)display_pool.free_ring[n]=n;
+ display_pool.available=1025;ArenaHealthDisplayScratch display_scratch{};
+ ArenaHealthDisplayTransport display{&display_pool,&display_scratch};
+ c={};c.health_display.kind_500=1;c.position_480={2.5f,0,3.5f,0};c.previous_scalar_38_4e8=1000;
+ auto changing=source;fp(changing,0x38,999);
+ assert(finalize_arena_entity_record(changing,statistics,c,0,display)==ArenaEntityFinalization::Committed);
+ assert(changing[0x7f]==0&&word(changing,0x38)==std::bit_cast<unsigned>(999.f)&&display_pool.available==1025);
+ display_pool.available=1026;c.previous_scalar_38_4e8=999;fp(changing,0x38,998);
+ assert(finalize_arena_entity_record(changing,statistics,c,1,display)==ArenaEntityFinalization::Committed);
+ assert(changing[0x7f]==1&&display_pool.available==1024&&word(display_pool.records[0],0x64)==std::bit_cast<unsigned>(998.f));
+ // No request ownership leaks when native bank admission fails after6578.
+ auto limited=snapshot;limited.banks[0][0]=limited.banks[1][0]=source;limited.cells[0][3*24+6].resize(126);limited.cells[1][3*24+6].resize(126);
+ for(auto& bank:limited.cells)for(auto& entry:bank[3*24+6]){entry[0]=255;entry[1]=255;}
+ c.position_480={6.5f,0,3.5f,0};c.previous_scalar_38_4e8=1000;
+ auto limited_body=limited.banks[0][0];fp(limited_body,0x38,997);limited_body[0x7f]=0;
+ display_pool.available=1026;const auto pool_before=display_pool;const auto scratch_before=display_scratch;const auto limited_before=limited;
+ assert(finalize_arena_entity_update(limited,0,limited_body,statistics,c,1,display)==ArenaEntityFinalization::CellFull);
+ assert(limited.banks==limited_before.banks&&limited.cells==limited_before.cells&&display_pool.records==pool_before.records&&display_pool.available==pool_before.available&&display_scratch==scratch_before);
+ c.position_480[0]=100; // finite but outside native storage's supported domain
+ assert(finalize_arena_entity_update(limited,0,limited_body,statistics,c,1,display)==ArenaEntityFinalization::Invalid);
+ assert(display_pool.records==pool_before.records&&display_pool.available==pool_before.available);
  // A real registered player body now accepts controller output through the
  // simulation API and keeps the player/root identity while it moves.
  ArenaConstructionSimulationConfig config;config.capacity=4;config.native_extent=8;

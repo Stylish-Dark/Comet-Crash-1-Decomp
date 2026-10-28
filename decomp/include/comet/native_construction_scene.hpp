@@ -44,11 +44,13 @@ public:
       std::uint32_t original_frame,ArenaPlayerControlScratch* scratch=nullptr,
       const ArenaPlayerPendingTransport& pending={},const ArenaCounterEmissionSink& emitter={},
       const ArenaPlayerParticleTransport& particles={},
-      const ArenaAudioEventSink& audio={});
+      const ArenaAudioEventSink& audio={},
+      ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAccumulatorTransport& peer_accumulator={});
   // Resume retained controller output without replaying request callbacks.
   ArenaEntityFinalization finalize_player_craft(std::uint8_t owner,
       const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext&,
-      std::uint32_t original_frame);
+      std::uint32_t original_frame,const ArenaHealthDisplayTransport& display={});
   bool set_ground_deployment(std::size_t owner,ArenaGroundDeploymentControl control) { return simulation_.set_ground_deployment(owner,control); }
   void set_ground_contacts(bool enabled) { simulation_.set_ground_contacts(enabled); }
   void set_ground_dynamics(bool enabled) { simulation_.set_ground_dynamics(enabled); }

@@ -211,7 +211,7 @@ ArenaPreparationCompletion ArenaConstructionSimulation::complete_player_craft_pr
 }
 ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
     std::uint8_t owner,const ArenaEntitySlot& updated,
-    const ArenaEntityFinalizationContext& context,std::uint32_t frame) {
+    const ArenaEntityFinalizationContext& context,std::uint32_t frame,const ArenaHealthDisplayTransport& display) {
   if(owner>=players_.size() || context.statistics_owner_542!=owner ||
      !players_[owner].craft_entity_index ||
      players_[owner].craft_entity_index!=craft_registry_.indices[owner] ||
@@ -221,12 +221,12 @@ ArenaEntityFinalization ArenaConstructionSimulation::finalize_player_craft(
   if(index>=storage_.banks[storage_.read_bank].size() ||
      storage_.banks[storage_.read_bank][index][15]!=1)
     return ArenaEntityFinalization::Invalid;
-  return finalize_arena_entity_update(storage_,index,updated,statistics_[owner],context,frame);
+  return finalize_arena_entity_update(storage_,index,updated,statistics_[owner],context,frame,display);
 }
 ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player_craft(
     std::uint8_t owner,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
     ArenaEntityWorkContext& work,std::uint32_t frame,ArenaPlayerControlScratch* scratch,
-    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio){
+    const ArenaPlayerPendingTransport& pending,const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,ArenaRequestPublicationQueue* display_queue,const ArenaAccumulatorTransport& peer_accumulator){
   ArenaPlayerCraftControlStep result;
   auto read=[&](const auto& b,unsigned o){return std::uint32_t(b[o])<<24|
       std::uint32_t(b[o+1])<<16|std::uint32_t(b[o+2])<<8|b[o+3];};
@@ -239,15 +239,23 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
   if(index>=storage_.banks[storage_.read_bank].size()||
      storage_.banks[storage_.read_bank][index][15]!=1||
      (unsigned(work[12])<<8|work[13])!=index)return result;
-  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles,audio);
+  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles,audio,peer_accumulator);
   if(result.control.status!=ArenaPlayerControlStatus::Advanced)return result;
   auto scalar=[&](unsigned o){return std::bit_cast<float>(read(work,o));};
   for(unsigned i=0;i<4;++i){result.commit.position_480[i]=scalar(0x480+4*i);result.commit.velocity_4a0[i]=scalar(0x4a0+4*i);}
   result.commit.previous_scalar_38_4e8=scalar(0x4e8);result.commit.statistics_owner_542=owner;
   result.commit.removal_590=work[0x590];result.commit.removal_handled_593=work[0x593];
   result.commit.auxiliary_596=work[0x596];result.commit.changed_59a=work[0x59a];
+  result.commit.health_display={read(work,0x500),read(work,0x520),scalar(0x4e4)};
   ArenaEntitySlot body;std::copy_n(work.begin(),256,body.begin());
-  result.finalization=finalize_player_craft(owner,body,result.commit,frame);
+  ArenaHealthDisplayScratch display_scratch;
+  for(unsigned n=0;n<2;++n)std::copy_n(work.begin()+0x380+128*n,128,display_scratch[n].begin());
+  const ArenaHealthDisplayTransport display{display_queue,&display_scratch};
+  result.finalization=finalize_player_craft(owner,body,result.commit,frame,display);
+  if(result.finalization==ArenaEntityFinalization::Committed){
+    std::copy_n(storage_.banks[storage_.read_bank][index].begin(),256,work.begin());
+    for(unsigned n=0;n<2;++n)std::copy(display_scratch[n].begin(),display_scratch[n].end(),work.begin()+0x380+128*n);
+  }
   if(result.finalization!=ArenaEntityFinalization::Committed){
     const auto pc=result.finalization==ArenaEntityFinalization::NeedsChangeEffects?0x3940u:
         result.finalization==ArenaEntityFinalization::NeedsSpatialRecovery?0x6260u:0x6578u;

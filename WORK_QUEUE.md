@@ -1,5 +1,29 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-28 — Original health-display creation and real peer contact
+
+Active code: `work/original-health-display-20261028`, above PR #70.
+P1/P3/P4/P5/P6 advance within Partial:3940 first-display allocation/publication
+and11618 ->7E40 ->7510 single-peer contact now connect through authoritative
+player bank/scene commits. Fixed16F8 contact impulse CAS publication also connects
+to original1AD8 consumption. Full display pools still commit health and allow a
+later retry; successful first display commits7F1 and both original records.
+Nine-step attachment sequence now starts7F0. Actual registered ground-peer fetch,
+contact, bank commit and impulse consumption execute without fabricated peer data.
+See [source/evidence/remaining boundaries](docs/decomp/original-player-health-contact.md).
+
+54 original6578/display cases,36 original7E40 cases,36 full10290 contact cases
+and8 fixed16F8 write/retry cases match within the documented domains and callback
+boundaries. Independent review found no material source mismatch; complete peer
+transport is an explicit host contract. G1/G2 remain unaccepted. Overall complete
+faithful PC-port estimate stays about25%, plausible15–35%.
+Release native build and77 CTests pass. Two restored executable artifacts lacked
+execute permissions; one was also corrupt and was relinked. Only affected launches
+were rerun. Repository safety and whitespace checks pass.
+Next: actual pickup/drop/carried-unit state changes, full death/reset, display
+consumer, original pending queue/bootstrap/scheduling and command/mouse integration.
+
+
 ## 2026-10-27 — Expired attachment growth/repair and audio queue
 
 Active code: `work/original-attachment-states-20261027`, above PR #69.

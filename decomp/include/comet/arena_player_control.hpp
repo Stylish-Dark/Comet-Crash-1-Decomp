@@ -2,10 +2,12 @@
 #include "comet/arena_counter_emission.hpp"
 #include "comet/arena_audio_event.hpp"
 #include "comet/arena_particle_emission.hpp"
+#include "comet/arena_entity_accumulator.hpp"
 #include <functional>
 namespace comet::decomp {
 struct ArenaPlayerControlScratch {
  ArenaEntitySlot pending_entity{};
+ ArenaAccumulatorRecord peer_accumulator{};
  ArenaEmissionDescriptor owner_effect{};
  ArenaEmissionDescriptor action_effect{};
  ArenaEmissionDescriptor attachment_effect{};
@@ -37,12 +39,12 @@ struct ArenaPlayerControlResult {
  std::uint32_t blocked_address=0;
 };
 // Original10290 entry through supported ordinary/banking returns, including3238 request
-// construction,7DD0 bounds, no-target7E40, movement/target-facing, ordinary
+// construction,7DD0 bounds, single-peer7E40, movement/target-facing, ordinary
 // action edge/visual requests/candidate selection, owner timer/request
 // and body/controller commits. Also recovers11CA8 grid approach,119BC positive
 // attachment countdown,11DE8 expired attachment growth/repair, and10B60 arm
 // banking/four180A0 proxy lifecycles. Missing
-// death/attachment/peer-contact continuations return a named boundary.11A80
+// death/attachment/capture continuations return a named boundary.11A80
 // full expansion emits four original particle calls through the supplied pool/RNG
 // transport. Hard7DD0 craft impacts have source particle count0 and can advance
 // without a particle transport. Proxy storage
@@ -51,12 +53,19 @@ struct ArenaPlayerControlResult {
 // snapshot. Supports finite normal/zero values in the documented math domain.
 // Rejection preserves context/scratch and issues no external callbacks. Callback
 // contracts apply equally to emitter, audio and particle sinks. Finalization
-// and scheduling are separate.
+// and scheduling are separate. Real-peer11618 ->7E40/7510 uses particles.random
+// and the supplied complete peer accumulator transport. That transport must
+// serialize source EA records, retain reservations, retry losses, and complete
+// each write; Unavailable/invalid records are fatal host failures, not resumable
+// controller boundaries. A thrown host failure may follow earlier source effects:
+// never replay10290 after it. Missing callbacks reject before any effects.
+// Packed W metadata is retained; XYZ/scalar subnormal recovery remains excluded.
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext&,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch=nullptr,
  const ArenaPlayerPendingTransport& pending={},
  const ArenaCounterEmissionSink& emitter={},
  const ArenaPlayerParticleTransport& particles={},
- const ArenaAudioEventSink& audio={});
+ const ArenaAudioEventSink& audio={},
+ const ArenaAccumulatorTransport& peer_accumulator={});
 }

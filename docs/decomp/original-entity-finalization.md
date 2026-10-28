@@ -1,6 +1,6 @@
 # Shared entity finalization and delayed removal
 
-Latest continuation: [attachment states](original-attachment-states.md) recovers3940's immediate return for nonzero body7F. First-display allocation remains open.
+Latest continuation: [health displays and contact](original-player-health-contact.md) recovers3940 first-display reservation/construction/publication and normal full-pool return. Existing7F returns remain recovered. Downstream display consumers remain open.
 
 ## Source and connected boundary
 
@@ -38,7 +38,7 @@ native storage without partially applying statistics.
 
 ## Explicit remaining boundaries
 
-- 3940 change effects remain unrecovered. Health difference greater than source
+- Without an explicit display transport,3940 remains a visible boundary. Health difference greater than source
   bits38D1B717 or changed59A lowbit, when flags bit2 is set, returns
   NeedsChangeEffects without writes. This does not silently omit effects.
 - r4=0 requires6568/6260 spatial work; return NeedsSpatialRecovery without writes.
