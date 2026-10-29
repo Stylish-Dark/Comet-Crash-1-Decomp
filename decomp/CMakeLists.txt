@@ -75,6 +75,7 @@ add_library(comet_native_recovery STATIC
     src/arena_craft_facing.cpp
     src/arena_craft_flight.cpp
     src/native_pilot.cpp
+    src/native_mouse_input.cpp
     src/native_gamepad_input.cpp
     src/native_deployment_input.cpp
     src/native_construction_scene.cpp
@@ -722,4 +723,20 @@ if(MSVC)
  target_compile_options(comet_arena_ground_carry_test PRIVATE /UNDEBUG)
 else()
  target_compile_options(comet_arena_ground_carry_test PRIVATE -UNDEBUG)
+endif()
+
+add_executable(comet_native_mouse_input_test tests/native_mouse_input.cpp)
+target_link_libraries(comet_native_mouse_input_test PRIVATE comet_native_recovery)
+add_test(NAME comet_native_mouse_input_test COMMAND comet_native_mouse_input_test)
+if(MSVC)
+ target_compile_options(comet_native_mouse_input_test PRIVATE /UNDEBUG)
+else()
+ target_compile_options(comet_native_mouse_input_test PRIVATE -UNDEBUG)
+endif()
+
+if(COMET_NATIVE_VIEWER)
+ add_executable(comet_native_mouse_viewer_test tests/native_mouse_viewer.cpp)
+ target_link_libraries(comet_native_mouse_viewer_test PRIVATE comet_native_viewer SDL2::SDL2)
+ add_test(NAME comet_native_mouse_viewer_test COMMAND comet_native_mouse_viewer_test)
+ set_tests_properties(comet_native_mouse_viewer_test PROPERTIES LABELS graphics ENVIRONMENT "SDL_VIDEODRIVER=offscreen;LIBGL_ALWAYS_SOFTWARE=1")
 endif()

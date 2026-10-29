@@ -32,6 +32,15 @@ The same package now includes OPEN_SKIRMISH.cmd and native-skirmish.cfg.
 Drag your extracted game folder onto OPEN_SKIRMISH.cmd. No original map
 extraction is needed for this mode. Original model/texture assets are required.
 
+Mouse gameplay:
+  Click FACTORY, then an empty cell beside your base to build.
+  Click PLAY. Hold HOLD RELEASE to deploy produced units.
+  Click TESLA or CANNON, then an empty cell to place defenses.
+  Click an existing factory, then FACTORY MODE to change its production.
+  PREV UNIT / NEXT UNIT choose which unit kind to release.
+  Right mouse drag rotates the camera; wheel zooms. RESTART resets the match.
+  Pause, focus loss and restart cancel held mouse orders.
+
 The preview starts paused with a human player and an automatic opponent.
 The cursor starts on your base. Press Right, 7, B to build a nearby factory.
 Press P to run, and hold D to release produced units. Press 3 to select Tesla

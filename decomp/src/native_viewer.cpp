@@ -7,6 +7,8 @@
 #include "native_status_overlay.hpp"
 #include "native_sdl_gamepad.hpp"
 #include "comet/native_pilot.hpp"
+#include "comet/native_mouse_input.hpp"
+#include "native_mouse_toolbar.hpp"
 #include <memory>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -97,7 +99,7 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         const GLfloat ambient[]={0.28f,0.28f,0.32f,1};glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
         std::size_t selected=config.initial_model;float yaw=25,pitch=55,zoom=1;bool quit=false,wireframe=false;
         std::uint32_t frames=0;int width=config.width,height=config.height;
-        ArenaGridPosition cursor{};unsigned owner=0,opcode=20;bool manual_tick=false,focused=true;
+        ArenaGridPosition cursor{};std::optional<ArenaGridPosition> selected_factory;unsigned owner=0,opcode=20;bool manual_tick=false,focused=true;
         std::unique_ptr<NativeDeploymentInput> deployment;
         std::unique_ptr<NativeMissionPlayback> mission;
         if(config.construction){mission=std::make_unique<NativeMissionPlayback>(*config.construction);deployment=std::make_unique<NativeDeploymentInput>(*config.construction);owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});}
@@ -106,15 +108,16 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
         const bool has_pilot_model=std::any_of(models.begin(),models.end(),[](const auto& m){return m.spec.original_slot_index==0;});
         if(deployment)pilot.reset(cursor,arena->extent);
         const auto pilot_key=[](SDL_Keycode key)->unsigned{return key==SDLK_i?1:key==SDLK_k?2:key==SDLK_j?4:key==SDLK_l?8:0;};
-        bool keyboard_release=false,pad_release=false;
-        auto cancel_input=[&]{keyboard_release=pad_release=false;pilot_keys=0;pilot.stop();pad_input.cancel();if(deployment)deployment->cancel();};
-        auto sync_release=[&]{if(deployment){if(!mission->finished()&&(keyboard_release||pad_release))deployment->press();else deployment->release();}};
+        bool keyboard_release=false,pad_release=false,mouse_release=false,last_build_queued=false;
+        int mouse_x=-1,mouse_y=-1;
+        auto cancel_input=[&]{keyboard_release=pad_release=mouse_release=false;SDL_CaptureMouse(SDL_FALSE);pilot_keys=0;pilot.stop();pad_input.cancel();if(deployment)deployment->cancel();};
+        auto sync_release=[&]{if(deployment){if(!mission->finished()&&(keyboard_release||pad_release||mouse_release))deployment->press();else deployment->release();}};
         auto last_counter=SDL_GetPerformanceCounter();
-        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | arrows: cell, 1..8: type, Tab: owner, B: build, Q/E: release type, hold D: release, U: spawn pending ground unit, M: transport, N: dynamics, C: contacts, T: tick, P: play, F5..F9: factory mode | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(pilot_mode?" PILOT PREVIEW":" GRID")+(mission->playing()?" playing":mission->finished()?" finished - F2 restart":" paused")+(config.construction->simulation().ground_transport_enabled()?" transport on":" transport off")+(config.construction->simulation().ground_dynamics_enabled()?" dynamics on":" dynamics off")+(config.construction->simulation().ground_contacts_enabled()?" contacts on":" contacts off");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";if(entity.production_mode)text+=" factory mode "+std::to_string(*entity.production_mode)+" timer "+std::to_string(*entity.production_elapsed)+"/"+std::to_string(*entity.production_period)+" pending units "+std::to_string(config.construction->simulation().unit_quotas()[entity.owner].pending);}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
+        auto title=[&]{if(config.construction){auto text=std::string("Comet Crash construction | click: build/select, right drag: camera, toolbar: structures / release / play | cell ")+std::to_string(cursor.x)+","+std::to_string(cursor.z)+" owner "+std::to_string(owner)+" type "+std::to_string(opcode)+" resource "+std::to_string(config.construction->simulation().accounts()[owner].resource)+(pilot_mode?" PILOT PREVIEW":" GRID")+(mission->playing()?" playing":mission->finished()?" finished - F2 restart":" paused")+(config.construction->simulation().ground_transport_enabled()?" transport on":" transport off")+(config.construction->simulation().ground_dynamics_enabled()?" dynamics on":" dynamics off")+(config.construction->simulation().ground_contacts_enabled()?" contacts on":" contacts off");const auto* cell=arena->cell(cursor.x,cursor.z);if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];if(entity.construction_progress)text+=entity.construction_ready?" ready":" building "+std::to_string(static_cast<int>(std::clamp(*entity.construction_progress,0.0f,1.0f)*100))+"%";if(entity.production_mode)text+=" factory mode "+std::to_string(*entity.production_mode)+" timer "+std::to_string(*entity.production_elapsed)+"/"+std::to_string(*entity.production_period)+" pending units "+std::to_string(config.construction->simulation().unit_quotas()[entity.owner].pending);}SDL_SetWindowTitle(platform.window,text.c_str());return;}if(arena){SDL_SetWindowTitle(platform.window,"Comet Crash recovered arena | drag: orbit, wheel: zoom, W: wireframe");return;}const auto&m=models[selected];auto s="Comet Crash native viewer | "+std::string(m.spec.path)+" | "+std::to_string(m.model.indices.size()/3)+" triangles | arrows: model, drag: orbit, wheel: zoom, W: wireframe";SDL_SetWindowTitle(platform.window,s.c_str());};title();
         auto command=[&](SDL_Keycode key){
 
             if(key==SDLK_F2){
-                cancel_input();deployment.reset();
+                cancel_input();selected_factory.reset();deployment.reset();
                 mission->restart();
                 deployment=std::make_unique<NativeDeploymentInput>(*config.construction);
                 owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});opcode=20;manual_tick=false;pilot.reset(cursor,arena->extent);
@@ -131,13 +134,13 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             if(key==SDLK_DOWN&&cursor.z+1u<arena->extent)++cursor.z;
             if(key==SDLK_UP&&cursor.z)--cursor.z;
             if(key>=SDLK_1&&key<=SDLK_8){constexpr unsigned types[]={20,21,22,23,24,25,26,28};opcode=types[key-SDLK_1];}
-            if(key==SDLK_TAB){cancel_input();deployment->next_owner();owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});pilot.reset(cursor,arena->extent);}
+            if(key==SDLK_TAB){cancel_input();selected_factory.reset();deployment->next_owner();owner=static_cast<unsigned>(deployment->owner());cursor=arena->players[owner].start_grid.value_or(ArenaGridPosition{});pilot.reset(cursor,arena->extent);}
             if(key==SDLK_q)deployment->cycle_kind(-1);
             if(key==SDLK_e)deployment->cycle_kind(1);
             // Inspection/camera remain available; finished matches reject mutations.
             if(mission->finished() && key!=SDLK_w && key!=SDLK_r){title();return;}
             if(key==SDLK_d){keyboard_release=true;sync_release();}
-            if(deployment->controllable()&&(key==SDLK_b||key==SDLK_SPACE)){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';if(result==ArenaConstructionSubmit::Queued)manual_tick=true;}
+            if(deployment->controllable()&&(key==SDLK_b||key==SDLK_SPACE)){auto result=config.construction->enqueue({static_cast<std::uint8_t>(owner),static_cast<std::uint8_t>(opcode),cursor.x,cursor.z});std::cout<<"Build submission: "<<static_cast<unsigned>(result)<<'\n';last_build_queued=result==ArenaConstructionSubmit::Queued;if(last_build_queued)manual_tick=true;}
             if(deployment->controllable()&&key>=SDLK_F5&&key<=SDLK_F9){auto result=config.construction->select_factory(owner,cursor,static_cast<std::uint8_t>(4+key-SDLK_F5));std::cout<<"Factory selection: "<<static_cast<unsigned>(result)<<'\n';}
             if(deployment->controllable()&&key==SDLK_u){
                 const auto &quota=config.construction->simulation().unit_quotas()[owner];
@@ -149,6 +152,39 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             if(key==SDLK_t)manual_tick=true;
             if(key==SDLK_p){mission->toggle_playing();cancel_input();}
             title();
+        };
+        auto status_lines=[&]{
+            auto lines=deployment->status_lines(mission->playing(),gamepad.sample().connected);
+            if(selected_factory)lines[3]="FACTORY "+std::to_string(selected_factory->x)+","+std::to_string(selected_factory->z)+" SELECTED  FACTORY MODE CHANGES ITS PRODUCTION";
+            lines[4]=pilot_mode?"SHIP: IJKL/STICK MOVE  F3 GRID":"LEFT CLICK BUILD/SELECT  RIGHT DRAG CAMERA  WHEEL ZOOM";
+            return lines;
+        };
+        auto mouse_cell=[&](int x,int y)->bool{
+            if(!deployment||pilot_mode||!focused)return false;
+            int ww,wh;SDL_GetWindowSize(platform.window,&ww,&wh);
+            if(wh<=0||native_mouse_toolbar_at(y,wh)||double(y)*height/wh<detail::status_overlay_height(status_lines(),width))return false;
+            const auto hit=native_mouse_cell(x,y,ww,wh,arena->extent,yaw,pitch,zoom);
+            if(!hit)return false;
+            cursor=*hit;title();return true;
+        };
+        auto mouse_command=[&](int button){
+            if(button==9){command(SDLK_F2);return;}
+            if(mission->finished())return;
+            if(button==8){command(SDLK_p);return;}
+            if(!deployment->controllable())return;
+            if(button>=0&&button<8){opcode=detail::mouse_build_types[button];title();}
+            if(button==10){mouse_release=true;SDL_CaptureMouse(SDL_TRUE);sync_release();title();}
+            if(button==11)command(SDLK_q);
+            if(button==12)command(SDLK_e);
+            if(button==13&&selected_factory){
+                const auto* cell=arena->cell(selected_factory->x,selected_factory->z);
+                if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];
+                    if(entity.owner==owner&&(entity.type==26||entity.type==28)&&entity.production_mode)
+                        config.construction->select_factory(owner,*selected_factory,static_cast<std::uint8_t>(4+(*entity.production_mode+1)%5));
+                }
+                title();
+            }
+            if(button==14)command(SDLK_F3);
         };
         while(!quit){
             SDL_Event event;
@@ -168,7 +204,31 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                     if(event.key.keysym.sym==SDLK_w)wireframe=!wireframe;
                     if(event.key.keysym.sym==SDLK_r){yaw=25;pitch=55;zoom=1;}
                 }
-                if(event.type==SDL_MOUSEMOTION&&(event.motion.state&SDL_BUTTON_LMASK)){yaw+=event.motion.xrel*0.5f;pitch=std::clamp(pitch+event.motion.yrel*0.5f,-89.0f,89.0f);}
+                if(event.type==SDL_MOUSEMOTION){
+                    mouse_x=event.motion.x;mouse_y=event.motion.y;
+                    const bool orbit=event.motion.state&(deployment?SDL_BUTTON_RMASK:SDL_BUTTON_LMASK);
+                    if(orbit&&focused){yaw+=event.motion.xrel*0.5f;pitch=std::clamp(pitch+event.motion.yrel*0.5f,-89.0f,89.0f);}
+                    else if(deployment)mouse_cell(mouse_x,mouse_y);
+                }
+                if(deployment&&event.type==SDL_MOUSEBUTTONDOWN&&event.button.button==SDL_BUTTON_LEFT&&focused){
+                    mouse_x=event.button.x;mouse_y=event.button.y;
+                    int ww,wh;SDL_GetWindowSize(platform.window,&ww,&wh);
+                    const int button=native_mouse_button_at(mouse_x,mouse_y,ww,wh);
+                    if(button>=0)mouse_command(button);
+                    else if(!mission->finished()&&mouse_cell(mouse_x,mouse_y)){
+                        const auto* cell=arena->cell(cursor.x,cursor.z);
+                        // Clicking an existing structure selects it; it never
+                        // submits a second building on the occupied cell.
+                        selected_factory.reset();
+                        if(cell&&cell->entity_index){const auto& entity=arena->entities[*cell->entity_index];
+                            if(entity.owner==owner&&(entity.type==26||entity.type==28))selected_factory=cursor;
+                        }
+                        if(cell&&!cell->entity_index){last_build_queued=false;command(SDLK_b);if(last_build_queued&&(opcode==26||opcode==28))selected_factory=cursor;}
+                    }
+                }
+                if(deployment&&event.type==SDL_MOUSEBUTTONUP&&event.button.button==SDL_BUTTON_LEFT){
+                    mouse_release=false;SDL_CaptureMouse(SDL_FALSE);sync_release();title();
+                }
                 if(event.type==SDL_MOUSEWHEEL)zoom=std::clamp(zoom*std::pow(0.9f,static_cast<float>(event.wheel.y)),0.1f,20.0f);
             }
             if(quit)break;
@@ -281,6 +341,10 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
                         glVertex3f(entity.grid.x+0.1f,0.08f,entity.grid.z+0.1f);
                         glVertex3f(entity.grid.x+0.1f+0.8f*progress,0.08f,entity.grid.z+0.1f);glEnd();
                     }
+                    if(selected_factory){
+                        const auto p=*selected_factory;glColor3f(.1f,.6f,1.f);glLineWidth(3.f);
+                        glBegin(GL_LINE_LOOP);glVertex3f(p.x,.06f,p.z);glVertex3f(p.x+1,.06f,p.z);glVertex3f(p.x+1,.06f,p.z+1);glVertex3f(p.x,.06f,p.z+1);glEnd();glLineWidth(1.f);
+                    }
                     glColor3f(1,1,0);glBegin(GL_LINE_LOOP);glVertex3f(cursor.x,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z);glVertex3f(cursor.x+1,0.05f,cursor.z+1);glVertex3f(cursor.x,0.05f,cursor.z+1);glEnd();
                     glEnable(GL_LIGHTING);glEnableClientState(GL_VERTEX_ARRAY);glEnableClientState(GL_NORMAL_ARRAY);glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 }
@@ -288,9 +352,10 @@ AssetLoadResult run_native_viewer(const std::vector<ArenaNativeModel>& models,co
             if(glGetError()!=GL_NO_ERROR)return error("OpenGL draw failed");
             targets.present();
             if(deployment){
-                auto lines=deployment->status_lines(mission->playing(),gamepad.sample().connected);
-                lines[4]=pilot_mode?"F3 GRID  IJKL/STICK PILOT  KEY B/PAD A BUILD  P PLAY":"F3 PILOT PREVIEW  B BUILD  F5-F9 FACTORY  M MOVE";
-                detail::draw_status_overlay(lines,width,height);
+                detail::draw_status_overlay(status_lines(),width,height);
+                int ww,wh;SDL_GetWindowSize(platform.window,&ww,&wh);
+                detail::draw_mouse_toolbar(ww,wh,width,height,opcode,mission->playing(),mission->finished(),deployment->controllable(),
+                    keyboard_release||pad_release||mouse_release,pilot_mode,native_mouse_button_at(mouse_x,mouse_y,ww,wh));
             }
             if(glGetError()!=GL_NO_ERROR)return error("OpenGL status overlay failed");
             ++frames;
