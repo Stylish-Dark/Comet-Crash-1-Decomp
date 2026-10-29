@@ -1,6 +1,7 @@
 #include "comet/arena_ground_carry.hpp"
 #include "comet/arena_unit_entity.hpp"
 #include "comet/native_construction_scene.hpp"
+#include "comet/arena_preparation_effects.hpp"
 #include <algorithm>
 #include <bit>
 #include <cassert>
@@ -137,13 +138,15 @@ int main(){
  // parent command3 ->1AD8 consumption -> original audio60 acknowledgement.
  // Only the preceding14060/ordinary158B8 motion/contact outputs are supplied.
  ArenaConstructionSimulationConfig cc;cc.capacity=4;cc.native_extent=8;
- cc.players={{{{0,0},0,false},100,100}};
+ cc.players={{{{0,0},0,false},100,100},{{{6,6},1,false},100,100}};
+ cc.unit_base_available[1]=true;
  cc.unit_quotas[0].capacity=2;cc.unit_quotas[0].pending=2;
  cc.unit_quotas[0].by_type[7]=cc.unit_quotas[0].by_type[0]=1;
- NativeConstructionScene carrier_scene(arena,cc);
+ ArenaState carry_arena=arena;carry_arena.players.resize(2);carry_arena.players[1].start_grid=ArenaGridPosition{6,6};
+ NativeConstructionScene carrier_scene(carry_arena,cc);
  assert(carrier_scene.spawn_reserved_ground_unit(0,47,{3,3}).entity_index==0);
  assert(carrier_scene.spawn_reserved_ground_unit(0,40,{3,3}).entity_index==1);
- auto cs=snapshot();put(cs,0x27f8,0x81000000);
+ auto cs=snapshot();put(cs,0x27f8,0x81000000);put(cs,0x2774,2);put(cs,0x2664,6);put(cs,0x2674,6);
  std::array<ArenaAccumulatorRecord,2> records{};
  for(unsigned n=0;n<2;++n){put(records[n],0,0x81000000+128*n);put(records[n],0x78,0xffffffff);}
  ArenaAccumulatorTransport channel;
@@ -188,5 +191,90 @@ int main(){
  assert(acknowledgements==1&&!(word(carrier,0x60)&0x200000)&&carrier[0xb1]==19);
  assert(carrier_scene.simulation().storage().banks[0]==carrier_scene.simulation().storage().banks[1]);
  assert(carrier_scene.arena().entities[1].position.x==scalar(carrier_scene.simulation().storage().banks[0][1],0));
+
+ // Each update now starts from the actual committed body and real parent,
+ // executes shared9A70 and the recovered14060 motion, then158B8/6578/6260.
+ // No position, velocity or completed14060 output is supplied by the fixture.
+ ArenaGroundCarryContext moving{};ArenaEntityWorkContext prefix{};
+ for(unsigned frame=5;frame<13;++frame){
+  assert(carrier_scene.stage_ground_carry_references(1,moving,records,frame));
+  std::copy_n(moving.begin(),prefix.size(),prefix.begin());
+  assert(stage_arena_entity_preparation(prefix,cs));
+  const auto consumed=consume_arena_prepared_accumulator(prefix,channel);
+  auto stats=carrier_scene.simulation().player_statistics()[0];
+  assert(complete_arena_entity_preparation(prefix,cs,consumed,stats)==ArenaPreparationCompletion::Prepared);
+  std::copy(prefix.begin(),prefix.end(),moving.begin());
+  const auto old_position=scalar(moving,0x480);
+  const auto cell=ArenaGridPosition{std::uint8_t(std::clamp(int(scalar(moving,0)),0,7)),std::uint8_t(std::clamp(int(scalar(moving,8)),0,7))};
+  const auto advanced=carrier_scene.advance_prepared_linked_ground_carry(1,cs,.016f,moving,frame,cell,nullptr,channel);
+  assert(advanced==ArenaGroundCarryStatus::Advanced);
+  const auto& storage=carrier_scene.simulation().storage();const auto& body=storage.banks[0][1];
+  assert(storage.banks[0]==storage.banks[1]&&word(body,0xb4)==0x0000ffff);
+  assert(scalar(body,0)!=old_position);
+  assert(carrier_scene.arena().entities[1].position.x==scalar(body,0));
+ }
+ // A contact impulse is published once even when health-display allocation
+ // defers bank commit. The dedicated finalizer resumes without replaying it.
+ assert(carrier_scene.stage_ground_carry_references(1,moving,records,13));
+ std::copy_n(moving.begin(),prefix.size(),prefix.begin());assert(stage_arena_entity_preparation(prefix,cs));
+ auto consumed=consume_arena_prepared_accumulator(prefix,channel);auto owner_stats=carrier_scene.simulation().player_statistics()[0];
+ assert(complete_arena_entity_preparation(prefix,cs,consumed,owner_stats)==ArenaPreparationCompletion::Prepared);
+ std::copy(prefix.begin(),prefix.end(),moving.begin());
+ std::copy_n(carrier_scene.simulation().storage().banks[0][0].begin(),256,moving.begin()+0x100);
+ moving[0x1c]=moving[0x1d]=0;put(moving,0x11c,0xffffffff);
+ fp(moving,0x480,scalar(moving,0x100)-.15f);fp(moving,0x484,scalar(moving,0x104));fp(moving,0x488,scalar(moving,0x108));
+ fp(moving,0x4a0,.2f);fp(moving,0x4a4,0);fp(moving,0x4a8,0);
+ moving[0x7f]=0;fp(moving,0x4e8,std::numeric_limits<float>::quiet_NaN());
+ unsigned impulse_writes=0;auto counted=channel;
+ counted.write_conditional=[&](unsigned ea,const ArenaAccumulatorRecord& record){++impulse_writes;return channel.write_conditional(ea,record);};
+ const auto banks_before=carrier_scene.simulation().storage().banks;
+ assert(carrier_scene.advance_prepared_linked_ground_carry(1,cs,.016f,moving,13,{3,3},nullptr,counted)==ArenaGroundCarryStatus::NeedsFinalization);
+ assert(impulse_writes==1&&carrier_scene.simulation().storage().banks==banks_before);
+ // Invalid finalization inputs share the post-effect phase, never the
+ // transactional motion-rejection status. Repairing them does not republish.
+ fp(moving,0x4e8,scalar(moving,0x38)+1);
+ assert(carrier_scene.finalize_prepared_ground_carry(1,cs,moving,13,{3,3})==ArenaGroundCarryStatus::NeedsFinalization);
+ assert(impulse_writes==1);
+ // Existing source display identity allows the allocation-free continuation.
+ moving[0x7f]=1;
+ assert(carrier_scene.finalize_prepared_ground_carry(1,cs,moving,13,{3,3})==ArenaGroundCarryStatus::Advanced);
+ assert(impulse_writes==1);
+ // Source16008 timeout returns the reserved slot once, clears only pending21,
+ // and restores carrier loading. Bits above21 alone do not trigger timeout.
+ for(unsigned flags:{0x200000u,0x400000u,0x600000u}){
+  auto timeout=fixture(1,47);put(timeout,0x60,flags);put(timeout,0xb0,0x0013abcd);put(timeout,0xbc,1);
+  assert(complete_arena_ground_carry_command(timeout,cs,.016f,stack,{})==ArenaGroundCarryStatus::Advanced);
+  assert((word(timeout,0xb0)>>16)==((flags&0x200000u)?20u:19u));
+  assert(word(timeout,0xbc)==((flags&0x200000u)?0u:3u));
+  assert(word(timeout,0x60)==((flags&~0x200000u)|((flags&0x200000u)?0x1000u:0u)));
+  const auto restored=word(timeout,0xb0);
+  assert(complete_arena_ground_carry_command(timeout,cs,.016f,stack,{})==ArenaGroundCarryStatus::Advanced&&word(timeout,0xb0)==restored);
+ }
+ // Commands2/3 bypass the BC timeout and must not return a claimed slot.
+ auto ack=fixture(1,47);put(ack,0x60,0x200000);put(ack,0xb0,0x0013abcd);put(ack,0xbc,1);put(ack,0x360,3);
+ assert(complete_arena_ground_carry_command(ack,cs,.016f,stack,{},nullptr,{},[](const ArenaAudioEvent&){})==ArenaGroundCarryStatus::Advanced);
+ assert((word(ack,0xb0)>>16)==19&&word(ack,0xbc)==1&&word(ack,0x60)==0);
+ // Gentle world contact sets source BA even without an energetic impact.
+ auto wall=fixture(1);wall[0x7e]=1;wall[0x10f]=63;wall[0xa33]=20;wall[0xa7e]=1;
+ put(wall,0x530,0);fp(wall,0x4e0,.1f);fp(wall,0x4e4,.1f);fp(wall,0x480,.05f);fp(wall,0x484,1);fp(wall,0x488,1);
+ fp(wall,0x4a0,0);fp(wall,0x4a4,0);fp(wall,0x4a8,0);
+ assert(advance_prepared_arena_linked_ground_motion(wall,cs,.016f)==ArenaGroundCarryStatus::Advanced&&wall[0xba]==1);
+ //12BE0 reacquires a lost target with exactly one source draw. An owner
+ // override and an empty enemy list consume none; no-target steering survives.
+ auto target_image=cs;target_image[0x257e]=255;target_image[0x25b8]=1;put(target_image,0x2820,2);
+ auto acquire=fixture(1);acquire[0x7e]=255;acquire[0x10f]=63;acquire[0xa33]=20;acquire[0xa7e]=1;
+ put(acquire,0x530,0);fp(acquire,0x4e0,.1f);fp(acquire,0x4e4,.1f);
+ ArenaRandom rng(31),expected_rng(31);expected_rng.next();
+ auto selected=acquire;
+ assert(advance_prepared_arena_linked_ground_motion(selected,target_image,.016f,&rng)==ArenaGroundCarryStatus::Advanced);
+ assert(selected[0x7e]==1&&selected[0x598]==1&&rng.next()==expected_rng.next());
+ target_image[0x257e]=1;rng.seed(31);expected_rng.seed(31);selected=acquire;
+ assert(advance_prepared_arena_linked_ground_motion(selected,target_image,.016f,&rng)==ArenaGroundCarryStatus::Advanced&&rng.next()==expected_rng.next());
+ target_image[0x257e]=255;put(target_image,0x2774,0xffffffff);acquire[0xa7e]=255;rng.seed(31);expected_rng.seed(31);
+ assert(advance_prepared_arena_linked_ground_motion(acquire,target_image,.016f,&rng)==ArenaGroundCarryStatus::Advanced);
+ assert(acquire[0x7e]==255&&acquire[0x598]==0&&rng.next()==expected_rng.next());
+ // Unrecovered stage6 motion rejects without consuming state.
+ auto reject=fixture(1);reject[0x33]=24;const auto saved=reject;
+ assert(advance_prepared_arena_linked_ground_motion(reject,cs,.016f)==ArenaGroundCarryStatus::NeedsCaller&&reject==saved);
 
 }

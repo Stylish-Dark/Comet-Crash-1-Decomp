@@ -207,6 +207,17 @@ public:
       std::span<const ArenaAccumulatorRecord>,std::uint32_t original_job_tag) const;
   // Caller supplies completed14060 output. Executes supported158B8 and6F40
   // alive/no-base continuation, committing authoritative banks and cell lists.
+  // Completed9A70 and12CD0 reference fetch -> linked14060 ->158B8 ->banks/scene.
+  // Removes the old supplied-motion boundary for supported linked stage5 units.
+  // Finalization refusal retains completed motion/effects in work; resume via
+  // finalize_prepared_ground_carry, never replay the motion or peer effects.
+  // Complete effect callbacks share10290's no-throw/no-reentry contract.
+  ArenaGroundCarryStatus advance_prepared_linked_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaGroundCarryContext&,std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAccumulatorTransport& peer_accumulator={},
+      const ArenaPlayerParticleTransport& particles={});
   ArenaGroundCarryStatus advance_prepared_ground_carry(std::uint16_t index,
       std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
       ArenaGroundCarryContext&,std::uint32_t original_frame,ArenaGridPosition original_job_cell,

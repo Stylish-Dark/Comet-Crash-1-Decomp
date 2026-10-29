@@ -15,6 +15,11 @@ struct ArenaPlayerPeerResult {
 // original16F8 then1E880 calls and must be executed by the caller.
 ArenaPlayerPeerResult prepare_arena_player_peer_contact(ArenaEntityWorkContext&,
  std::span<const std::uint8_t,0x2900> snapshot,ArenaRandom&);
+// Original14188 call to7E40 has the same r6=1/r7=1 arguments as11618.
+// Includes geometry,7510 response and ordered deferred effects.
+// Supports kinds40..48; hostile kind45 capture remains an explicit boundary.
+ArenaPlayerPeerResult prepare_arena_ground_peer_contact(ArenaEntityWorkContext&,
+ std::span<const std::uint8_t,0x2900> snapshot,ArenaRandom&);
 // Original16F8 fixed contact arguments: zero health/request/counters, supplied
 // impulse, flags0. Fresh reservation is loaded after each failed write.
 ArenaAccumulatorStatus submit_arena_peer_impulse(ArenaAccumulatorRecord& scratch,

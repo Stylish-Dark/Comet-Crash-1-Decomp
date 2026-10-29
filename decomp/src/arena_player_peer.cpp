@@ -23,10 +23,10 @@ float add(float a,float b){volatile float v=a+b;return v;}
 float dot(const V& a,const V& b){return std::fma(a[2],b[2],std::fma(a[1],b[1],mul(a[0],b[0])));}
 struct Rounding{int previous=std::fegetround();Rounding(){if(previous<0||std::fesetround(FE_TOWARDZERO)!=0)throw std::runtime_error("peer rounding unavailable");}~Rounding(){std::fesetround(previous);}};
 }
-ArenaPlayerPeerResult prepare_arena_player_peer_contact(ArenaEntityWorkContext& context,
- std::span<const std::uint8_t,0x2900> snapshot,ArenaRandom& random){
+static ArenaPlayerPeerResult prepare_peer(ArenaEntityWorkContext& context,
+ std::span<const std::uint8_t,0x2900> snapshot,ArenaRandom& random,bool ground_call){
  ArenaPlayerPeerResult result;
- if(context[15]!=1||word(context,0x500)!=1)return result;
+ if(word(context,0x500)!=context[15]||(ground_call?(context[15]<40||context[15]>48):context[15]!=1))return result;
  auto next=context;auto rng=random;result.peer_index=std::uint16_t(half(next,0x1c));
  if(next[0x10f]>=62){next[0x1c]=next[0x1d]=255;context=next;result.advanced=true;return result;}
  if(result.peer_index==65535||result.peer_index==half(next,0x6c)){result.advanced=true;return result;}
@@ -80,6 +80,10 @@ ArenaPlayerPeerResult prepare_arena_player_peer_contact(ArenaEntityWorkContext& 
  }
  context=next;random=rng;result.advanced=true;return result;
 }
+ArenaPlayerPeerResult prepare_arena_player_peer_contact(ArenaEntityWorkContext& c,
+ std::span<const std::uint8_t,0x2900> s,ArenaRandom& r){return prepare_peer(c,s,r,false);}
+ArenaPlayerPeerResult prepare_arena_ground_peer_contact(ArenaEntityWorkContext& c,
+ std::span<const std::uint8_t,0x2900> s,ArenaRandom& r){return prepare_peer(c,s,r,true);}
 ArenaAccumulatorStatus submit_arena_peer_impulse(ArenaAccumulatorRecord& scratch,
  std::uint32_t ea,const V& impulse,const ArenaAccumulatorTransport& transport){
  if(!transport.read_reserved||!transport.write_conditional)return ArenaAccumulatorStatus::MissingTransport;

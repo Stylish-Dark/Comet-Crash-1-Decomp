@@ -1,5 +1,26 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-29 — Original carried-unit movement and pickup timeout
+
+P2/P3/P6 advance within Partial. The linked ground adapter now computes original
+14060 movement instead of requiring supplied movement output: parent formation,
+7E40/7510 peer contact and ordered effects, integration/world contact, cell
+suppression, target reacquisition and routing/height steering connect through
+158B8 and actual banks/scene. An actual carrier/passenger handshake continues
+through eight updates without supplied position/velocity results. Failed pickup
+BC1/bit21 timeout restores one loading slot; acknowledgements bypass it.
+
+[Source scope and runnable evidence](docs/decomp/original-linked-ground-motion.md).
+Independent review corrected the gentle-contact BA flag and made post-effect
+finalization refusal unambiguous; resumption never republishes contact effects.
+Original instruction comparisons cover1,296 complete motion/RNG contexts,
+24 edge contexts and50 timeout contexts. Focused carry/player-peer/controller
+checks pass. Full ordinary14060, ship grab/drop, carrier unloading, death and
+original scheduling/input integration remain open; G1/G2 are not accepted.
+Overall complete faithful PC-game estimate remains about25%, plausible15–35%.
+This is original gameplay recovery, not a new playable-preview feature.
+
+
 ## 2026-10-29 — Playable preview mouse controls
 
 The owner explicitly prioritizes improving the delivered playable Windows build.

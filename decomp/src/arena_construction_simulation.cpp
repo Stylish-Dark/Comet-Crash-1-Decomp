@@ -276,6 +276,41 @@ bool ArenaConstructionSimulation::stage_ground_carry_references(std::uint16_t in
   if(!fetch_arena_ground_carry_references(next,storage_.banks[storage_.read_bank],accumulators,tag))return false;
   work=next;return true;
 }
+ArenaGroundCarryStatus ArenaConstructionSimulation::advance_prepared_linked_ground_carry(
+    std::uint16_t index,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+    ArenaGroundCarryContext& work,std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue,
+    const ArenaAccumulatorTransport& peer_accumulator,const ArenaPlayerParticleTransport& particles){
+  auto read=[](const auto& v,unsigned o){return std::uint32_t(v[o])<<24|std::uint32_t(v[o+1])<<16|std::uint32_t(v[o+2])<<8|v[o+3];};
+  const auto owner=unsigned(work[0x542])<<8|work[0x543];
+  if(owner>=players_.size()||owner!=(work[0x33]>>5)||storage_.read_bank>1||
+     index>=storage_.banks[storage_.read_bank].size()||
+     (unsigned(work[12])<<8|work[13])!=index||
+     storage_.banks[storage_.read_bank][index][15]!=work[15]||
+     (storage_.banks[storage_.read_bank][index][0x33]>>5)!=owner||
+     read(snapshot,0x28d8)!=storage_.width||read(snapshot,0x28dc)!=storage_.height||
+     original_job_cell.x>=storage_.width||original_job_cell.z>=storage_.height)return ArenaGroundCarryStatus::Invalid;
+  auto next=work;auto rng=particles.random?*particles.random:random_;ArenaPlayerPeerResult effects;
+  const auto moved=advance_prepared_arena_linked_ground_motion(next,snapshot,elapsed,&rng,&effects);
+  if(moved!=ArenaGroundCarryStatus::Advanced)return moved;
+  const auto advanced=advance_arena_ground_carry_dynamics(next,snapshot,elapsed);
+  if(advanced!=ArenaGroundCarryStatus::Advanced)return advanced;
+  if(effects.outgoing_impulse&&(!peer_accumulator.read_reserved||!peer_accumulator.write_conditional))return ArenaGroundCarryStatus::NeedsContactEffects;
+  if(effects.particles&&!particles.publish)return ArenaGroundCarryStatus::NeedsContactEffects;
+  if(effects.outgoing_impulse&&(effects.peer_index>=32768||(read(snapshot,0x27f8)&127u)))return ArenaGroundCarryStatus::Invalid;
+  // As in10290, all rejecting calculations precede external effects. Complete
+  // host transports must not throw/reenter/inspect inputs. A host failure is
+  // fatal and must never be replayed. Finalization has a separate resume API.
+  if(effects.outgoing_impulse){
+    if(effects.peer_index>=32768)throw std::logic_error("invalid ground contact identity");
+    ArenaAccumulatorRecord scratch{};
+    if(submit_arena_peer_impulse(scratch,read(snapshot,0x27f8)+128u*effects.peer_index,effects.impulse,peer_accumulator)!=ArenaAccumulatorStatus::Cached)
+      throw std::runtime_error("original ground peer accumulator transport failed");
+  }
+  if(effects.particles)particles.publish(*effects.particles,rng);
+  work=next;random_=rng;if(particles.random)*particles.random=rng;
+  const auto committed=finalize_prepared_ground_carry(index,snapshot,work,frame,original_job_cell,queue);
+  return committed==ArenaGroundCarryStatus::Advanced?committed:ArenaGroundCarryStatus::NeedsFinalization;
+}
 ArenaGroundCarryStatus ArenaConstructionSimulation::advance_prepared_ground_carry(
     std::uint16_t index,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
     ArenaGroundCarryContext& work,std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue){

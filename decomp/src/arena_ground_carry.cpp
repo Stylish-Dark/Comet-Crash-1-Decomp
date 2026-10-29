@@ -1,5 +1,9 @@
 #include "comet/arena_ground_carry.hpp"
 #include "comet/arena_ground_orientation.hpp"
+#include "comet/arena_ground_contact.hpp"
+#include "comet/arena_ground_steering.hpp"
+#include "comet/arena_ground_height.hpp"
+#include "comet/arena_player_peer.hpp"
 #include "arena_spu_math.hpp"
 #include <algorithm>
 #include <bit>
@@ -69,6 +73,80 @@ S prepare_arena_ground_carry_position(ArenaGroundCarryContext& context,
  if(!valid(moved,true))return S::NeedsNumericRecovery;
  store(next,0x480,moved);context=next;return S::Advanced;
 }
+S advance_prepared_arena_linked_ground_motion(ArenaGroundCarryContext& context,
+ std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaRandom* random,ArenaPlayerPeerResult* deferred_peer){
+ if(!carried(context))return S::NeedsParent;
+ const unsigned width=word(snapshot,0x28d8),height=word(snapshot,0x28dc),owner=half(context,0x542);
+ if(!width||width>24||height!=width||owner>=4||!number(elapsed)||elapsed<0||elapsed>.25f)return S::Invalid;
+ //18030 passes r4=1 exactly for stage5. Other stages reach14820's separate
+ // approach/deployment branch, not the route branch recovered here.
+ if((context[0x33]&28u)!=20)return S::NeedsCaller;
+ const unsigned initial_target=context[0x7e];
+ if(initial_target!=255&&initial_target>=4)return S::Invalid;
+ const bool target_valid=initial_target!=255&&word(snapshot,0x2770+4*initial_target)!=0xffffffffu;
+ const unsigned players=word(snapshot,0x2820);if(players>4)return S::Invalid;
+ if(context[0xa0f]==63)return S::NeedsCaller;
+ const bool live_peer=context[0x10f]<62&&half(context,0x1c)!=65535&&half(context,0x1c)!=half(context,0x6c);
+ if(live_peer&&!random)return S::NeedsPeerContact;
+ auto rng=random?*random:ArenaRandom{};
+ auto next=context;Rounding rounding;next[0x598]=target_valid;
+ if(!target_valid){
+  //12BE0 prefers owner+257E when its base is live.3068 otherwise chooses
+  // from2CE0's ascending enemy list using one original shuffled RNG draw.
+  const unsigned forced=snapshot[0x257e + 64*owner];unsigned target=255;
+  if(forced!=255){if(forced>=4)return S::Invalid;if(word(snapshot,0x2770+4*forced)!=0xffffffffu)target=forced;}
+  if(target==255){
+   std::array<unsigned,4> candidates{};unsigned count=0;
+   for(unsigned p=0;p<players;++p)if(snapshot[0x2578+64*p]!=snapshot[0x2578+64*owner]&&word(snapshot,0x2770+4*p)!=0xffffffffu)candidates[count++]=p;
+   if(count){if(!random)return S::NeedsCaller;target=candidates[rng.next()%count];}
+  }
+  next[0x7e]=std::uint8_t(target);next[0x598]=target!=255;
+ }
+ const auto formed=prepare_arena_ground_carry_position(next,snapshot,elapsed);
+ if(formed!=S::Advanced)return formed;
+ const unsigned target=next[0x7e];
+ if(next[0x598]&&(target>=4||target==owner))return S::NeedsCaller;
+ //14188 calls7E40 before integrating. A stale fetched record clears the
+ // reference even when the previous link was alreadyFFFF.
+ ArenaEntityWorkContext prefix;std::copy_n(next.begin(),prefix.size(),prefix.begin());
+ const auto peer=prepare_arena_ground_peer_contact(prefix,snapshot,rng);
+ if(!peer.advanced)return S::NeedsPeerContact;
+ if((peer.outgoing_impulse||peer.particles)&&!deferred_peer)return S::NeedsContactEffects;
+ std::copy(prefix.begin(),prefix.end(),next.begin());
+ auto position=vector(next,0x480);const auto velocity=vector(next,0x4a0);
+ if(!valid(velocity,true)||!valid(vector(next,0x4d0),true))return S::NeedsNumericRecovery;
+ for(unsigned i=0;i<4;++i)position[i]=ma(velocity[i],elapsed,position[i]);
+ if(!valid(position,true))return S::NeedsNumericRecovery;
+ // Linked B4 bypasses local terrain20 and always invokes7DD0 world bounds.
+ ArenaGroundBoundsQuery q;q.position=position;q.velocity=velocity;q.accumulated_impulse=vector(next,0x4d0);
+ q.max_x=float(width);q.max_z=float(height);q.radius=scalar(next,0x4e0);q.lateral_radius=scalar(next,0x4e4);
+ q.restitution_percent=next[0x7d];q.movable=(word(next,0x60)&0x4000u)!=0;
+ q.floor_uses_lateral_radius=(word(next,0x60)&0x02000000u)!=0;
+ const auto bounded=contain_arena_ground_unit(q);if(!bounded)return S::NeedsNumericRecovery;
+ //7510 can publish particles on an energetic world hit. Never suppress them.
+ if(bounded->energetic_impact&&word(next,0x5a0))return S::NeedsContactEffects;
+ store(next,0x480,bounded->position);store(next,0x4a0,bounded->velocity);store(next,0x4d0,bounded->accumulated_impulse);
+ next[0xba]=bounded->contacts!=0;
+ const unsigned x=unsigned(std::clamp(int(bounded->position[0]),0,int(width)-1)),z=unsigned(std::clamp(int(bounded->position[2]),0,int(height)-1));
+ auto ph=[&](unsigned o,unsigned v){next[o]=std::uint8_t(v>>8);next[o+1]=std::uint8_t(v);};
+ ph(0x552,x);ph(0x562,z);
+ if(half(next,0xcc)!=x||half(next,0xce)!=z){ph(0xc8,half(next,0xcc));ph(0xca,half(next,0xce));ph(0xcc,x);ph(0xce,z);}
+ fp(next,0x574,32);
+ ArenaRoutingGrid grid;
+ for(unsigned n=0;n<576;++n){grid.cells[n].visibility=snapshot[16*n+3];std::copy_n(snapshot.begin()+16*n+4,12,grid.cells[n].routes.begin());}
+ ArenaGroundSteeringQuery steering;steering.position=bounded->position;steering.orientation=vector(next,0x20);
+ steering.owner=std::uint8_t(owner);steering.target=std::uint8_t(target);steering.extent=std::uint8_t(width);
+ steering.visibility_bit=std::uint8_t(word(next,0x530));steering.target_available=next[0x598]!=0;
+ const auto tx=steering.target_available?word(snapshot,0x2660+4*target):0u,tz=steering.target_available?word(snapshot,0x2670+4*target):0u;
+ if(tx>=width||tz>=height||word(next,0x530)>=32)return S::Invalid;
+ steering.target_base={std::uint8_t(tx),std::uint8_t(tz)};steering.direct_route=next[0x595]!=0;
+ steering.suppressed_cell={std::bit_cast<std::int16_t>(std::uint16_t(half(next,0xc8))),std::bit_cast<std::int16_t>(std::uint16_t(half(next,0xca)))};
+ const auto direction=steer_arena_ground_unit(steering,grid);if(!direction)return S::NeedsNumericRecovery;
+ if(steering.target_available)next[0x596]=direction->blocked;
+ ArenaGroundHeightQuery h;h.position=bounded->position;h.velocity=bounded->velocity;h.direction=direction->direction;h.enabled=steering.target_available&&next[0x595]!=0;
+ const auto elevated=steer_arena_ground_height(h);if(!elevated)return S::NeedsNumericRecovery;
+ store(next,0x5c0,*elevated);context=next;if(random)*random=rng;if(deferred_peer)*deferred_peer=peer;return S::Advanced;
+}
 S advance_arena_ground_carry_dynamics(ArenaGroundCarryContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed){
  if(!carried(context))return S::NeedsParent;
@@ -81,8 +159,7 @@ S advance_arena_ground_carry_dynamics(ArenaGroundCarryContext& context,
  const auto flags=word(context,0x60)&~0x800u;
  //15F94 onward command/effect paths must not be silently omitted.
  if(word(context,0x370)||word(context,0x360)==2||word(context,0x360)==3||
-    ((flags&0x1000u)&&scalar(context,0x570)<bits(0x3ecccccc)&&(word(context,0x160)&0x2000u)&&!(flags&0x200000u))||
-    (word(context,0xbc)==1&&(flags>>21)))return S::NeedsCommands;
+    ((flags&0x1000u)&&scalar(context,0x570)<bits(0x3ecccccc)&&(word(context,0x160)&0x2000u)&&!(flags&0x200000u)))return S::NeedsCommands;
  if(!number(scalar(context,0xc4)))return S::NeedsNumericRecovery;
  auto next=context;Rounding rounding;
  const float timer=sub(scalar(context,0xc4),elapsed);
@@ -106,7 +183,12 @@ S advance_arena_ground_carry_dynamics(ArenaGroundCarryContext& context,
   if(!orientation||!valid(velocity,true))return S::NeedsNumericRecovery;
   store(next,0x4a0,velocity);store(next,0x20,*orientation);
  }
- put(next,0xbc,3);fp(next,0xc4,timer);context=next;return S::Advanced;
+ const auto tail_flags=word(next,0x60);
+ const bool timeout=word(next,0xbc)==1&&(tail_flags&0x200000u);
+ put(next,0xbc,timeout?0:3);
+ if(timeout){const auto slots=std::uint16_t(half(next,0xb0)+1);next[0xb0]=std::uint8_t(slots>>8);next[0xb1]=std::uint8_t(slots);
+  put(next,0x60,(tail_flags&~0x200000u)|(next[15]==47?0x1000u:0u));}
+ fp(next,0xc4,timer);context=next;return S::Advanced;
 }
 S commit_prepared_arena_ground_carry(ArenaEntityStorage& storage,std::uint16_t index,
  ArenaGroundCarryContext& context,std::span<std::uint8_t,128> statistics,
@@ -161,7 +243,6 @@ S complete_arena_ground_carry_command(ArenaGroundCarryContext& context,
  if(word(context,0x370))return S::NeedsCommands;
  const auto opcode=word(context,0x360);
  if(opcode==3&&!audio)return S::NeedsAudio;
- if(opcode!=2&&opcode!=3&&word(context,0xbc)==1&&(flags>>21))return S::NeedsCommands;
  Rounding rounding;const auto timer=sub(scalar(context,0xc4),elapsed);
  if(timer<0&&word(snapshot,0x28e8)!=0xffffffffu)return S::NeedsCommands;
  //16710 skips the BC decrement and goes straight16060 after the claim.
@@ -184,7 +265,12 @@ S complete_arena_ground_carry_command(ArenaGroundCarryContext& context,
  }
  }
  else if(opcode==3){put(next,0x60,flags&~0x200000u);}
- else put(next,0xbc,3);
+ else {
+  const auto tail_flags=word(next,0x60);
+  const bool timeout=word(next,0xbc)==1&&(tail_flags&0x200000u);put(next,0xbc,timeout?0:3);
+  if(timeout){const auto slots=std::uint16_t(half(next,0xb0)+1);next[0xb0]=std::uint8_t(slots>>8);next[0xb1]=std::uint8_t(slots);
+   put(next,0x60,(tail_flags&~0x200000u)|(next[15]==47?0x1000u:0u));}
+ }
  fp(next,0xc4,timer);
  if(opcode==3)audio(ArenaAudioEvent{60,original_job_cell.x,original_job_cell.z});
  context=next;scratch=buffer;return S::Advanced;
