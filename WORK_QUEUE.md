@@ -1,5 +1,23 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-10-29 — Playable preview mouse controls
+
+The owner explicitly prioritizes improving the delivered playable Windows build.
+P8 now includes point-and-click construction/selection, structure toolbar buttons,
+play/pause/restart, held deployment, unit-kind selection and latched-factory mode
+selection. Screen picking follows the actual yaw/pitch/zoom camera in logical SDL
+coordinates. Right drag orbits during gameplay; standalone model-viewer left drag
+is preserved. Input cancellation includes focus/pause/restart/owner changes.
+
+This is PC input adaptation to the existing skirmish, without new AI/economy or
+original gameplay substitutions. Actual SDL mouse input builds one factory,
+changes its mode after hovering elsewhere, releases produced units and restarts;
+keyboard/gamepad paths remain available. Original assets render in the updated
+window. This is not original player grab/carry, campaign or G1/G2 acceptance.
+The whole faithful-game estimate remains about25% (plausible15–35%); this update
+improves usability of the playable preview rather than measured recovery coverage.
+
+
 ## 2026-10-29 — Original carried units and shared nearest-peer selection
 
 Active code: `work/original-carry-state-20261029`, above PR #71.

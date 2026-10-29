@@ -6,6 +6,18 @@ existing recovered simulation, original model/texture loader, SDL/OpenGL viewer,
 base-counter outcome and F2 checkpoint. This is a native preview mode; original
 campaign/AI recovery remains separate.
 
+## Mouse gameplay
+
+Click a structure button, then an empty ground cell to build. Factory is the
+normal starting structure. Click PLAY, then hold HOLD RELEASE to deploy units.
+Click an existing factory to select it; its blue outline stays selected while
+moving to FACTORY MODE. PREV UNIT/NEXT UNIT choose the release kind. RESTART
+restores the launch checkpoint. Right drag orbits and the wheel zooms.
+
+The toolbar forwards the existing construction/deployment/factory APIs. It does
+not implement different build costs, combat, AI or mission rules. Keyboard and
+controller inputs are retained. The separate ship preview still uses IJKL/stick.
+
 ## Launch
 
 The Windows CI package includes `OPEN_SKIRMISH.cmd` and `native-skirmish.cfg`.

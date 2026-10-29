@@ -30,6 +30,11 @@ inline std::array<unsigned,7> status_glyph(char c){
  default:return {};
  }
 }
+inline int status_overlay_height(const std::array<std::string,5>& lines,int width){
+ const int scale=width>=800?2:1,columns=std::max(1,(width-20)/(6*scale));
+ int rows=0;for(const auto& line:lines)rows+=std::max(1,(int(line.size())+columns-1)/columns);
+ return 16+rows*10*scale;
+}
 inline void draw_status_overlay(const std::array<std::string,5>&lines,int width,int height){
  const int scale=width>=800?2:1;
  const int columns=std::max(1,(width-20)/(6*scale));
