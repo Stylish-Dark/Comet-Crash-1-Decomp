@@ -1,5 +1,11 @@
 # Original-game recovery status — 2026-10-21
 
+Latest: [original linked ground movement and pickup timeout](original-linked-ground-motion.md)
+removes the supplied14060-motion boundary for supported carried stage5 units,
+including target reacquisition, peer effects and bank/scene commits. Full ordinary
+14060, ship pickup/drop and original mission/scheduler remain incomplete.
+
+
 Latest: [carried ground units and shared6260 nearest-peer selection](original-ground-carry.md) connect supplied source states to authoritative banks/scene. Ground carrier47 pickup/link/acknowledgement now connects via original accumulators. Player-craft pickup/drop, full14060 and original scheduling/mouse integration remain missing. Earlier finalizer r4 polarity notes are corrected there.
 
 Latest player checkpoint: [health displays and real peer contact](original-player-health-contact.md)

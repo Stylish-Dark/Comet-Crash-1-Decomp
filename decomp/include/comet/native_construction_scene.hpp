@@ -52,6 +52,16 @@ public:
       std::span<const ArenaAccumulatorRecord> accumulators,std::uint32_t tag) const {
     return simulation_.stage_ground_carry_references(index,work,accumulators,tag);
   }
+  // Completed9A70 and12CD0 reference fetch -> linked14060 ->158B8 ->banks/scene.
+  // Removes the old supplied-motion boundary for supported linked stage5 units.
+  // After finalization refusal resume via finalize_prepared_ground_carry;
+  // completed peer publications must never be replayed.
+  ArenaGroundCarryStatus advance_prepared_linked_ground_carry(std::uint16_t index,
+      std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+      ArenaGroundCarryContext&,std::uint32_t frame,ArenaGridPosition original_job_cell,
+      ArenaRequestPublicationQueue* display_queue=nullptr,
+      const ArenaAccumulatorTransport& peer_accumulator={},
+      const ArenaPlayerParticleTransport& particles={});
   ArenaGroundCarryStatus advance_prepared_ground_carry(std::uint16_t index,
       std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
       ArenaGroundCarryContext&,std::uint32_t original_frame,ArenaGridPosition original_job_cell,

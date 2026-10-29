@@ -1,5 +1,10 @@
 # Original carried ground-unit continuation
 
+**Continuation:** [original linked motion and timeout](original-linked-ground-motion.md)
+now removes this document's supplied14060-motion boundary for the supported
+linked stage5 path. Historical comparison scope below stays unchanged.
+
+
 Reference: NPEB00142 v1.00 ELF SHA256
 `3b4b6fef525ac0893fd96f7f53d84affd8c9d2586a71a45341a76e8ba78497c6`,
 FE5D8 job SHA256

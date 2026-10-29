@@ -249,6 +249,14 @@ ArenaPlayerCraftControlStep NativeConstructionScene::advance_prepared_player_cra
   if(result.control.status==ArenaPlayerControlStatus::Advanced)refresh_construction();
   return result;
 }
+ArenaGroundCarryStatus NativeConstructionScene::advance_prepared_linked_ground_carry(std::uint16_t index,
+    std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaGroundCarryContext& work,
+    std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue,
+    const ArenaAccumulatorTransport& peer_accumulator,const ArenaPlayerParticleTransport& particles){
+  const auto result=simulation_.advance_prepared_linked_ground_carry(index,snapshot,elapsed,work,frame,original_job_cell,queue,peer_accumulator,particles);
+  if(result==ArenaGroundCarryStatus::Advanced)refresh_construction();
+  return result;
+}
 ArenaGroundCarryStatus NativeConstructionScene::advance_prepared_ground_carry(std::uint16_t index,
     std::span<const std::uint8_t,0x2900> snapshot,float elapsed,ArenaGroundCarryContext& work,
     std::uint32_t frame,ArenaGridPosition original_job_cell,ArenaRequestPublicationQueue* queue){

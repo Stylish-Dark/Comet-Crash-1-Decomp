@@ -4,12 +4,13 @@
 #include "comet/arena_entity_finalization.hpp"
 #include "comet/arena_entity_spatial.hpp"
 #include "comet/arena_audio_event.hpp"
+#include "comet/arena_player_peer.hpp"
 namespace comet::decomp {
 //12CD0 uses A00/B00, beyond the680-byte craft work slice.
 using ArenaGroundCarryContext=std::array<std::uint8_t,0xc00>;
 enum class ArenaGroundCarryStatus {
  Advanced, Invalid, NeedsParent, NeedsCaller, NeedsNumericRecovery, NeedsCommands,
- NeedsFinalization, CellFull, NeedsAudio
+ NeedsFinalization, CellFull, NeedsAudio, NeedsPeerContact, NeedsContactEffects
 };
 // Original12CD0/3108 references.FFFF retains reused cache bytes; signed-negative
 // IDs outside the supported native pool reject before any write.
@@ -19,6 +20,15 @@ bool fetch_arena_ground_carry_references(ArenaGroundCarryContext&,
 // Does not claim the remaining14060 caller. Reads actual cached A00 parent.
 ArenaGroundCarryStatus prepare_arena_ground_carry_position(ArenaGroundCarryContext&,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed);
+//14090..14420 linked stage5 continuation after completed9A70. Executes
+// formation,7E40/7510 peer contact, integration, world bounds, source cell/
+// suppression changes and13998 steering. Hostile capture, energetic world-hit
+// effects and invalid-target reacquisition remain explicit boundaries. Rejection
+// preserves context/RNG/effect output. Deferred16F8/1E880 effects require output
+// storage when reached; the caller must publish them once in source order.
+ArenaGroundCarryStatus advance_prepared_arena_linked_ground_motion(
+ ArenaGroundCarryContext&,std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
+ ArenaRandom* random=nullptr,ArenaPlayerPeerResult* deferred_peer=nullptr);
 //158B8's linked path, including17EE8 parent-loss clear of B4/B6 and common
 // request-free tail. Requires completed14060 motion at480/4A0, not guessed state.
 ArenaGroundCarryStatus advance_arena_ground_carry_dynamics(ArenaGroundCarryContext&,
