@@ -1,5 +1,24 @@
 # Active recovery queue — corrected 2026-10-20
 
+## 2026-11-03 — Original player destruction and reset
+
+P1/P4/P5/P6 advance within Partial. The original12288 boundary now executes
+through sound/particle requests, fresh-reservation BF58/BB30 statistics, base-enabled
+reset or permanent removal, remaining10290 banking/proxy work and6578 into actual
+banks/scene. Damage enters through the actual reserved accumulator. Reset keeps
+the live ship; permanent destruction retires proxy identities and removes its
+rendered projection while retaining the source frame+3 tombstone in storage.
+
+[Source, connected evidence and limits](docs/decomp/original-player-destruction.md).
+Missing original job-cell/transport ownership rejects before effects; finalizer
+resumption never repeats effects or accounting. Complete original10290 comparison
+matches144 supported contexts/events/statistics/RNG. Focused native paths pass.
+Ship grab/drop, capture, original base attachment/bootstrap/scheduler/input,
+mission/AI/content/presentation/audio/persistence remain; G1/G2 are not accepted.
+Overall faithful complete PC-game estimate remains about25%, plausible15–35%.
+This is an original-code checkpoint, not a new playable-preview download.
+
+
 ## 2026-10-29 — Original carried-unit movement and pickup timeout
 
 P2/P3/P6 advance within Partial. The linked ground adapter now computes original

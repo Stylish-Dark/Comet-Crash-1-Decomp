@@ -90,6 +90,25 @@ NativeConstructionScene::enqueue(ArenaConstructionRequest r) {
 void NativeConstructionScene::refresh_construction() {
   const auto &bank =
       simulation_.storage().banks[simulation_.storage().read_bank];
+  // A3400 tombstone is retained by the original pool until frame+3, but is
+  // no longer a drawable live entity. Keep storage release separately owned.
+  if(std::any_of(arena_.entities.begin(),arena_.entities.end(),[&](const auto& entity){
+       return entity.live_entity_index&&bank[*entity.live_entity_index][15]==63;
+     })){
+    std::vector<std::optional<std::size_t>> remap(arena_.entities.size());
+    std::size_t write=0;
+    for(std::size_t old=0;old<arena_.entities.size();++old){
+      const auto& entity=arena_.entities[old];
+      if(entity.live_entity_index&&bank[*entity.live_entity_index][15]==63)continue;
+      remap[old]=write;
+      if(write!=old)arena_.entities[write]=arena_.entities[old];
+      ++write;
+    }
+    if(write!=arena_.entities.size()){
+      arena_.entities.resize(write);
+      for(auto& cell:arena_.cells)if(cell.entity_index)cell.entity_index=remap[*cell.entity_index];
+    }
+  }
   for (auto &entity : arena_.entities) {
     if (!entity.live_entity_index)
       continue;
@@ -281,7 +300,7 @@ ArenaEntityFinalization NativeConstructionScene::finalize_player_craft(std::uint
     const ArenaEntitySlot& updated,const ArenaEntityFinalizationContext& context,
     std::uint32_t frame,const ArenaHealthDisplayTransport& display){
   const auto result=simulation_.finalize_player_craft(owner,updated,context,frame,display);
-  if(result==ArenaEntityFinalization::Committed)refresh_construction();
+  if(result==ArenaEntityFinalization::Committed||result==ArenaEntityFinalization::Tombstone)refresh_construction();
   return result;
 }
 ArenaUnitSpawnResult NativeConstructionScene::spawn_reserved_ground_unit(

@@ -240,7 +240,19 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
      storage_.banks[storage_.read_bank][index][15]!=1||
      (unsigned(work[12])<<8|work[13])!=index)return result;
   if(original_job_cell&&(original_job_cell->x>=storage_.width||original_job_cell->z>=storage_.height))return result;
-  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles,audio,peer_accumulator);
+  // Native serial ownership of the actual original player record. Raw10290
+  // also supports external reservation transports; no statistics are fabricated.
+  const auto statistics_ea=read(snapshot,0x2800)+128u*owner;
+  ArenaAccumulatorTransport player_statistics;
+  player_statistics.read_reserved=[&](std::uint32_t ea)->std::optional<ArenaAccumulatorRecord>{
+    if(ea!=statistics_ea)return {};
+    return statistics_[owner];
+  };
+  player_statistics.write_conditional=[&](std::uint32_t ea,const ArenaAccumulatorRecord& record){
+    if(ea!=statistics_ea)return ArenaAccumulatorWrite::Unavailable;
+    statistics_[owner]=record;return ArenaAccumulatorWrite::Committed;
+  };
+  result.control=advance_arena_player_control(work,snapshot,elapsed,scratch,pending,emitter,particles,audio,peer_accumulator,player_statistics,original_job_cell);
   if(result.control.status!=ArenaPlayerControlStatus::Advanced)return result;
   auto scalar=[&](unsigned o){return std::bit_cast<float>(read(work,o));};
   for(unsigned i=0;i<4;++i){result.commit.position_480[i]=scalar(0x480+4*i);result.commit.velocity_4a0[i]=scalar(0x4a0+4*i);}
@@ -257,11 +269,11 @@ ArenaPlayerCraftControlStep ArenaConstructionSimulation::advance_prepared_player
   for(unsigned n=0;n<2;++n)std::copy_n(work.begin()+0x380+128*n,128,display_scratch[n].begin());
   const ArenaHealthDisplayTransport display{display_queue,&display_scratch};
   result.finalization=finalize_player_craft(owner,body,result.commit,frame,display);
-  if(result.finalization==ArenaEntityFinalization::Committed){
+  if(result.finalization==ArenaEntityFinalization::Committed||result.finalization==ArenaEntityFinalization::Tombstone){
     std::copy_n(storage_.banks[storage_.read_bank][index].begin(),256,work.begin());
     for(unsigned n=0;n<2;++n)std::copy(display_scratch[n].begin(),display_scratch[n].end(),work.begin()+0x380+128*n);
   }
-  if(result.finalization!=ArenaEntityFinalization::Committed){
+  if(result.finalization!=ArenaEntityFinalization::Committed&&result.finalization!=ArenaEntityFinalization::Tombstone){
     const auto pc=result.finalization==ArenaEntityFinalization::NeedsChangeEffects?0x3940u:
         result.finalization==ArenaEntityFinalization::NeedsSpatialRecovery?0x6260u:0x6578u;
     result.control={ArenaPlayerControlStatus::NeedsFinalization,pc};

@@ -188,7 +188,7 @@ ArenaCounterEmissionRequest action_visual_request(ArenaEmissionDescriptor descri
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& context,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
  ArenaPlayerControlScratch* scratch,const ArenaPlayerPendingTransport& pending,
- const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,const ArenaAccumulatorTransport& peer_accumulator){
+ const ArenaCounterEmissionSink& emitter,const ArenaPlayerParticleTransport& particles,const ArenaAudioEventSink& audio,const ArenaAccumulatorTransport& peer_accumulator,const ArenaAccumulatorTransport& player_statistics,const ArenaGridPosition* original_job_cell){
  using S=ArenaPlayerControlStatus;
  if(context[15]!=1||word(context,0x500)!=1||word(context,0x5d0)!=0x80||context[0xc6]>=4||
     half(context,0x542)!=context[0xc6]||!std::isfinite(elapsed)||elapsed<0||elapsed>.25f||
@@ -211,6 +211,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  // replace that quadword before it becomes observable.
  const bool retain_attachment_w=banking&&attached&&!(word(context,0x660)&8u)&&!(scalar(context,0xc0)>0)&&!context[0xbc];
  auto next=context;Rounding rounding;bool owner_emission=false,full_action=false,attachment_audio=false,attachment_emission=false,repair_particle=false;
+ bool death=false;ArenaPlayerDeathEffects death_effects;
  ArenaPlayerPeerResult peer_result;std::optional<ArenaRandom> peer_random;
  ArenaCounterEmissionRequest attachment_request;ArenaParticleEmission repair_request;
  std::array<ArenaParticleEmission,4> action_particles{};
@@ -409,7 +410,15 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
    ph(next,0x1e,65535);next[0xbe]=next[0xbf]=0;next[0xbb]=1;
   }
   next[0x590]=std::uint8_t((!(check(scalar(next,0x38))>0))&(next[0xbc]^1u));
-  if(next[0x590])return blocked(S::NeedsDeath,0x12288);
+  if(next[0x590]){
+   if(!scratch||!particles.random||!particles.publish)return blocked(S::NeedsContactEffects,0x1237c);
+   if(!audio)return blocked(S::NeedsAudio,0x1231c);
+   if(!original_job_cell)return blocked(S::NeedsJobCell,0x12314);
+   const auto stats_base=word(snapshot,0x2800);
+   if(!stats_base||(stats_base&127u)||std::uint64_t(stats_base)+128u*owner>0xffffffffu||!player_statistics.read_reserved||!player_statistics.write_conditional)return blocked(S::NeedsPlayerStatistics,0xbf58);
+   if(!prepare_arena_player_death(next,snapshot,staged.death,death_effects))return blocked(S::NeedsDeath,0x12288);
+   death=true;
+  }
   if(banking){
    // 10B60..10EEC: body-relative arm roots, angular banking and smoothed
    // arm vectors. Source20 holds the new facing until the final delayed exchange.
@@ -502,6 +511,7 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext& co
  if(attachment_emission){emitter(attachment_request);staged.attachment_effect=attachment_request.descriptor;}
  if(repair_particle)particles.publish(repair_request,*particles.random);
  for(unsigned i=0;i<action_count;++i){emitter(action_requests[i]);staged.action_effect=action_requests[i].descriptor;}
+ if(death)publish_arena_player_death(next,snapshot,staged.death,death_effects,*particles.random,particles.publish,audio,player_statistics,*original_job_cell);
  if(banking)for(unsigned i=0;i<4;++i)publish_proxy(next,proxy_links[i],staged.interaction_proxies[i],pending,word(snapshot,0x27c0));
  if(full_action)for(auto& q:action_particles){
   q.configuration[8]=std::uint8_t(85+(particles.random->next()&3u));
