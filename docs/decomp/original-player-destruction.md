@@ -77,12 +77,24 @@ registry clearing or alternative respawn policy has been invented.
   missing job-cell ownership and explicit-finalizer scene refresh. Connected
   execution additionally exposed and fixed retained live rendering of tombstones.
 
+A follow-on caller correction removes a false player-contact boundary. In the
+hostile stage5/kind45/BB path,83F4 invokes48C8, whose4994..49C4 type1 rejection
+returns before statistics I/O.7E40 then continues ordinary collision handling.
+The previous shared peer gate incorrectly stopped the ship along with ground
+units. The player now continues; ground capture remains explicitly unrecovered.
+Another144 complete10290 cases execute that original48C8 rejection exactly once
+per call and match full contexts, both statistics/peer-impulse records, effect
+requests and next RNG. The public fixture failed on the old gate and passes on
+the corrected gate; player peer/controller/lifecycle checks pass. Windows/native
+and Linux/graphics CI passed the destruction checkpoint before this narrow caller
+correction; the updated commit runs the same CI workflows.
+
 No proprietary code, original binaries, assets, disassembly or private comparison
 harness is committed.
 
 ## Remaining work
 
-Ship pickup/link and voluntary drop, hostile capture and excluded numeric paths,
+Ship pickup/link and voluntary drop, ground capture and excluded numeric paths,
 original snapshot/bootstrap/scheduling and complete input integration remain.
 The supplied ready BC0 and job snapshot in fixtures are original-state inputs;
 they do not recover the missing outer bootstrap. The reset's next update is

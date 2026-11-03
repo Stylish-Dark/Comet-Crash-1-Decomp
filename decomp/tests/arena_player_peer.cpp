@@ -61,6 +61,16 @@ int main(){
  ArenaRandom impact_random(71);const auto impact=prepare_arena_player_peer_contact(energetic,snapshot,impact_random);
  assert(impact.advanced&&impact.overlapping&&impact.outgoing_impulse&&impact.particles);
  assert(impact.particles->count==7&&impact.particles->configuration[8]==48&&impact.particles->configuration[10]==1);
+ // A type1 ship cannot be captured by the hostile stage5 kind45 branch:
+ // original48C8 rejects type1 before reservation/publication, then7E40 returns
+ // to ordinary contact. The same state remains an explicit boundary for ground.
+ auto capture=energetic;capture[0x33]=20;put(capture,0x510,5);put(capture,0x530,0);
+ capture[0x10f]=45;capture[0x133]=std::uint8_t(32|20);capture[0x1bb]=1;
+ put(capture,0x160,word(capture,0x160)&~0x20000u);snapshot[0x2723]=1;
+ ArenaRandom capture_random(71);const auto capture_result=prepare_arena_player_peer_contact(capture,snapshot,capture_random);
+ assert(capture_result.advanced&&capture_result.overlapping);
+ auto ground=capture;ground[15]=40;put(ground,0x500,40);
+ assert(!prepare_arena_ground_peer_contact(ground,snapshot,capture_random).advanced);
  // Ignored links and dead peer kinds take their source early returns without RNG.
  auto ignored=saved;ignored[0x6c]=ignored[0x1c];ignored[0x6d]=ignored[0x1d];auto rng_before=impact_random;
  assert(prepare_arena_player_peer_contact(ignored,snapshot,impact_random).advanced);

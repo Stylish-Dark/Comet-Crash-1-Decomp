@@ -13,7 +13,11 @@ rendered projection while retaining the source frame+3 tombstone in storage.
 Missing original job-cell/transport ownership rejects before effects; finalizer
 resumption never repeats effects or accounting. Complete original10290 comparison
 matches144 supported contexts/events/statistics/RNG. Focused native paths pass.
-Ship grab/drop, capture, original base attachment/bootstrap/scheduler/input,
+A follow-on source comparison closes a false enemy-capture contact boundary:
+48C8 rejects type1 before statistics I/O, so the original ship continues collision
+handling. Ground capture remains unrecovered. Another144 full10290 comparisons
+include actual48C8 rejection, peer impulse, death/reset and unchanged RNG order.
+Ship grab/drop, ground capture, original base attachment/bootstrap/scheduler/input,
 mission/AI/content/presentation/audio/persistence remain; G1/G2 are not accepted.
 Overall faithful complete PC-game estimate remains about25%, plausible15–35%.
 This is an original-code checkpoint, not a new playable-preview download.
