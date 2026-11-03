@@ -32,7 +32,10 @@ static ArenaPlayerPeerResult prepare_peer(ArenaEntityWorkContext& context,
  if(result.peer_index==65535||result.peer_index==half(next,0x6c)){result.advanced=true;return result;}
  const unsigned owner=next[0x133]>>5;
  const bool hostile=word(next,0x530)!=half(snapshot,0x2720+2*owner)&&!(word(next,0x160)&0x20000u);
- if(word(next,0x510)==5&&next[0x10f]==45&&hostile&&next[0x1bb])return result;
+ //83F4 ->48C8 rejects type1 before any statistics reservation;84C8
+ // ownership transfer is consequently unreachable for a player ship. Ground
+ // entities still require the separately unrecovered capture continuation.
+ if(ground_call&&word(next,0x510)==5&&next[0x10f]==45&&hostile&&next[0x1bb])return result;
  ArenaGroundPairQuery q;q.position=vector(next,0x480);q.peer_position=vector(next,0x100);
  q.radius=scalar(next,0x4e0);q.own_mass=scalar(next,0x58);q.peer_mass=scalar(next,0x158);
  q.peer_radius=next[0x10e];q.index=std::uint16_t(word(next,0x4f0));q.peer_index=std::uint16_t(half(next,0x10c));

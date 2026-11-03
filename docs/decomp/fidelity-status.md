@@ -1,5 +1,13 @@
 # Original-game recovery status — 2026-10-21
 
+Latest: [original player destruction and base-enabled reset](original-player-destruction.md)
+closes10290's12288 boundary through effects/statistics and authoritative banks/scene.
+Permanent removal retires interaction arms and the live projection; reset retains
+the craft. Whole original player-loop/mission gates remain unaccepted. Original
+ship grab/drop, base attachment/bootstrap/scheduler/input and full presentation
+remain incomplete. Earlier death-blocker lists below predate this checkpoint.
+
+
 Latest: [original linked ground movement and pickup timeout](original-linked-ground-motion.md)
 removes the supplied14060-motion boundary for supported carried stage5 units,
 including target reacquisition, peer effects and bank/scene commits. Full ordinary

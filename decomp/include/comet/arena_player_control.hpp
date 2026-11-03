@@ -3,6 +3,7 @@
 #include "comet/arena_audio_event.hpp"
 #include "comet/arena_particle_emission.hpp"
 #include "comet/arena_entity_accumulator.hpp"
+#include "comet/arena_player_lifecycle.hpp"
 #include <functional>
 namespace comet::decomp {
 struct ArenaPlayerControlScratch {
@@ -11,6 +12,7 @@ struct ArenaPlayerControlScratch {
  ArenaEmissionDescriptor owner_effect{};
  ArenaEmissionDescriptor action_effect{};
  ArenaEmissionDescriptor attachment_effect{};
+ ArenaPlayerDeathScratch death{};
  // Four reused original interaction proxy records (far/near, left/right).
  std::array<ArenaEntitySlot,4> interaction_proxies{};
 };
@@ -32,7 +34,7 @@ struct ArenaPlayerParticleTransport {
 enum class ArenaPlayerControlStatus {
  Advanced, Invalid, NeedsPendingQueue, NeedsPeerContact, NeedsAlternateControl,
  NeedsAttachment, NeedsTargetFacing, NeedsCarry, NeedsDeath, NeedsBanking,
- NeedsOwnerEmission, NeedsActionEmission, NeedsContactEffects, NeedsNumericRecovery, NeedsFinalization, NeedsAudio
+ NeedsOwnerEmission, NeedsActionEmission, NeedsContactEffects, NeedsNumericRecovery, NeedsFinalization, NeedsAudio, NeedsPlayerStatistics, NeedsJobCell
 };
 struct ArenaPlayerControlResult {
  ArenaPlayerControlStatus status=ArenaPlayerControlStatus::Invalid;
@@ -43,8 +45,8 @@ struct ArenaPlayerControlResult {
 // action edge/visual requests/candidate selection, owner timer/request
 // and body/controller commits. Also recovers11CA8 grid approach,119BC positive
 // attachment countdown,11DE8 expired attachment growth/repair, and10B60 arm
-// banking/four180A0 proxy lifecycles. Missing
-// death/attachment/capture continuations return a named boundary.11A80
+// banking/four180A0 proxy lifecycles and12288 destruction/base-enabled reset.
+// Missing attachment/capture continuations return a named boundary.11A80
 // full expansion emits four original particle calls through the supplied pool/RNG
 // transport. Hard7DD0 craft impacts have source particle count0 and can advance
 // without a particle transport. Proxy storage
@@ -59,6 +61,9 @@ struct ArenaPlayerControlResult {
 // each write; Unavailable/invalid records are fatal host failures, not resumable
 // controller boundaries. A thrown host failure may follow earlier source effects:
 // never replay10290 after it. Missing callbacks reject before any effects.
+// Destruction uses the supplied original player-statistics reservation transport
+// and original job-cell sound parameters; reset and permanent removal diverge
+// before6578. The owned simulation supplies its actual player record.
 // Packed W metadata is retained; XYZ/scalar subnormal recovery remains excluded.
 ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext&,
  std::span<const std::uint8_t,0x2900> snapshot,float elapsed,
@@ -67,5 +72,6 @@ ArenaPlayerControlResult advance_arena_player_control(ArenaEntityWorkContext&,
  const ArenaCounterEmissionSink& emitter={},
  const ArenaPlayerParticleTransport& particles={},
  const ArenaAudioEventSink& audio={},
- const ArenaAccumulatorTransport& peer_accumulator={});
+ const ArenaAccumulatorTransport& peer_accumulator={},
+ const ArenaAccumulatorTransport& player_statistics={},const ArenaGridPosition* original_job_cell=nullptr);
 }
